@@ -1,0 +1,116 @@
+{
+  "meta": {
+    "title": "Tablix - Transforme planilhas complexas em arquivos prontos para uso",
+    "description": "Envie sua planilha, selecione as colunas que você precisa e gere um novo arquivo em segundos. Ferramenta web para processamento e geração de planilhas personalizadas."
+  },
+  "header": {
+    "brand": "Tablix"
+  },
+  "hero": {
+    "title": "Transforme planilhas complexas em arquivos prontos para uso",
+    "subtitle": "Envie sua planilha, selecione as colunas que você precisa e gere um novo arquivo em segundos.",
+    "cta": "Gerar minha planilha"
+  },
+  "howItWorks": {
+    "title": "Como funciona",
+    "steps": {
+      "upload": {
+        "title": "Envie sua planilha",
+        "description": "Faça upload do seu arquivo CSV ou XLSX"
+      },
+      "visualize": {
+        "title": "Visualize as colunas detectadas",
+        "description": "O sistema identifica automaticamente todas as colunas"
+      },
+      "choose": {
+        "title": "Escolha o que deseja manter",
+        "description": "Selecione apenas as colunas necessárias"
+      },
+      "generate": {
+        "title": "Gere o novo arquivo",
+        "description": "Baixe sua planilha limpa e pronta para uso"
+      }
+    }
+  },
+  "audience": {
+    "title": "Para quem é",
+    "roles": {
+      "analysts": "Analistas",
+      "admins": "Times administrativos",
+      "recurring": "Pessoas que lidam com planilhas recorrentes"
+    },
+    "description": "O Tablix foi criado para reduzir tarefas repetitivas e ganhar tempo em atividades operacionais com planilhas."
+  },
+  "pricing": {
+    "title": "Planos",
+    "subtitle": "Escolha o plano ideal para suas necessidades",
+    "billingPeriod": {
+      "monthly": "Mensal",
+      "semester": "Semestral",
+      "annual": "Anual",
+      "annualBadge": "Mais vantajoso"
+    },
+    "plans": {
+      "free": {
+        "name": "Free",
+        "price": "R$ 0",
+        "period": "Para sempre",
+        "features": {
+          "sheetsPerMonth": "1 planilha por mês",
+          "maxRows": "até 300 linhas",
+          "maxColumns": "até 3 colunas"
+        },
+        "description": "Ideal para testar o fluxo e entender se o Tablix resolve seu problema.",
+        "cta": "Começar grátis"
+      },
+      "pro": {
+        "name": "Pro",
+        "badge": "Mais popular",
+        "oldPrice": "R$ 47",
+        "period": "mês",
+        "launchPrice": "Preço de lançamento garantido enquanto a assinatura estiver ativa",
+        "features": {
+          "sheetsPerMonth": "até 40 planilhas por mês",
+          "maxRows": "até 5.000 linhas por planilha",
+          "maxColumns": "até 10 colunas",
+          "priorityProcessing": "processamento prioritário",
+          "noWatermark": "sem marca d'água",
+          "fileHistory": "histórico de arquivos por 30 dias"
+        },
+        "cta": "Assinar Pro"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Personalizado",
+        "period": "Sob consulta",
+        "features": {
+          "customLimits": "Limites customizados",
+          "sla": "SLA garantido",
+          "prioritySupport": "Suporte prioritário",
+          "dedicatedInfra": "Infraestrutura dedicada"
+        },
+        "description": "Para empresas com alto volume ou necessidades específicas.",
+        "cta": "Falar com o time"
+      }
+    }
+  },
+  "footer": {
+    "security": "Seus arquivos são processados de forma temporária e segura.",
+    "privacy": "O Tablix não armazena seus arquivos. Eles são descartados após o processamento."
+  },
+  "upload": {
+    "title": "Envie sua planilha",
+    "subtitle": "Plano gratuito: até 300 linhas e 3 colunas",
+    "back": "Voltar",
+    "dropzone": "Clique para selecionar ou arraste arquivos",
+    "dropzoneWithFiles": "arquivo(s) selecionado(s)",
+    "or": "ou",
+    "selectFile": "Selecione um arquivo",
+    "maxSize": "CSV ou XLSX • Máximo 10MB",
+    "processing": "Processando...",
+    "continue": "Continuar",
+    "error": "Erro ao processar arquivo",
+    "securityNote": "Seus arquivos são processados de forma temporária e segura.",
+    "selectAtLeastOne": "Selecione pelo menos um arquivo"
+  }
+}

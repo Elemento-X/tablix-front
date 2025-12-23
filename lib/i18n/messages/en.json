@@ -1,0 +1,116 @@
+{
+  "meta": {
+    "title": "Tablix - Transform complex spreadsheets into ready-to-use files",
+    "description": "Upload your spreadsheet, select the columns you need and generate a new file in seconds. Web tool for custom spreadsheet processing and generation."
+  },
+  "header": {
+    "brand": "Tablix"
+  },
+  "hero": {
+    "title": "Transform complex spreadsheets into ready-to-use files",
+    "subtitle": "Upload your spreadsheet, select the columns you need and generate a new file in seconds.",
+    "cta": "Generate my spreadsheet"
+  },
+  "howItWorks": {
+    "title": "How it works",
+    "steps": {
+      "upload": {
+        "title": "Upload your spreadsheet",
+        "description": "Upload your CSV or XLSX file"
+      },
+      "visualize": {
+        "title": "View detected columns",
+        "description": "The system automatically identifies all columns"
+      },
+      "choose": {
+        "title": "Choose what to keep",
+        "description": "Select only the necessary columns"
+      },
+      "generate": {
+        "title": "Generate the new file",
+        "description": "Download your clean, ready-to-use spreadsheet"
+      }
+    }
+  },
+  "audience": {
+    "title": "Who is it for",
+    "roles": {
+      "analysts": "Analysts",
+      "admins": "Administrative teams",
+      "recurring": "People who deal with recurring spreadsheets"
+    },
+    "description": "Tablix was created to reduce repetitive tasks and save time in operational activities with spreadsheets."
+  },
+  "pricing": {
+    "title": "Plans",
+    "subtitle": "Choose the ideal plan for your needs",
+    "billingPeriod": {
+      "monthly": "Monthly",
+      "semester": "Semester",
+      "annual": "Annual",
+      "annualBadge": "Best value"
+    },
+    "plans": {
+      "free": {
+        "name": "Free",
+        "price": "$0",
+        "period": "Forever",
+        "features": {
+          "sheetsPerMonth": "1 spreadsheet per month",
+          "maxRows": "up to 300 rows",
+          "maxColumns": "up to 3 columns"
+        },
+        "description": "Ideal for testing the workflow and understanding if Tablix solves your problem.",
+        "cta": "Start for free"
+      },
+      "pro": {
+        "name": "Pro",
+        "badge": "Most popular",
+        "oldPrice": "$9.90",
+        "period": "month",
+        "launchPrice": "Launch price guaranteed while subscription is active",
+        "features": {
+          "sheetsPerMonth": "up to 40 spreadsheets per month",
+          "maxRows": "up to 5,000 rows per spreadsheet",
+          "maxColumns": "up to 10 columns",
+          "priorityProcessing": "priority processing",
+          "noWatermark": "no watermark",
+          "fileHistory": "file history for 30 days"
+        },
+        "cta": "Subscribe to Pro"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Custom",
+        "period": "Contact us",
+        "features": {
+          "customLimits": "Custom limits",
+          "sla": "Guaranteed SLA",
+          "prioritySupport": "Priority support",
+          "dedicatedInfra": "Dedicated infrastructure"
+        },
+        "description": "For companies with high volume or specific needs.",
+        "cta": "Talk to our team"
+      }
+    }
+  },
+  "footer": {
+    "security": "Your files are processed temporarily and securely.",
+    "privacy": "Tablix does not store your files. They are discarded after processing."
+  },
+  "upload": {
+    "title": "Upload your spreadsheet",
+    "subtitle": "Free plan: up to 300 rows and 3 columns",
+    "back": "Back",
+    "dropzone": "Click to select or drag files",
+    "dropzoneWithFiles": "file(s) selected",
+    "or": "or",
+    "selectFile": "Select a file",
+    "maxSize": "CSV or XLSX • Maximum 10MB",
+    "processing": "Processing...",
+    "continue": "Continue",
+    "error": "Error processing file",
+    "securityNote": "Your files are processed temporarily and securely.",
+    "selectAtLeastOne": "Select at least one file"
+  }
+}

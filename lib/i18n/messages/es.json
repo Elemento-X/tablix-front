@@ -1,0 +1,116 @@
+{
+  "meta": {
+    "title": "Tablix - Transforma hojas de cálculo complejas en archivos listos para usar",
+    "description": "Carga tu hoja de cálculo, selecciona las columnas que necesitas y genera un nuevo archivo en segundos. Herramienta web para procesamiento y generación de hojas de cálculo personalizadas."
+  },
+  "header": {
+    "brand": "Tablix"
+  },
+  "hero": {
+    "title": "Transforma hojas de cálculo complejas en archivos listos para usar",
+    "subtitle": "Carga tu hoja de cálculo, selecciona las columnas que necesitas y genera un nuevo archivo en segundos.",
+    "cta": "Generar mi hoja de cálculo"
+  },
+  "howItWorks": {
+    "title": "Cómo funciona",
+    "steps": {
+      "upload": {
+        "title": "Carga tu hoja de cálculo",
+        "description": "Sube tu archivo CSV o XLSX"
+      },
+      "visualize": {
+        "title": "Visualiza las columnas detectadas",
+        "description": "El sistema identifica automáticamente todas las columnas"
+      },
+      "choose": {
+        "title": "Elige qué mantener",
+        "description": "Selecciona solo las columnas necesarias"
+      },
+      "generate": {
+        "title": "Genera el nuevo archivo",
+        "description": "Descarga tu hoja de cálculo limpia y lista para usar"
+      }
+    }
+  },
+  "audience": {
+    "title": "Para quién es",
+    "roles": {
+      "analysts": "Analistas",
+      "admins": "Equipos administrativos",
+      "recurring": "Personas que trabajan con hojas de cálculo recurrentes"
+    },
+    "description": "Tablix fue creado para reducir tareas repetitivas y ahorrar tiempo en actividades operativas con hojas de cálculo."
+  },
+  "pricing": {
+    "title": "Planes",
+    "subtitle": "Elige el plan ideal para tus necesidades",
+    "billingPeriod": {
+      "monthly": "Mensual",
+      "semester": "Semestral",
+      "annual": "Anual",
+      "annualBadge": "Mejor valor"
+    },
+    "plans": {
+      "free": {
+        "name": "Free",
+        "price": "$0",
+        "period": "Para siempre",
+        "features": {
+          "sheetsPerMonth": "1 hoja de cálculo por mes",
+          "maxRows": "hasta 300 filas",
+          "maxColumns": "hasta 3 columnas"
+        },
+        "description": "Ideal para probar el flujo y entender si Tablix resuelve tu problema.",
+        "cta": "Comenzar gratis"
+      },
+      "pro": {
+        "name": "Pro",
+        "badge": "Más popular",
+        "oldPrice": "$9.90",
+        "period": "mes",
+        "launchPrice": "Precio de lanzamiento garantizado mientras la suscripción esté activa",
+        "features": {
+          "sheetsPerMonth": "hasta 40 hojas de cálculo por mes",
+          "maxRows": "hasta 5,000 filas por hoja de cálculo",
+          "maxColumns": "hasta 10 columnas",
+          "priorityProcessing": "procesamiento prioritario",
+          "noWatermark": "sin marca de agua",
+          "fileHistory": "historial de archivos por 30 días"
+        },
+        "cta": "Suscribirse a Pro"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Personalizado",
+        "period": "Consulta",
+        "features": {
+          "customLimits": "Límites personalizados",
+          "sla": "SLA garantizado",
+          "prioritySupport": "Soporte prioritario",
+          "dedicatedInfra": "Infraestructura dedicada"
+        },
+        "description": "Para empresas con alto volumen o necesidades específicas.",
+        "cta": "Hablar con el equipo"
+      }
+    }
+  },
+  "footer": {
+    "security": "Tus archivos se procesan de forma temporal y segura.",
+    "privacy": "Tablix no almacena tus archivos. Se descartan después del procesamiento."
+  },
+  "upload": {
+    "title": "Carga tu hoja de cálculo",
+    "subtitle": "Plan gratuito: hasta 300 filas y 3 columnas",
+    "back": "Volver",
+    "dropzone": "Haz clic para seleccionar o arrastra archivos",
+    "dropzoneWithFiles": "archivo(s) seleccionado(s)",
+    "or": "o",
+    "selectFile": "Selecciona un archivo",
+    "maxSize": "CSV o XLSX • Máximo 10MB",
+    "processing": "Procesando...",
+    "continue": "Continuar",
+    "error": "Error al procesar el archivo",
+    "securityNote": "Tus archivos se procesan de forma temporal y segura.",
+    "selectAtLeastOne": "Selecciona al menos un archivo"
+  }
+}
