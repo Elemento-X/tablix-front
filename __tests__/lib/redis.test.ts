@@ -87,8 +87,11 @@ describe('redis.ts', () => {
       const client = getRedisClient()
 
       expect(client).not.toBeNull()
-      // Verificar que Redis foi instanciado (o mock pode ter sido chamado em outro teste)
-      expect(Redis).toHaveBeenCalled()
+      // Verificar que o cliente retornado tem os métodos esperados
+      expect(client).toHaveProperty('get')
+      expect(client).toHaveProperty('set')
+      expect(client).toHaveProperty('incr')
+      expect(client).toHaveProperty('expire')
     })
   })
 

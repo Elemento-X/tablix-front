@@ -37,3 +37,15 @@ jest.mock('next/navigation', () => ({
 // Mock environment variables
 process.env.UPSTASH_REDIS_REST_URL = undefined
 process.env.UPSTASH_REDIS_REST_TOKEN = undefined
+
+// Mock @upstash/ratelimit to avoid ESM issues
+jest.mock('@upstash/ratelimit', () => ({
+  Ratelimit: jest.fn().mockImplementation(() => ({
+    limit: jest.fn().mockResolvedValue({
+      success: true,
+      remaining: 10,
+      limit: 10,
+      reset: Date.now() + 60000,
+    }),
+  })),
+}))

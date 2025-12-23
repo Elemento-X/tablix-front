@@ -1,13 +1,13 @@
 import { NextRequest } from 'next/server'
-import { rateLimit, rateLimiters } from '@/lib/security/rate-limit'
+import { rateLimit, rateLimiters, __resetRateLimitStore } from '@/lib/security/rate-limit'
 
 describe('rate-limit.ts', () => {
   // Contador para gerar IPs únicos em cada teste
   let testCounter = 0
 
   const createRequest = (headers: Record<string, string> = {}): NextRequest => {
-    // Se não houver IP especificado, gerar um único para este teste
-    if (!headers['x-forwarded-for']) {
+    // Se não houver nenhum header de IP especificado, gerar um único para este teste
+    if (!headers['x-forwarded-for'] && !headers['x-real-ip'] && !headers['cf-connecting-ip']) {
       testCounter++
       headers['x-forwarded-for'] = `192.168.${Math.floor(testCounter / 256)}.${testCounter % 256}`
     }
@@ -17,7 +17,9 @@ describe('rate-limit.ts', () => {
   }
 
   beforeEach(() => {
-    jest.useFakeTimers()
+    jest.useFakeTimers({ now: Date.now() })
+    // Reset the rate limit store before each test
+    __resetRateLimitStore()
   })
 
   afterEach(() => {
@@ -122,8 +124,9 @@ describe('rate-limit.ts', () => {
 
       await limiter.check(request)
 
-      // Advance time exactly to reset time
+      // Advance time exactly to reset time (need to advance both timers and Date.now())
       jest.advanceTimersByTime(60000)
+      jest.setSystemTime(Date.now() + 60000)
 
       const result = await limiter.check(request)
 
@@ -178,8 +181,9 @@ describe('rate-limit.ts', () => {
       let result = await limiter.check(request)
       expect(result.success).toBe(false)
 
-      // Advance by 30 seconds
+      // Advance by 30 seconds (both timers and Date.now())
       jest.advanceTimersByTime(30000)
+      jest.setSystemTime(Date.now() + 30000)
 
       // Should be allowed again
       result = await limiter.check(request)
@@ -420,8 +424,9 @@ describe('rate-limit.ts', () => {
       let result = await rateLimiters.upload.check(request)
       expect(result.success).toBe(false)
 
-      // Advance time by 1 minute
+      // Advance time by 1 minute (both timers and Date.now())
       jest.advanceTimersByTime(60000)
+      jest.setSystemTime(Date.now() + 60000)
 
       // Should be allowed again
       result = await rateLimiters.upload.check(request)

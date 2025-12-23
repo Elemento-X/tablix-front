@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@testing-library/react'
 import { useUsage, formatFileSize } from '@/hooks/use-usage'
 
 describe('use-usage.ts', () => {
@@ -157,8 +157,10 @@ describe('use-usage.ts', () => {
         json: async () => updatedData,
       })
 
-      // Call refetch
-      result.current.refetch()
+      // Call refetch wrapped in act
+      await act(async () => {
+        await result.current.refetch()
+      })
 
       await waitFor(() => {
         expect(result.current.usage?.uploads.current).toBe(2)
@@ -179,8 +181,10 @@ describe('use-usage.ts', () => {
         expect(result.current.isLoading).toBe(false)
       })
 
-      // Start refetch - the loading state change happens asynchronously
-      await result.current.refetch()
+      // Start refetch wrapped in act
+      await act(async () => {
+        await result.current.refetch()
+      })
 
       // After refetch completes, loading should be false again
       expect(result.current.isLoading).toBe(false)
@@ -201,7 +205,9 @@ describe('use-usage.ts', () => {
         json: async () => mockUsageData,
       })
 
-      result.current.refetch()
+      await act(async () => {
+        await result.current.refetch()
+      })
 
       await waitFor(() => {
         expect(result.current.error).toBeNull()
