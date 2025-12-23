@@ -8,6 +8,7 @@ import { Button } from '@/components/button'
 import { Card, CardContent } from '@/components/card'
 import { Input } from './input'
 import { formatFileSize, useUsage } from '@/hooks/use-usage'
+import { useFileParser } from '@/hooks/use-file-parser'
 import { useLocale } from '@/lib/i18n'
 import { validateFile, validateFileContent } from '@/lib/security'
 import { ArrowLeft, FileSpreadsheet, Info, Loader2, Upload } from 'lucide-react'
@@ -20,6 +21,7 @@ export function UploadPageContent() {
   const router = useRouter()
   const { t } = useLocale()
   const { usage, isLoading: isLoadingUsage, refetch: refetchUsage } = useUsage()
+  const { parseFile } = useFileParser()
   const [files, setFiles] = useState<File[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [detectedColumns, setDetectedColumns] = useState<string[]>([])
@@ -137,39 +139,25 @@ export function UploadPageContent() {
     setIsUploading(true)
 
     try {
-      const formData = new FormData()
-      files.forEach((file) => formData.append('files', file))
+      const file = files[0]
 
-      const response = await fetch('/api/preview', {
-        method: 'POST',
-        body: formData,
-      })
+      // Parse file (smart: client-side for <10MB, server-side for >10MB)
+      const result = await parseFile(file)
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          if (data.errorCode === 'LIMIT_EXCEEDED') {
-            toast.error(data.error || 'Upload limit exceeded for this month')
-            refetchUsage()
-          } else if (data.errorCode === 'FILE_TOO_LARGE') {
-            toast.error(data.error || 'File size exceeds plan limit')
-          } else {
-            toast.error(data.error || 'Access denied')
-          }
-        } else {
-          toast.error(data.error || t('upload.error'))
-        }
+      // Validate column count against plan limits
+      if (usage && result.columns.length > usage.limits.maxColumns) {
+        toast.error(
+          `File has ${result.columns.length} columns. Maximum ${usage.limits.maxColumns} columns for ${usage.plan.toUpperCase()} plan.`
+        )
+        setIsUploading(false)
         return
       }
 
-      if (data.usage) {
-        refetchUsage()
-      }
-
-      toast.success('File uploaded successfully!')
-      setDetectedColumns(data.columns || [])
-      setSelectedColumns(data.columns || [])
+      toast.success(
+        `File parsed successfully! Found ${result.columns.length} columns and ${result.rowCount} rows.`
+      )
+      setDetectedColumns(result.columns)
+      setSelectedColumns(result.columns)
       setStep('columns')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('upload.error'))
