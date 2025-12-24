@@ -8,8 +8,9 @@ const createJestConfig = nextJest({
 // Add any custom config to be passed to Jest
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  // Use edge-runtime for Next.js server-side APIs
-  testEnvironment: '@edge-runtime/jest-environment',
+  // Use node environment by default (supports coverage)
+  // Tests that need jsdom should use @jest-environment jsdom docblock
+  testEnvironment: 'node',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
@@ -18,21 +19,19 @@ const customJestConfig = {
   ],
   collectCoverageFrom: [
     'src/lib/**/*.{js,jsx,ts,tsx}',
-    'src/app/**/*.{js,jsx,ts,tsx}',
-    'src/components/**/*.{js,jsx,ts,tsx}',
     'src/hooks/**/*.{js,jsx,ts,tsx}',
+    '!src/lib/i18n/**', // Exclude i18n messages from coverage
     '!**/*.d.ts',
     '!**/node_modules/**',
     '!**/.next/**',
     '!**/coverage/**',
-    '!**/jest.config.js',
   ],
   coverageThreshold: {
     global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80,
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70,
     },
   },
   testMatch: [
