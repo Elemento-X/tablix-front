@@ -57,7 +57,7 @@
         "period": "Forever",
         "features": {
           "sheetsPerMonth": "1 spreadsheet per month",
-          "maxRows": "up to 300 rows",
+          "maxRows": "up to 500 rows",
           "maxColumns": "up to 3 columns"
         },
         "description": "Ideal for testing the workflow and understanding if Tablix solves your problem.",
@@ -100,7 +100,7 @@
   },
   "upload": {
     "title": "Upload your spreadsheet",
-    "subtitle": "Free plan: up to 300 rows and 3 columns",
+    "subtitle": "Free plan: up to 500 rows and 3 columns",
     "back": "Back",
     "dropzone": "Click to select or drag files",
     "dropzoneWithFiles": "file(s) selected",

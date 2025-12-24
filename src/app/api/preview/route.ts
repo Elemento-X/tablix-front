@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { rateLimiters } from "@/lib/security/rate-limit"
 import { sanitizeFileName } from "@/lib/security/file-validator"
 import { validateFileLimits } from "@/lib/security/validation-schemas"
-import { checkUploadLimit, incrementUploadCount, checkFileSizeLimit } from "@/lib/usage-tracker"
+import { checkUnificationLimit, incrementUnificationCount, checkFileSizeLimit } from "@/lib/usage-tracker"
 import { getUserFingerprint, setFingerprintCookie, getUserPlan } from "@/lib/fingerprint"
 
 const MAX_FILES = 1 // Only 1 file per upload
@@ -29,18 +29,18 @@ export async function POST(request: NextRequest) {
     const { isNew, cookieId } = getUserFingerprint(request)
     const plan = getUserPlan(request)
 
-    // Check upload limit (monthly quota)
-    const uploadCheck = await checkUploadLimit(request)
+    // Check unification limit (monthly quota)
+    const unificationCheck = await checkUnificationLimit(request)
 
-    if (!uploadCheck.allowed) {
+    if (!unificationCheck.allowed) {
       const response = NextResponse.json(
         {
-          error: uploadCheck.error,
-          errorCode: uploadCheck.errorCode,
+          error: unificationCheck.error,
+          errorCode: unificationCheck.errorCode,
           usage: {
-            current: uploadCheck.currentUploads,
-            max: uploadCheck.maxUploads,
-            remaining: uploadCheck.remainingUploads,
+            current: unificationCheck.currentUnifications,
+            max: unificationCheck.maxUnifications,
+            remaining: unificationCheck.remainingUnifications,
           },
         },
         { status: 403 }
@@ -119,18 +119,20 @@ export async function POST(request: NextRequest) {
       "Status",
     ]
 
-    // ✅ INCREMENT UPLOAD COUNTER (only after successful validation)
-    const newUploadCount = await incrementUploadCount(request)
-    console.log(`[Upload] User uploaded file. New count: ${newUploadCount}/${uploadCheck.maxUploads}`)
+    // ✅ INCREMENT UNIFICATION COUNTER (only after successful validation)
+    // NOTE: This should only be called when generating the unified file, not on preview
+    // TODO: Move this to the /api/process endpoint when implemented
+    const newUnificationCount = await incrementUnificationCount(request)
+    console.log(`[Unification] User created unification. New count: ${newUnificationCount}/${unificationCheck.maxUnifications}`)
 
     // Create response with usage info
     const response = NextResponse.json(
       {
         columns,
         usage: {
-          current: newUploadCount,
-          max: uploadCheck.maxUploads,
-          remaining: uploadCheck.maxUploads - newUploadCount,
+          current: newUnificationCount,
+          max: unificationCheck.maxUnifications,
+          remaining: unificationCheck.maxUnifications - newUnificationCount,
         },
       },
       {

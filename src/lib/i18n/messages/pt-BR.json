@@ -57,7 +57,7 @@
         "period": "Para sempre",
         "features": {
           "sheetsPerMonth": "1 planilha por mês",
-          "maxRows": "até 300 linhas",
+          "maxRows": "até 500 linhas",
           "maxColumns": "até 3 colunas"
         },
         "description": "Ideal para testar o fluxo e entender se o Tablix resolve seu problema.",
@@ -100,7 +100,7 @@
   },
   "upload": {
     "title": "Envie sua planilha",
-    "subtitle": "Plano gratuito: até 300 linhas e 3 colunas",
+    "subtitle": "Plano gratuito: até 500 linhas e 3 colunas",
     "back": "Voltar",
     "dropzone": "Clique para selecionar ou arraste arquivos",
     "dropzoneWithFiles": "arquivo(s) selecionado(s)",

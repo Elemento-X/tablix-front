@@ -57,7 +57,7 @@
         "period": "Para siempre",
         "features": {
           "sheetsPerMonth": "1 hoja de cálculo por mes",
-          "maxRows": "hasta 300 filas",
+          "maxRows": "hasta 500 filas",
           "maxColumns": "hasta 3 columnas"
         },
         "description": "Ideal para probar el flujo y entender si Tablix resuelve tu problema.",
@@ -100,7 +100,7 @@
   },
   "upload": {
     "title": "Carga tu hoja de cálculo",
-    "subtitle": "Plan gratuito: hasta 300 filas y 3 columnas",
+    "subtitle": "Plan gratuito: hasta 500 filas y 3 columnas",
     "back": "Volver",
     "dropzone": "Haz clic para seleccionar o arrastra archivos",
     "dropzoneWithFiles": "archivo(s) seleccionado(s)",
