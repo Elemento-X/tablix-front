@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import {
-  checkUploadLimit,
-  incrementUploadCount,
+  checkUnificationLimit,
+  incrementUnificationCount,
   checkFileSizeLimit,
   getUserUsage,
 } from '@/lib/usage-tracker'
@@ -51,73 +51,62 @@ describe('usage-tracker.ts', () => {
     mockCreateUploadCountKey.mockReturnValue('upload:test-fingerprint-123:2024-01')
   })
 
-  describe('checkUploadLimit', () => {
+  describe('checkUnificationLimit', () => {
     describe('Free plan', () => {
       beforeEach(() => {
         mockGetUserPlan.mockReturnValue('free')
       })
 
-      it('should allow upload when under limit', async () => {
-        mockStorage.get.mockResolvedValue(2) // 2 out of 3 uploads
+      it('should allow unification when under limit', async () => {
+        mockStorage.get.mockResolvedValue(0) // 0 out of 1 unifications
 
         const request = createMockRequest()
-        const result = await checkUploadLimit(request)
+        const result = await checkUnificationLimit(request)
 
         expect(result.allowed).toBe(true)
         expect(result.plan).toBe('free')
-        expect(result.currentUploads).toBe(2)
-        expect(result.maxUploads).toBe(3)
-        expect(result.remainingUploads).toBe(1)
+        expect(result.currentUnifications).toBe(0)
+        expect(result.maxUnifications).toBe(1)
+        expect(result.remainingUnifications).toBe(1)
         expect(result.error).toBeUndefined()
         expect(result.errorCode).toBeUndefined()
       })
 
-      it('should allow upload when at 0 uploads', async () => {
-        mockStorage.get.mockResolvedValue(0)
-
-        const request = createMockRequest()
-        const result = await checkUploadLimit(request)
-
-        expect(result.allowed).toBe(true)
-        expect(result.currentUploads).toBe(0)
-        expect(result.remainingUploads).toBe(3)
-      })
-
-      it('should allow upload when storage returns null (new user)', async () => {
+      it('should allow unification when storage returns null (new user)', async () => {
         mockStorage.get.mockResolvedValue(null)
 
         const request = createMockRequest()
-        const result = await checkUploadLimit(request)
+        const result = await checkUnificationLimit(request)
 
         expect(result.allowed).toBe(true)
-        expect(result.currentUploads).toBe(0)
-        expect(result.remainingUploads).toBe(3)
+        expect(result.currentUnifications).toBe(0)
+        expect(result.remainingUnifications).toBe(1)
       })
 
-      it('should block upload when at limit', async () => {
-        mockStorage.get.mockResolvedValue(3) // 3 out of 3 uploads
+      it('should block unification when at limit', async () => {
+        mockStorage.get.mockResolvedValue(1) // 1 out of 1 unifications
 
         const request = createMockRequest()
-        const result = await checkUploadLimit(request)
+        const result = await checkUnificationLimit(request)
 
         expect(result.allowed).toBe(false)
         expect(result.plan).toBe('free')
-        expect(result.currentUploads).toBe(3)
-        expect(result.maxUploads).toBe(3)
-        expect(result.remainingUploads).toBe(0)
-        expect(result.error).toContain('Upload limit exceeded')
+        expect(result.currentUnifications).toBe(1)
+        expect(result.maxUnifications).toBe(1)
+        expect(result.remainingUnifications).toBe(0)
+        expect(result.error).toContain('Unification limit exceeded')
         expect(result.error).toContain('Upgrade to Pro')
         expect(result.errorCode).toBe('LIMIT_EXCEEDED')
       })
 
-      it('should block upload when over limit', async () => {
+      it('should block unification when over limit', async () => {
         mockStorage.get.mockResolvedValue(5) // Over limit
 
         const request = createMockRequest()
-        const result = await checkUploadLimit(request)
+        const result = await checkUnificationLimit(request)
 
         expect(result.allowed).toBe(false)
-        expect(result.remainingUploads).toBe(0)
+        expect(result.remainingUnifications).toBe(0)
         expect(result.errorCode).toBe('LIMIT_EXCEEDED')
       })
     })
@@ -127,27 +116,27 @@ describe('usage-tracker.ts', () => {
         mockGetUserPlan.mockReturnValue('pro')
       })
 
-      it('should allow upload when under limit', async () => {
-        mockStorage.get.mockResolvedValue(15) // 15 out of 20 uploads
+      it('should allow unification when under limit', async () => {
+        mockStorage.get.mockResolvedValue(30) // 30 out of 40 unifications
 
         const request = createMockRequest()
-        const result = await checkUploadLimit(request)
+        const result = await checkUnificationLimit(request)
 
         expect(result.allowed).toBe(true)
         expect(result.plan).toBe('pro')
-        expect(result.currentUploads).toBe(15)
-        expect(result.maxUploads).toBe(20)
-        expect(result.remainingUploads).toBe(5)
+        expect(result.currentUnifications).toBe(30)
+        expect(result.maxUnifications).toBe(40)
+        expect(result.remainingUnifications).toBe(10)
       })
 
-      it('should block upload when at limit', async () => {
-        mockStorage.get.mockResolvedValue(20)
+      it('should block unification when at limit', async () => {
+        mockStorage.get.mockResolvedValue(40)
 
         const request = createMockRequest()
-        const result = await checkUploadLimit(request)
+        const result = await checkUnificationLimit(request)
 
         expect(result.allowed).toBe(false)
-        expect(result.error).toContain('Upload limit exceeded')
+        expect(result.error).toContain('Unification limit exceeded')
         expect(result.error).toContain('Contact support for enterprise plan')
         expect(result.errorCode).toBe('LIMIT_EXCEEDED')
       })
@@ -158,35 +147,35 @@ describe('usage-tracker.ts', () => {
         mockGetUserPlan.mockReturnValue('enterprise')
       })
 
-      it('should always allow uploads (unlimited)', async () => {
+      it('should always allow unifications (unlimited)', async () => {
         mockStorage.get.mockResolvedValue(1000000)
 
         const request = createMockRequest()
-        const result = await checkUploadLimit(request)
+        const result = await checkUnificationLimit(request)
 
         expect(result.allowed).toBe(true)
         expect(result.plan).toBe('enterprise')
-        expect(result.maxUploads).toBe(Infinity)
-        expect(result.remainingUploads).toBe(Infinity)
+        expect(result.maxUnifications).toBe(Infinity)
+        expect(result.remainingUnifications).toBe(Infinity)
       })
 
-      it('should allow uploads for new enterprise users', async () => {
+      it('should allow unifications for new enterprise users', async () => {
         mockStorage.get.mockResolvedValue(null)
 
         const request = createMockRequest()
-        const result = await checkUploadLimit(request)
+        const result = await checkUnificationLimit(request)
 
         expect(result.allowed).toBe(true)
-        expect(result.currentUploads).toBe(0)
+        expect(result.currentUnifications).toBe(0)
       })
     })
 
     it('should use correct fingerprint and month key', async () => {
       mockGetUserPlan.mockReturnValue('free')
-      mockStorage.get.mockResolvedValue(1)
+      mockStorage.get.mockResolvedValue(0)
 
       const request = createMockRequest()
-      await checkUploadLimit(request)
+      await checkUnificationLimit(request)
 
       expect(mockGetUserFingerprint).toHaveBeenCalledWith(request)
       expect(mockGetCurrentMonthKey).toHaveBeenCalled()
@@ -195,9 +184,9 @@ describe('usage-tracker.ts', () => {
     })
   })
 
-  describe('incrementUploadCount', () => {
+  describe('incrementUnificationCount', () => {
     beforeEach(() => {
-      mockStorage.incr.mockResolvedValue(3)
+      mockStorage.incr.mockResolvedValue(1)
       mockStorage.expire.mockResolvedValue(undefined)
 
       // Mock Date to have consistent tests
@@ -209,17 +198,17 @@ describe('usage-tracker.ts', () => {
       jest.useRealTimers()
     })
 
-    it('should increment upload counter', async () => {
+    it('should increment unification counter', async () => {
       const request = createMockRequest()
-      const newCount = await incrementUploadCount(request)
+      const newCount = await incrementUnificationCount(request)
 
-      expect(newCount).toBe(3)
+      expect(newCount).toBe(1)
       expect(mockStorage.incr).toHaveBeenCalledWith('upload:test-fingerprint-123:2024-01')
     })
 
     it('should set expiration to end of next month', async () => {
       const request = createMockRequest()
-      await incrementUploadCount(request)
+      await incrementUnificationCount(request)
 
       expect(mockStorage.expire).toHaveBeenCalled()
 
@@ -234,7 +223,7 @@ describe('usage-tracker.ts', () => {
       jest.setSystemTime(new Date('2024-01-31T23:59:59Z'))
 
       const request = createMockRequest()
-      await incrementUploadCount(request)
+      await incrementUnificationCount(request)
 
       const expirySeconds = mockStorage.expire.mock.calls[0][1]
 
@@ -249,7 +238,7 @@ describe('usage-tracker.ts', () => {
       jest.setSystemTime(new Date('2024-12-31T23:59:59Z'))
 
       const request = createMockRequest()
-      await incrementUploadCount(request)
+      await incrementUnificationCount(request)
 
       const expirySeconds = mockStorage.expire.mock.calls[0][1]
 
@@ -261,7 +250,7 @@ describe('usage-tracker.ts', () => {
 
     it('should use correct fingerprint and month key', async () => {
       const request = createMockRequest()
-      await incrementUploadCount(request)
+      await incrementUnificationCount(request)
 
       expect(mockGetUserFingerprint).toHaveBeenCalledWith(request)
       expect(mockGetCurrentMonthKey).toHaveBeenCalled()
@@ -272,16 +261,16 @@ describe('usage-tracker.ts', () => {
       mockStorage.incr.mockResolvedValue(5)
 
       const request = createMockRequest()
-      const result = await incrementUploadCount(request)
+      const result = await incrementUnificationCount(request)
 
       expect(result).toBe(5)
     })
 
-    it('should work for first upload (count 1)', async () => {
+    it('should work for first unification (count 1)', async () => {
       mockStorage.incr.mockResolvedValue(1)
 
       const request = createMockRequest()
-      const result = await incrementUploadCount(request)
+      const result = await incrementUnificationCount(request)
 
       expect(result).toBe(1)
     })
@@ -289,29 +278,29 @@ describe('usage-tracker.ts', () => {
 
   describe('checkFileSizeLimit', () => {
     describe('Free plan', () => {
-      it('should allow files under 2MB', () => {
-        const result = checkFileSizeLimit(1 * 1024 * 1024, 'free') // 1MB
+      it('should allow files under 1MB', () => {
+        const result = checkFileSizeLimit(512 * 1024, 'free') // 512KB
 
         expect(result.allowed).toBe(true)
-        expect(result.maxSize).toBe(2 * 1024 * 1024)
+        expect(result.maxSize).toBe(1 * 1024 * 1024)
         expect(result.error).toBeUndefined()
         expect(result.errorCode).toBeUndefined()
       })
 
-      it('should allow files exactly 2MB', () => {
-        const result = checkFileSizeLimit(2 * 1024 * 1024, 'free') // 2MB
+      it('should allow files exactly 1MB', () => {
+        const result = checkFileSizeLimit(1 * 1024 * 1024, 'free') // 1MB
 
         expect(result.allowed).toBe(true)
       })
 
-      it('should block files over 2MB', () => {
-        const result = checkFileSizeLimit(3 * 1024 * 1024, 'free') // 3MB
+      it('should block files over 1MB', () => {
+        const result = checkFileSizeLimit(2 * 1024 * 1024, 'free') // 2MB
 
         expect(result.allowed).toBe(false)
-        expect(result.maxSize).toBe(2 * 1024 * 1024)
+        expect(result.maxSize).toBe(1 * 1024 * 1024)
         expect(result.error).toContain('File too large')
         expect(result.error).toContain('Free')
-        expect(result.error).toContain('2 MB')
+        expect(result.error).toContain('1 MB')
         expect(result.errorCode).toBe('FILE_TOO_LARGE')
       })
 
@@ -323,25 +312,25 @@ describe('usage-tracker.ts', () => {
     })
 
     describe('Pro plan', () => {
-      it('should allow files under 10MB', () => {
-        const result = checkFileSizeLimit(5 * 1024 * 1024, 'pro') // 5MB
+      it('should allow files under 2MB', () => {
+        const result = checkFileSizeLimit(1 * 1024 * 1024, 'pro') // 1MB
 
         expect(result.allowed).toBe(true)
-        expect(result.maxSize).toBe(10 * 1024 * 1024)
+        expect(result.maxSize).toBe(2 * 1024 * 1024)
       })
 
-      it('should allow files exactly 10MB', () => {
-        const result = checkFileSizeLimit(10 * 1024 * 1024, 'pro')
+      it('should allow files exactly 2MB', () => {
+        const result = checkFileSizeLimit(2 * 1024 * 1024, 'pro')
 
         expect(result.allowed).toBe(true)
       })
 
-      it('should block files over 10MB', () => {
-        const result = checkFileSizeLimit(11 * 1024 * 1024, 'pro') // 11MB
+      it('should block files over 2MB', () => {
+        const result = checkFileSizeLimit(3 * 1024 * 1024, 'pro') // 3MB
 
         expect(result.allowed).toBe(false)
         expect(result.error).toContain('Pro')
-        expect(result.error).toContain('10 MB')
+        expect(result.error).toContain('2 MB')
         expect(result.errorCode).toBe('FILE_TOO_LARGE')
       })
     })
@@ -371,13 +360,13 @@ describe('usage-tracker.ts', () => {
     })
 
     it('should format file sizes correctly in error messages', () => {
-      // Free plan - 2MB
-      const freeResult = checkFileSizeLimit(3 * 1024 * 1024, 'free')
-      expect(freeResult.error).toContain('2 MB')
+      // Free plan - 1MB
+      const freeResult = checkFileSizeLimit(2 * 1024 * 1024, 'free')
+      expect(freeResult.error).toContain('1 MB')
 
-      // Pro plan - 10MB
-      const proResult = checkFileSizeLimit(11 * 1024 * 1024, 'pro')
-      expect(proResult.error).toContain('10 MB')
+      // Pro plan - 2MB
+      const proResult = checkFileSizeLimit(3 * 1024 * 1024, 'pro')
+      expect(proResult.error).toContain('2 MB')
 
       // Enterprise - 50MB
       const enterpriseResult = checkFileSizeLimit(51 * 1024 * 1024, 'enterprise')
@@ -392,32 +381,36 @@ describe('usage-tracker.ts', () => {
 
     it('should return usage statistics for free plan', async () => {
       mockGetUserPlan.mockReturnValue('free')
-      mockStorage.get.mockResolvedValue(2)
+      mockStorage.get.mockResolvedValue(0)
 
       const request = createMockRequest()
       const usage = await getUserUsage(request)
 
       expect(usage.plan).toBe('free')
-      expect(usage.currentUploads).toBe(2)
-      expect(usage.maxUploads).toBe(3)
-      expect(usage.remainingUploads).toBe(1)
-      expect(usage.maxFileSize).toBe(2 * 1024 * 1024)
+      expect(usage.currentUnifications).toBe(0)
+      expect(usage.maxUnifications).toBe(1)
+      expect(usage.remainingUnifications).toBe(1)
+      expect(usage.maxInputFiles).toBe(3)
+      expect(usage.maxFileSize).toBe(1 * 1024 * 1024)
+      expect(usage.maxTotalSize).toBe(1 * 1024 * 1024)
       expect(usage.maxRows).toBe(500)
       expect(usage.maxColumns).toBe(3)
     })
 
     it('should return usage statistics for pro plan', async () => {
       mockGetUserPlan.mockReturnValue('pro')
-      mockStorage.get.mockResolvedValue(10)
+      mockStorage.get.mockResolvedValue(20)
 
       const request = createMockRequest()
       const usage = await getUserUsage(request)
 
       expect(usage.plan).toBe('pro')
-      expect(usage.currentUploads).toBe(10)
-      expect(usage.maxUploads).toBe(20)
-      expect(usage.remainingUploads).toBe(10)
-      expect(usage.maxFileSize).toBe(10 * 1024 * 1024)
+      expect(usage.currentUnifications).toBe(20)
+      expect(usage.maxUnifications).toBe(40)
+      expect(usage.remainingUnifications).toBe(20)
+      expect(usage.maxInputFiles).toBe(15)
+      expect(usage.maxFileSize).toBe(2 * 1024 * 1024)
+      expect(usage.maxTotalSize).toBe(30 * 1024 * 1024)
       expect(usage.maxRows).toBe(5000)
       expect(usage.maxColumns).toBe(10)
     })
@@ -430,28 +423,30 @@ describe('usage-tracker.ts', () => {
       const usage = await getUserUsage(request)
 
       expect(usage.plan).toBe('enterprise')
-      expect(usage.currentUploads).toBe(1000)
-      expect(usage.maxUploads).toBe(Infinity)
-      expect(usage.remainingUploads).toBe(Infinity)
+      expect(usage.currentUnifications).toBe(1000)
+      expect(usage.maxUnifications).toBe(Infinity)
+      expect(usage.remainingUnifications).toBe(Infinity)
+      expect(usage.maxInputFiles).toBe(Infinity)
       expect(usage.maxFileSize).toBe(50 * 1024 * 1024)
+      expect(usage.maxTotalSize).toBe(Infinity)
       expect(usage.maxRows).toBe(Infinity)
       expect(usage.maxColumns).toBe(Infinity)
     })
 
-    it('should handle new users with no uploads', async () => {
+    it('should handle new users with no unifications', async () => {
       mockGetUserPlan.mockReturnValue('free')
       mockStorage.get.mockResolvedValue(null)
 
       const request = createMockRequest()
       const usage = await getUserUsage(request)
 
-      expect(usage.currentUploads).toBe(0)
-      expect(usage.remainingUploads).toBe(3)
+      expect(usage.currentUnifications).toBe(0)
+      expect(usage.remainingUnifications).toBe(1)
     })
 
     it('should use correct fingerprint and month key', async () => {
       mockGetUserPlan.mockReturnValue('free')
-      mockStorage.get.mockResolvedValue(1)
+      mockStorage.get.mockResolvedValue(0)
 
       const request = createMockRequest()
       await getUserUsage(request)
@@ -464,16 +459,18 @@ describe('usage-tracker.ts', () => {
 
     it('should include all required fields', async () => {
       mockGetUserPlan.mockReturnValue('free')
-      mockStorage.get.mockResolvedValue(1)
+      mockStorage.get.mockResolvedValue(0)
 
       const request = createMockRequest()
       const usage = await getUserUsage(request)
 
       expect(usage).toHaveProperty('plan')
-      expect(usage).toHaveProperty('currentUploads')
-      expect(usage).toHaveProperty('maxUploads')
-      expect(usage).toHaveProperty('remainingUploads')
+      expect(usage).toHaveProperty('currentUnifications')
+      expect(usage).toHaveProperty('maxUnifications')
+      expect(usage).toHaveProperty('remainingUnifications')
+      expect(usage).toHaveProperty('maxInputFiles')
       expect(usage).toHaveProperty('maxFileSize')
+      expect(usage).toHaveProperty('maxTotalSize')
       expect(usage).toHaveProperty('maxRows')
       expect(usage).toHaveProperty('maxColumns')
     })

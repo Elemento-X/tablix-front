@@ -8,12 +8,16 @@ export type PlanType = 'free' | 'pro' | 'enterprise'
 export interface PlanLimits {
   name: string
 
-  // Upload limits
-  uploadsPerMonth: number
-  maxFileSize: number // in bytes
+  // Unification limits (output)
+  unificationsPerMonth: number
+
+  // Input limits (per unification)
+  maxInputFiles: number
+  maxFileSize: number // in bytes (per file for Pro, total for Free)
+  maxTotalSize: number // in bytes (sum of all input files)
 
   // Processing limits
-  maxRows: number
+  maxRows: number // total for Free, per file for Pro
   maxColumns: number
 
   // Features
@@ -26,9 +30,11 @@ export interface PlanLimits {
 export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
   free: {
     name: 'Free',
-    uploadsPerMonth: 3,
-    maxFileSize: 2 * 1024 * 1024, // 2MB
-    maxRows: 500,
+    unificationsPerMonth: 1,
+    maxInputFiles: 3,
+    maxFileSize: 1 * 1024 * 1024, // 1MB (total, not per file)
+    maxTotalSize: 1 * 1024 * 1024, // 1MB total
+    maxRows: 500, // total across all input files
     maxColumns: 3,
     priorityProcessing: false,
     noWatermark: false,
@@ -37,20 +43,24 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
 
   pro: {
     name: 'Pro',
-    uploadsPerMonth: 20,
-    maxFileSize: 10 * 1024 * 1024, // 10MB
-    maxRows: 5000,
+    unificationsPerMonth: 40,
+    maxInputFiles: 15,
+    maxFileSize: 2 * 1024 * 1024, // 2MB per file
+    maxTotalSize: 30 * 1024 * 1024, // 30MB total (15 files x 2MB)
+    maxRows: 5000, // per file
     maxColumns: 10,
     priorityProcessing: true,
     noWatermark: true,
-    fileHistory: true,
-    fileHistoryDays: 30,
+    fileHistory: false, // Pro does not have file history per spec
+    fileHistoryDays: undefined,
   },
 
   enterprise: {
     name: 'Enterprise',
-    uploadsPerMonth: Infinity, // Unlimited
-    maxFileSize: 50 * 1024 * 1024, // 50MB
+    unificationsPerMonth: Infinity, // Unlimited
+    maxInputFiles: Infinity, // Unlimited
+    maxFileSize: 50 * 1024 * 1024, // 50MB per file
+    maxTotalSize: Infinity, // Unlimited
     maxRows: Infinity,
     maxColumns: Infinity,
     priorityProcessing: true,
@@ -89,18 +99,34 @@ export function isFileSizeAllowed(fileSize: number, plan: PlanType): boolean {
 }
 
 /**
- * Check if upload count is within plan limits
+ * Check if unification count is within plan limits
  */
-export function isUploadAllowed(currentUploads: number, plan: PlanType): boolean {
+export function isUnificationAllowed(currentUnifications: number, plan: PlanType): boolean {
   const limits = getPlanLimits(plan)
-  return currentUploads < limits.uploadsPerMonth
+  return currentUnifications < limits.unificationsPerMonth
 }
 
 /**
- * Get remaining uploads for a plan
+ * Get remaining unifications for a plan
  */
-export function getRemainingUploads(currentUploads: number, plan: PlanType): number {
+export function getRemainingUnifications(currentUnifications: number, plan: PlanType): number {
   const limits = getPlanLimits(plan)
-  const remaining = limits.uploadsPerMonth - currentUploads
+  const remaining = limits.unificationsPerMonth - currentUnifications
   return Math.max(0, remaining)
+}
+
+/**
+ * Check if input file count is within plan limits
+ */
+export function isInputFilesAllowed(fileCount: number, plan: PlanType): boolean {
+  const limits = getPlanLimits(plan)
+  return fileCount <= limits.maxInputFiles
+}
+
+/**
+ * Check if total file size is within plan limits
+ */
+export function isTotalSizeAllowed(totalSize: number, plan: PlanType): boolean {
+  const limits = getPlanLimits(plan)
+  return totalSize <= limits.maxTotalSize
 }

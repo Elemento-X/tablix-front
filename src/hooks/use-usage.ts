@@ -4,13 +4,15 @@ import { useState, useEffect } from "react"
 
 export interface UsageInfo {
   plan: "free" | "pro" | "enterprise"
-  uploads: {
+  unifications: {
     current: number
     max: number
     remaining: number
   }
   limits: {
+    maxInputFiles: number
     maxFileSize: number
+    maxTotalSize: number
     maxRows: number
     maxColumns: number
   }

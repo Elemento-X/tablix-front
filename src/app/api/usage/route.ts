@@ -17,13 +17,15 @@ export async function GET(request: NextRequest) {
     // Create response
     const response = NextResponse.json({
       plan: usage.plan,
-      uploads: {
-        current: usage.currentUploads,
-        max: usage.maxUploads,
-        remaining: usage.remainingUploads,
+      unifications: {
+        current: usage.currentUnifications,
+        max: usage.maxUnifications,
+        remaining: usage.remainingUnifications,
       },
       limits: {
+        maxInputFiles: usage.maxInputFiles,
         maxFileSize: usage.maxFileSize,
+        maxTotalSize: usage.maxTotalSize,
         maxRows: usage.maxRows,
         maxColumns: usage.maxColumns,
       },
