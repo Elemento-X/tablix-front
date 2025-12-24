@@ -11,7 +11,8 @@ import { formatFileSize, useUsage } from '@/hooks/use-usage'
 import { useFileParser } from '@/hooks/use-file-parser'
 import { useLocale } from '@/lib/i18n'
 import { validateFile, validateFileContent } from '@/lib/security'
-import { ArrowLeft, FileSpreadsheet, Info, Loader2, Upload } from 'lucide-react'
+import { mergeSpreadsheets, canProcessClientSide, downloadBlob } from '@/lib/spreadsheet-merge'
+import { ArrowLeft, FileSpreadsheet, Info, Loader2, Upload, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -28,6 +29,14 @@ export function UploadPageContent() {
   const [selectedColumns, setSelectedColumns] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [step, setStep] = useState<'upload' | 'columns'>('upload')
+  const [totalRows, setTotalRows] = useState(0)
+
+  // Get limits from usage or use defaults
+  const maxInputFiles = usage?.limits.maxInputFiles ?? 3
+  const maxTotalSize = usage?.limits.maxTotalSize ?? 1 * 1024 * 1024
+
+  // Calculate current total size
+  const currentTotalSize = files.reduce((sum, file) => sum + file.size, 0)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) {
@@ -35,37 +44,78 @@ export function UploadPageContent() {
     }
 
     const selectedFiles = Array.from(e.target.files)
+    const newFiles: File[] = []
 
-    if (selectedFiles.length > 1) {
-      toast.error('Only 1 file allowed per upload')
-      return
-    }
-
-    const file = selectedFiles[0]
-
-    if (usage && file.size > usage.limits.maxFileSize) {
+    // Check if adding these files would exceed the limit
+    const totalFilesAfterAdd = files.length + selectedFiles.length
+    if (totalFilesAfterAdd > maxInputFiles) {
       toast.error(
-        `File too large. Maximum file size for ${usage.plan.toUpperCase()} plan is ${formatFileSize(
-          usage.limits.maxFileSize
-        )}.`
+        `Too many files. Maximum ${maxInputFiles} files for ${usage?.plan.toUpperCase() ?? 'FREE'} plan.`
       )
       return
     }
 
-    const basicValidation = validateFile(file)
-    if (!basicValidation.valid) {
-      toast.error(basicValidation.error || t('upload.error') || 'Invalid file')
-      return
+    // Validate each file
+    for (const file of selectedFiles) {
+      // Check if file already exists
+      if (files.some((f) => f.name === file.name && f.size === file.size)) {
+        toast.error(`File "${file.name}" already added`)
+        continue
+      }
+
+      // Validate file size
+      if (usage && file.size > usage.limits.maxFileSize) {
+        toast.error(
+          `"${file.name}" is too large. Maximum file size for ${usage.plan.toUpperCase()} plan is ${formatFileSize(
+            usage.limits.maxFileSize
+          )}.`
+        )
+        continue
+      }
+
+      // Check total size limit
+      const newTotalSize = currentTotalSize + newFiles.reduce((s, f) => s + f.size, 0) + file.size
+      if (newTotalSize > maxTotalSize) {
+        toast.error(
+          `Total size exceeded. Maximum total size for ${usage?.plan.toUpperCase() ?? 'FREE'} plan is ${formatFileSize(
+            maxTotalSize
+          )}.`
+        )
+        break
+      }
+
+      // Validate file format
+      const basicValidation = validateFile(file)
+      if (!basicValidation.valid) {
+        toast.error(`"${file.name}": ${basicValidation.error || t('upload.error') || 'Invalid file'}`)
+        continue
+      }
+
+      // Validate file content
+      const contentValidation = await validateFileContent(file)
+      if (!contentValidation.valid) {
+        toast.error(`"${file.name}": ${contentValidation.error || t('upload.error') || 'Invalid file content'}`)
+        continue
+      }
+
+      newFiles.push(file)
     }
 
-    const contentValidation = await validateFileContent(file)
-    if (!contentValidation.valid) {
-      toast.error(contentValidation.error || t('upload.error') || 'Invalid file content')
-      return
+    if (newFiles.length > 0) {
+      setFiles((prev) => [...prev, ...newFiles])
+      toast.success(
+        newFiles.length === 1
+          ? 'File added successfully'
+          : `${newFiles.length} files added successfully`
+      )
     }
 
-    setFiles([file])
-    toast.success('File selected successfully')
+    // Reset input to allow re-selecting same file
+    e.target.value = ''
+  }
+
+  const handleRemoveFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
   const handleToggleColumn = (column: string) => {
@@ -90,32 +140,76 @@ export function UploadPageContent() {
     setIsProcessing(true)
 
     try {
-      const formData = new FormData()
-      files.forEach((file) => formData.append('files', file))
-      formData.append('columns', JSON.stringify(selectedColumns))
+      // Determine if we can process client-side
+      const useClientSide = canProcessClientSide(files)
+      const addWatermark = usage?.plan === 'free'
 
-      const response = await fetch('/api/process', {
-        method: 'POST',
-        body: formData,
-      })
+      if (useClientSide) {
+        // Client-side merge for small files
+        toast.info('Processing files...')
 
-      if (!response.ok) {
-        const data = await response.json()
-        toast.error(data.error || 'Failed to process file')
-        return
+        const result = await mergeSpreadsheets({
+          files,
+          selectedColumns,
+          addWatermark,
+        })
+
+        downloadBlob(result.blob, result.filename)
+
+        // Record the unification on the server
+        try {
+          await fetch('/api/unification/complete', { method: 'POST' })
+        } catch {
+          // Continue even if tracking fails - user already has the file
+          console.warn('Failed to record unification')
+        }
+
+        toast.success(
+          `Unified ${files.length} file${files.length > 1 ? 's' : ''} with ${result.rowCount} rows!`
+        )
+
+        // Refresh usage to update unification count
+        refetchUsage()
+
+        // Reset state for next unification
+        setStep('upload')
+        setFiles([])
+        setDetectedColumns([])
+        setSelectedColumns([])
+        setTotalRows(0)
+      } else {
+        // Server-side processing for large files
+        toast.info('Files are large, processing on server...')
+
+        const formData = new FormData()
+        files.forEach((file) => formData.append('files', file))
+        formData.append('columns', JSON.stringify(selectedColumns))
+
+        const response = await fetch('/api/process', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) {
+          const data = await response.json()
+          toast.error(data.error || 'Failed to process file')
+          return
+        }
+
+        const blob = await response.blob()
+        const timestamp = new Date().toISOString().split('T')[0]
+        downloadBlob(blob, `tablix-unificado-${timestamp}.xlsx`)
+
+        toast.success('File processed successfully!')
+
+        // Refresh usage and reset state
+        refetchUsage()
+        setStep('upload')
+        setFiles([])
+        setDetectedColumns([])
+        setSelectedColumns([])
+        setTotalRows(0)
       }
-
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'tablix-output.xlsx'
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-
-      toast.success('File processed successfully!')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to process file')
     } finally {
@@ -129,9 +223,9 @@ export function UploadPageContent() {
       return
     }
 
-    if (usage && usage.uploads.remaining <= 0) {
+    if (usage && usage.unifications.remaining <= 0) {
       toast.error(
-        `Upload limit exceeded. You have used ${usage.uploads.current}/${usage.uploads.max} uploads this month.`
+        `Unification limit exceeded. You have used ${usage.unifications.current}/${usage.unifications.max} unifications this month.`
       )
       return
     }
@@ -139,25 +233,65 @@ export function UploadPageContent() {
     setIsUploading(true)
 
     try {
-      const file = files[0]
+      // Parse all files and collect columns
+      const allColumns: Set<string>[] = []
+      let totalRowCount = 0
 
-      // Parse file (smart: client-side for <10MB, server-side for >10MB)
-      const result = await parseFile(file)
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        toast.info(`Parsing file ${i + 1} of ${files.length}: ${file.name}`)
 
-      // Validate column count against plan limits
-      if (usage && result.columns.length > usage.limits.maxColumns) {
+        const result = await parseFile(file)
+        allColumns.push(new Set(result.columns))
+        totalRowCount += result.rowCount
+      }
+
+      // Validate total row count against plan limits
+      if (usage && totalRowCount > usage.limits.maxRows) {
         toast.error(
-          `File has ${result.columns.length} columns. Maximum ${usage.limits.maxColumns} columns for ${usage.plan.toUpperCase()} plan.`
+          `Total rows (${totalRowCount}) exceed the limit. Maximum ${usage.limits.maxRows} rows for ${usage.plan.toUpperCase()} plan.`
         )
         setIsUploading(false)
         return
       }
 
+      // Find common columns across all files (intersection)
+      let commonColumns: string[]
+      if (allColumns.length === 1) {
+        commonColumns = Array.from(allColumns[0])
+      } else {
+        // Start with columns from first file
+        const firstFileColumns = allColumns[0]
+        commonColumns = Array.from(firstFileColumns).filter((col) =>
+          allColumns.every((colSet) => colSet.has(col))
+        )
+      }
+
+      if (commonColumns.length === 0) {
+        toast.error('No common columns found across all files. Files must have at least one column in common.')
+        setIsUploading(false)
+        return
+      }
+
+      // Validate column count against plan limits
+      if (usage && commonColumns.length > usage.limits.maxColumns) {
+        // This is informational - user can still select fewer columns
+        toast.info(
+          `Found ${commonColumns.length} common columns. You can select up to ${usage.limits.maxColumns} for your ${usage.plan.toUpperCase()} plan.`
+        )
+      }
+
       toast.success(
-        `File parsed successfully! Found ${result.columns.length} columns and ${result.rowCount} rows.`
+        files.length === 1
+          ? `Parsed successfully! Found ${commonColumns.length} columns and ${totalRowCount} rows.`
+          : `Parsed ${files.length} files! Found ${commonColumns.length} common columns and ${totalRowCount} total rows.`
       )
-      setDetectedColumns(result.columns)
-      setSelectedColumns(result.columns)
+
+      setTotalRows(totalRowCount)
+      setDetectedColumns(commonColumns)
+      // Pre-select columns up to the limit
+      const maxSelectable = usage?.limits.maxColumns ?? 3
+      setSelectedColumns(commonColumns.slice(0, maxSelectable))
       setStep('columns')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('upload.error'))
@@ -219,25 +353,25 @@ export function UploadPageContent() {
                     </span>
 
                     <span className="text-sm font-medium text-neutral-900">
-                      {usage.uploads.remaining}/{usage.uploads.max} uploads remaining
+                      {usage.unifications.remaining}/{usage.unifications.max} unifications remaining
                     </span>
                   </div>
 
                   <div className="w-full bg-neutral-200 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all ${
-                        usage.uploads.remaining === 1
+                        usage.unifications.remaining === 0
                           ? 'bg-red-500'
-                          : usage.uploads.remaining <= 2
+                          : usage.unifications.remaining === 1
                           ? 'bg-yellow-500'
                           : 'bg-green-500'
                       }`}
-                      style={{ width: `${(usage.uploads.remaining / usage.uploads.max) * 100}%` }}
+                      style={{ width: `${(usage.unifications.remaining / usage.unifications.max) * 100}%` }}
                     />
                   </div>
 
                   <p className="text-xs text-neutral-600 mt-2">
-                    Max file size: {formatFileSize(usage.limits.maxFileSize)} • Max{' '}
+                    Max {usage.limits.maxInputFiles} files • Max total size: {formatFileSize(usage.limits.maxTotalSize)} • Max{' '}
                     {usage.limits.maxRows} rows • Max {usage.limits.maxColumns} columns
                   </p>
                 </div>
@@ -283,15 +417,36 @@ export function UploadPageContent() {
 
                 {files.length > 0 && (
                   <div className="w-full space-y-2 bg-neutral-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-neutral-700">
+                        {files.length} of {maxInputFiles} files
+                      </span>
+                      <span className="text-xs text-neutral-500">
+                        {formatFileSize(currentTotalSize)} of {formatFileSize(maxTotalSize)}
+                      </span>
+                    </div>
                     {files.map((file, index) => (
-                      <div key={index} className="flex items-center gap-3 text-sm">
-                        <FileSpreadsheet className="h-4 w-4 text-neutral-600" />
+                      <div key={index} className="flex items-center gap-3 text-sm bg-white rounded-md p-2 border border-neutral-200">
+                        <FileSpreadsheet className="h-4 w-4 text-neutral-600 flex-shrink-0" />
                         <span className="truncate text-neutral-900 flex-1">{file.name}</span>
-                        <span className="text-xs text-neutral-500">
-                          ({(file.size / 1024).toFixed(0)} KB)
+                        <span className="text-xs text-neutral-500 flex-shrink-0">
+                          {formatFileSize(file.size)}
                         </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile(index)}
+                          className="p-1 hover:bg-neutral-100 rounded-md transition-colors flex-shrink-0"
+                          aria-label={`Remove ${file.name}`}
+                        >
+                          <X className="h-4 w-4 text-neutral-500 hover:text-red-500" />
+                        </button>
                       </div>
                     ))}
+                    {files.length < maxInputFiles && (
+                      <p className="text-xs text-neutral-500 text-center pt-2">
+                        Click above to add more files
+                      </p>
+                    )}
                   </div>
                 )}
 
