@@ -16,13 +16,14 @@ export function LandingPageContent() {
   const { t } = useLocale()
 
   const getProPrice = () => {
+    const period = t('billingPeriods.month')
     switch (billingPeriod) {
       case 'monthly':
-        return { price: '29,90', period: 'mês', total: 'R$ 29,90/mês' }
+        return { price: t('proPricing.monthly.price'), period, total: t('proPricing.monthly.total') }
       case 'semester':
-        return { price: '26,90', period: 'mês', total: 'R$ 161,40 a cada 6 meses' }
+        return { price: t('proPricing.semester.price'), period, total: t('proPricing.semester.total') }
       case 'annual':
-        return { price: '24,90', period: 'mês', total: 'R$ 298,80/ano' }
+        return { price: t('proPricing.annual.price'), period, total: t('proPricing.annual.total') }
     }
   }
 
@@ -250,7 +251,7 @@ export function LandingPageContent() {
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-neutral-900">R$ {proPrice.price}</span>
+                  <span className="text-4xl font-bold text-neutral-900">{t('proPricing.currencySymbol')} {proPrice.price}</span>
                   <span className="text-neutral-600">/{t('pricing.plans.pro.period')}</span>
                 </div>
               </div>

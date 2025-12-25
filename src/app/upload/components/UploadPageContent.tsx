@@ -50,7 +50,7 @@ export function UploadPageContent() {
     const totalFilesAfterAdd = files.length + selectedFiles.length
     if (totalFilesAfterAdd > maxInputFiles) {
       toast.error(
-        `Too many files. Maximum ${maxInputFiles} files for ${usage?.plan.toUpperCase() ?? 'FREE'} plan.`
+        t('messages.tooManyFiles', { max: maxInputFiles, plan: usage?.plan.toUpperCase() ?? 'FREE' })
       )
       return
     }
@@ -59,16 +59,18 @@ export function UploadPageContent() {
     for (const file of selectedFiles) {
       // Check if file already exists
       if (files.some((f) => f.name === file.name && f.size === file.size)) {
-        toast.error(`File "${file.name}" already added`)
+        toast.error(t('messages.fileAlreadyAdded', { name: file.name }))
         continue
       }
 
       // Validate file size
       if (usage && file.size > usage.limits.maxFileSize) {
         toast.error(
-          `"${file.name}" is too large. Maximum file size for ${usage.plan.toUpperCase()} plan is ${formatFileSize(
-            usage.limits.maxFileSize
-          )}.`
+          t('messages.fileTooLarge', {
+            name: file.name,
+            plan: usage.plan.toUpperCase(),
+            size: formatFileSize(usage.limits.maxFileSize)
+          })
         )
         continue
       }
@@ -77,9 +79,10 @@ export function UploadPageContent() {
       const newTotalSize = currentTotalSize + newFiles.reduce((s, f) => s + f.size, 0) + file.size
       if (newTotalSize > maxTotalSize) {
         toast.error(
-          `Total size exceeded. Maximum total size for ${usage?.plan.toUpperCase() ?? 'FREE'} plan is ${formatFileSize(
-            maxTotalSize
-          )}.`
+          t('messages.totalSizeExceeded', {
+            plan: usage?.plan.toUpperCase() ?? 'FREE',
+            size: formatFileSize(maxTotalSize)
+          })
         )
         break
       }
@@ -105,8 +108,8 @@ export function UploadPageContent() {
       setFiles((prev) => [...prev, ...newFiles])
       toast.success(
         newFiles.length === 1
-          ? 'File added successfully'
-          : `${newFiles.length} files added successfully`
+          ? t('messages.fileAdded')
+          : t('messages.filesAdded', { count: newFiles.length })
       )
     }
 
@@ -126,13 +129,13 @@ export function UploadPageContent() {
 
   const handleProcess = async () => {
     if (selectedColumns.length === 0) {
-      toast.error('Please select at least one column')
+      toast.error(t('messages.selectAtLeastOneColumn'))
       return
     }
 
     if (usage && selectedColumns.length > usage.limits.maxColumns) {
       toast.error(
-        `Too many columns selected. Maximum ${usage.limits.maxColumns} columns for ${usage.plan.toUpperCase()} plan.`
+        t('messages.tooManyColumns', { max: usage.limits.maxColumns, plan: usage.plan.toUpperCase() })
       )
       return
     }
@@ -146,7 +149,7 @@ export function UploadPageContent() {
 
       if (useClientSide) {
         // Client-side merge for small files
-        toast.info('Processing files...')
+        toast.info(t('messages.processingFiles'))
 
         const result = await mergeSpreadsheets({
           files,
@@ -165,7 +168,7 @@ export function UploadPageContent() {
         }
 
         toast.success(
-          `Unified ${files.length} file${files.length > 1 ? 's' : ''} with ${result.rowCount} rows!`
+          t('messages.unifiedSuccess', { count: files.length, rows: result.rowCount })
         )
 
         // Refresh usage to update unification count
@@ -179,7 +182,7 @@ export function UploadPageContent() {
         setTotalRows(0)
       } else {
         // Server-side processing for large files
-        toast.info('Files are large, processing on server...')
+        toast.info(t('messages.processingOnServer'))
 
         const formData = new FormData()
         files.forEach((file) => formData.append('files', file))
@@ -192,7 +195,7 @@ export function UploadPageContent() {
 
         if (!response.ok) {
           const data = await response.json()
-          toast.error(data.error || 'Failed to process file')
+          toast.error(data.error || t('messages.processFailed'))
           return
         }
 
@@ -200,7 +203,7 @@ export function UploadPageContent() {
         const timestamp = new Date().toISOString().split('T')[0]
         downloadBlob(blob, `tablix-unificado-${timestamp}.xlsx`)
 
-        toast.success('File processed successfully!')
+        toast.success(t('messages.processSuccess'))
 
         // Refresh usage and reset state
         refetchUsage()
@@ -211,7 +214,7 @@ export function UploadPageContent() {
         setTotalRows(0)
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to process file')
+      toast.error(err instanceof Error ? err.message : t('messages.processFailed'))
     } finally {
       setIsProcessing(false)
     }
@@ -225,7 +228,10 @@ export function UploadPageContent() {
 
     if (usage && usage.unifications.remaining <= 0) {
       toast.error(
-        `Unification limit exceeded. You have used ${usage.unifications.current}/${usage.unifications.max} unifications this month.`
+        t('messages.unificationLimitExceeded', {
+          current: usage.unifications.current,
+          max: usage.unifications.max
+        })
       )
       return
     }
@@ -239,7 +245,7 @@ export function UploadPageContent() {
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
-        toast.info(`Parsing file ${i + 1} of ${files.length}: ${file.name}`)
+        toast.info(t('messages.parsingFile', { current: i + 1, total: files.length, name: file.name }))
 
         const result = await parseFile(file)
         allColumns.push(new Set(result.columns))
@@ -249,7 +255,11 @@ export function UploadPageContent() {
       // Validate total row count against plan limits
       if (usage && totalRowCount > usage.limits.maxRows) {
         toast.error(
-          `Total rows (${totalRowCount}) exceed the limit. Maximum ${usage.limits.maxRows} rows for ${usage.plan.toUpperCase()} plan.`
+          t('messages.rowsExceedLimit', {
+            total: totalRowCount,
+            max: usage.limits.maxRows,
+            plan: usage.plan.toUpperCase()
+          })
         )
         setIsUploading(false)
         return
@@ -268,7 +278,7 @@ export function UploadPageContent() {
       }
 
       if (commonColumns.length === 0) {
-        toast.error('No common columns found across all files. Files must have at least one column in common.')
+        toast.error(t('messages.noCommonColumns'))
         setIsUploading(false)
         return
       }
@@ -277,14 +287,18 @@ export function UploadPageContent() {
       if (usage && commonColumns.length > usage.limits.maxColumns) {
         // This is informational - user can still select fewer columns
         toast.info(
-          `Found ${commonColumns.length} common columns. You can select up to ${usage.limits.maxColumns} for your ${usage.plan.toUpperCase()} plan.`
+          t('messages.foundCommonColumns', {
+            count: commonColumns.length,
+            max: usage.limits.maxColumns,
+            plan: usage.plan.toUpperCase()
+          })
         )
       }
 
       toast.success(
         files.length === 1
-          ? `Parsed successfully! Found ${commonColumns.length} columns and ${totalRowCount} rows.`
-          : `Parsed ${files.length} files! Found ${commonColumns.length} common columns and ${totalRowCount} total rows.`
+          ? t('messages.parsedSuccessSingle', { columns: commonColumns.length, rows: totalRowCount })
+          : t('messages.parsedSuccessMultiple', { files: files.length, columns: commonColumns.length, rows: totalRowCount })
       )
 
       setTotalRows(totalRowCount)
@@ -331,13 +345,13 @@ export function UploadPageContent() {
       <main className="mx-auto max-w-3xl px-6 py-16">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-neutral-900">
-            {step === 'upload' ? t('upload.title') : 'Select Columns'}
+            {step === 'upload' ? t('upload.title') : t('columns.title')}
           </h1>
 
           <p className="mt-4 text-lg text-neutral-600">
             {step === 'upload'
               ? t('upload.subtitle')
-              : 'Choose which columns to include in your processed file'}
+              : t('columns.subtitle')}
           </p>
         </div>
 
@@ -349,11 +363,11 @@ export function UploadPageContent() {
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-neutral-900">
-                      Plan: {usage.plan.toUpperCase()}
+                      {t('status.plan')}: {usage.plan.toUpperCase()}
                     </span>
 
                     <span className="text-sm font-medium text-neutral-900">
-                      {usage.unifications.remaining}/{usage.unifications.max} unifications remaining
+                      {usage.unifications.remaining}/{usage.unifications.max} {t('status.unificationsRemaining')}
                     </span>
                   </div>
 
@@ -371,8 +385,7 @@ export function UploadPageContent() {
                   </div>
 
                   <p className="text-xs text-neutral-600 mt-2">
-                    Max {usage.limits.maxInputFiles} files • Max total size: {formatFileSize(usage.limits.maxTotalSize)} • Max{' '}
-                    {usage.limits.maxRows} rows • Max {usage.limits.maxColumns} columns
+                    {t('status.maxFiles')} {usage.limits.maxInputFiles} {t('status.files')} • {t('status.maxTotalSize')}: {formatFileSize(usage.limits.maxTotalSize)} • {t('status.maxFiles')} {usage.limits.maxRows} {t('status.maxRows')} • {t('status.maxFiles')} {usage.limits.maxColumns} {t('status.maxColumns')}
                   </p>
                 </div>
               </section>
@@ -419,10 +432,10 @@ export function UploadPageContent() {
                   <div className="w-full space-y-2 bg-neutral-50 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-neutral-700">
-                        {files.length} of {maxInputFiles} files
+                        {files.length} {t('columns.of')} {maxInputFiles} {t('status.files')}
                       </span>
                       <span className="text-xs text-neutral-500">
-                        {formatFileSize(currentTotalSize)} of {formatFileSize(maxTotalSize)}
+                        {formatFileSize(currentTotalSize)} {t('columns.of')} {formatFileSize(maxTotalSize)}
                       </span>
                     </div>
                     {files.map((file, index) => (
@@ -444,7 +457,7 @@ export function UploadPageContent() {
                     ))}
                     {files.length < maxInputFiles && (
                       <p className="text-xs text-neutral-500 text-center pt-2">
-                        Click above to add more files
+                        {t('status.clickToAddMore')}
                       </p>
                     )}
                   </div>
@@ -481,11 +494,11 @@ export function UploadPageContent() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-semibold text-neutral-900">
-                      Detected Columns ({detectedColumns.length})
+                      {t('columns.detected')} ({detectedColumns.length})
                     </h3>
                     <p className="text-sm text-neutral-600 mt-1">
-                      {selectedColumns.length} of {detectedColumns.length} columns selected
-                      {usage && ` (max ${usage.limits.maxColumns})`}
+                      {selectedColumns.length} {t('columns.of')} {detectedColumns.length} {t('columns.selected')}
+                      {usage && ` (${t('columns.max')} ${usage.limits.maxColumns})`}
                     </p>
                   </div>
                   <Button
@@ -499,7 +512,7 @@ export function UploadPageContent() {
                     }}
                   >
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Start Over
+                    {t('columns.startOver')}
                   </Button>
                 </div>
 
@@ -537,7 +550,7 @@ export function UploadPageContent() {
                     className="flex-1"
                     disabled={selectedColumns.length === 0}
                   >
-                    Deselect All
+                    {t('columns.deselectAll')}
                   </Button>
                   <Button
                     variant="outline"
@@ -545,7 +558,7 @@ export function UploadPageContent() {
                     className="flex-1"
                     disabled={selectedColumns.length === detectedColumns.length}
                   >
-                    Select All
+                    {t('columns.selectAll')}
                   </Button>
                 </div>
 
@@ -558,10 +571,10 @@ export function UploadPageContent() {
                   {isProcessing ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Processing...
+                      {t('upload.processing')}
                     </>
                   ) : (
-                    'Process & Download'
+                    t('columns.processAndDownload')
                   )}
                 </Button>
               </section>

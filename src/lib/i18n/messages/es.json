@@ -112,5 +112,69 @@
     "error": "Error al procesar el archivo",
     "securityNote": "Tus archivos se procesan de forma temporal y segura.",
     "selectAtLeastOne": "Selecciona al menos un archivo"
+  },
+  "columns": {
+    "title": "Seleccionar Columnas",
+    "subtitle": "Elige qué columnas incluir en tu archivo procesado",
+    "detected": "Columnas Detectadas",
+    "selected": "seleccionada(s)",
+    "max": "máx",
+    "of": "de",
+    "startOver": "Empezar de Nuevo",
+    "deselectAll": "Deseleccionar Todo",
+    "selectAll": "Seleccionar Todo",
+    "processAndDownload": "Procesar y Descargar"
+  },
+  "status": {
+    "plan": "Plan",
+    "unificationsRemaining": "unificaciones restantes",
+    "files": "archivos",
+    "maxFiles": "Máx",
+    "maxTotalSize": "Tamaño máx",
+    "maxRows": "filas",
+    "maxColumns": "columnas",
+    "clickToAddMore": "Haz clic arriba para agregar más archivos"
+  },
+  "messages": {
+    "tooManyFiles": "Demasiados archivos. Máximo {max} archivos para el plan {plan}.",
+    "fileAlreadyAdded": "El archivo \"{name}\" ya fue agregado",
+    "fileTooLarge": "\"{name}\" es demasiado grande. El tamaño máximo para el plan {plan} es {size}.",
+    "totalSizeExceeded": "Tamaño total excedido. El tamaño máximo total para el plan {plan} es {size}.",
+    "fileAdded": "Archivo agregado exitosamente",
+    "filesAdded": "{count} archivos agregados exitosamente",
+    "selectAtLeastOneColumn": "Selecciona al menos una columna",
+    "tooManyColumns": "Demasiadas columnas seleccionadas. Máximo {max} columnas para el plan {plan}.",
+    "processingFiles": "Procesando archivos...",
+    "unifiedSuccess": "¡Unificado {count} archivo(s) con {rows} filas!",
+    "processingOnServer": "Archivos grandes, procesando en el servidor...",
+    "processFailed": "Error al procesar el archivo",
+    "processSuccess": "¡Archivo procesado exitosamente!",
+    "unificationLimitExceeded": "Límite de unificaciones excedido. Has usado {current}/{max} unificaciones este mes.",
+    "parsingFile": "Analizando archivo {current} de {total}: {name}",
+    "rowsExceedLimit": "El total de filas ({total}) excede el límite. Máximo {max} filas para el plan {plan}.",
+    "noCommonColumns": "No se encontraron columnas en común. Los archivos deben tener al menos una columna en común.",
+    "foundCommonColumns": "Se encontraron {count} columnas en común. Puedes seleccionar hasta {max} para tu plan {plan}.",
+    "parsedSuccessSingle": "¡Analizado exitosamente! Se encontraron {columns} columnas y {rows} filas.",
+    "parsedSuccessMultiple": "¡Se analizaron {files} archivos! Se encontraron {columns} columnas en común y {rows} filas en total."
+  },
+  "billingPeriods": {
+    "month": "mes",
+    "totalSemester": "${price} cada 6 meses",
+    "totalAnnual": "${price}/año"
+  },
+  "proPricing": {
+    "currencySymbol": "$",
+    "monthly": {
+      "price": "29,90",
+      "total": "$29,90/mes"
+    },
+    "semester": {
+      "price": "26,90",
+      "total": "$161,40 cada 6 meses"
+    },
+    "annual": {
+      "price": "24,90",
+      "total": "$298,80/año"
+    }
   }
 }

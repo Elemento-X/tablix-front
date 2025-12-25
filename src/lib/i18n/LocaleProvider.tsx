@@ -14,10 +14,12 @@ const messages = {
 
 type Messages = typeof ptBR
 
+type InterpolationValues = Record<string, string | number>
+
 interface LocaleContextType {
   locale: Locale
   setLocale: (locale: Locale) => void
-  t: (key: string) => string
+  t: (key: string, values?: InterpolationValues) => string
   messages: Messages
 }
 
@@ -60,9 +62,18 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const t = (key: string): string => {
+  const t = (key: string, values?: InterpolationValues): string => {
     const currentMessages = messages[locale]
-    return getNestedValue(currentMessages, key)
+    let result = getNestedValue(currentMessages, key)
+
+    // Interpolate values if provided
+    if (values) {
+      Object.entries(values).forEach(([k, v]) => {
+        result = result.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v))
+      })
+    }
+
+    return result
   }
 
   const value: LocaleContextType = {

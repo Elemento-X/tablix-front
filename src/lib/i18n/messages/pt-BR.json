@@ -112,5 +112,69 @@
     "error": "Erro ao processar arquivo",
     "securityNote": "Seus arquivos são processados de forma temporária e segura.",
     "selectAtLeastOne": "Selecione pelo menos um arquivo"
+  },
+  "columns": {
+    "title": "Selecionar Colunas",
+    "subtitle": "Escolha quais colunas incluir no arquivo processado",
+    "detected": "Colunas Detectadas",
+    "selected": "selecionada(s)",
+    "max": "máx",
+    "of": "de",
+    "startOver": "Recomeçar",
+    "deselectAll": "Desmarcar Todas",
+    "selectAll": "Selecionar Todas",
+    "processAndDownload": "Processar e Baixar"
+  },
+  "status": {
+    "plan": "Plano",
+    "unificationsRemaining": "unificações restantes",
+    "files": "arquivos",
+    "maxFiles": "Máx",
+    "maxTotalSize": "Tamanho máx",
+    "maxRows": "linhas",
+    "maxColumns": "colunas",
+    "clickToAddMore": "Clique acima para adicionar mais arquivos"
+  },
+  "messages": {
+    "tooManyFiles": "Muitos arquivos. Máximo de {max} arquivos para o plano {plan}.",
+    "fileAlreadyAdded": "Arquivo \"{name}\" já foi adicionado",
+    "fileTooLarge": "\"{name}\" é muito grande. Tamanho máximo para o plano {plan} é {size}.",
+    "totalSizeExceeded": "Tamanho total excedido. Tamanho máximo total para o plano {plan} é {size}.",
+    "fileAdded": "Arquivo adicionado com sucesso",
+    "filesAdded": "{count} arquivos adicionados com sucesso",
+    "selectAtLeastOneColumn": "Selecione pelo menos uma coluna",
+    "tooManyColumns": "Muitas colunas selecionadas. Máximo de {max} colunas para o plano {plan}.",
+    "processingFiles": "Processando arquivos...",
+    "unifiedSuccess": "Unificado {count} arquivo(s) com {rows} linhas!",
+    "processingOnServer": "Arquivos grandes, processando no servidor...",
+    "processFailed": "Falha ao processar arquivo",
+    "processSuccess": "Arquivo processado com sucesso!",
+    "unificationLimitExceeded": "Limite de unificações excedido. Você usou {current}/{max} unificações este mês.",
+    "parsingFile": "Analisando arquivo {current} de {total}: {name}",
+    "rowsExceedLimit": "Total de linhas ({total}) excede o limite. Máximo de {max} linhas para o plano {plan}.",
+    "noCommonColumns": "Nenhuma coluna em comum encontrada. Os arquivos devem ter pelo menos uma coluna em comum.",
+    "foundCommonColumns": "Encontradas {count} colunas em comum. Você pode selecionar até {max} para o plano {plan}.",
+    "parsedSuccessSingle": "Analisado com sucesso! Encontradas {columns} colunas e {rows} linhas.",
+    "parsedSuccessMultiple": "Analisados {files} arquivos! Encontradas {columns} colunas em comum e {rows} linhas no total."
+  },
+  "billingPeriods": {
+    "month": "mês",
+    "totalSemester": "R$ {price} a cada 6 meses",
+    "totalAnnual": "R$ {price}/ano"
+  },
+  "proPricing": {
+    "currencySymbol": "R$",
+    "monthly": {
+      "price": "29,90",
+      "total": "R$ 29,90/mês"
+    },
+    "semester": {
+      "price": "26,90",
+      "total": "R$ 161,40 a cada 6 meses"
+    },
+    "annual": {
+      "price": "24,90",
+      "total": "R$ 298,80/ano"
+    }
   }
 }

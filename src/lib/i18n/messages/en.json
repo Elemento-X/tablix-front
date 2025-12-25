@@ -112,5 +112,69 @@
     "error": "Error processing file",
     "securityNote": "Your files are processed temporarily and securely.",
     "selectAtLeastOne": "Select at least one file"
+  },
+  "columns": {
+    "title": "Select Columns",
+    "subtitle": "Choose which columns to include in your processed file",
+    "detected": "Detected Columns",
+    "selected": "selected",
+    "max": "max",
+    "of": "of",
+    "startOver": "Start Over",
+    "deselectAll": "Deselect All",
+    "selectAll": "Select All",
+    "processAndDownload": "Process & Download"
+  },
+  "status": {
+    "plan": "Plan",
+    "unificationsRemaining": "unifications remaining",
+    "files": "files",
+    "maxFiles": "Max",
+    "maxTotalSize": "Max total size",
+    "maxRows": "rows",
+    "maxColumns": "columns",
+    "clickToAddMore": "Click above to add more files"
+  },
+  "messages": {
+    "tooManyFiles": "Too many files. Maximum {max} files for {plan} plan.",
+    "fileAlreadyAdded": "File \"{name}\" already added",
+    "fileTooLarge": "\"{name}\" is too large. Maximum file size for {plan} plan is {size}.",
+    "totalSizeExceeded": "Total size exceeded. Maximum total size for {plan} plan is {size}.",
+    "fileAdded": "File added successfully",
+    "filesAdded": "{count} files added successfully",
+    "selectAtLeastOneColumn": "Please select at least one column",
+    "tooManyColumns": "Too many columns selected. Maximum {max} columns for {plan} plan.",
+    "processingFiles": "Processing files...",
+    "unifiedSuccess": "Unified {count} file(s) with {rows} rows!",
+    "processingOnServer": "Files are large, processing on server...",
+    "processFailed": "Failed to process file",
+    "processSuccess": "File processed successfully!",
+    "unificationLimitExceeded": "Unification limit exceeded. You have used {current}/{max} unifications this month.",
+    "parsingFile": "Parsing file {current} of {total}: {name}",
+    "rowsExceedLimit": "Total rows ({total}) exceed the limit. Maximum {max} rows for {plan} plan.",
+    "noCommonColumns": "No common columns found across all files. Files must have at least one column in common.",
+    "foundCommonColumns": "Found {count} common columns. You can select up to {max} for your {plan} plan.",
+    "parsedSuccessSingle": "Parsed successfully! Found {columns} columns and {rows} rows.",
+    "parsedSuccessMultiple": "Parsed {files} files! Found {columns} common columns and {rows} total rows."
+  },
+  "billingPeriods": {
+    "month": "month",
+    "totalSemester": "${price} every 6 months",
+    "totalAnnual": "${price}/year"
+  },
+  "proPricing": {
+    "currencySymbol": "$",
+    "monthly": {
+      "price": "29.90",
+      "total": "$29.90/month"
+    },
+    "semester": {
+      "price": "26.90",
+      "total": "$161.40 every 6 months"
+    },
+    "annual": {
+      "price": "24.90",
+      "total": "$298.80/year"
+    }
   }
 }
