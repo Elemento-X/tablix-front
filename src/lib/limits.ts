@@ -51,8 +51,8 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     maxColumns: 10,
     priorityProcessing: true,
     noWatermark: true,
-    fileHistory: false, // Pro does not have file history per spec
-    fileHistoryDays: undefined,
+    fileHistory: true,
+    fileHistoryDays: 30,
   },
 
   enterprise: {

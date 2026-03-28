@@ -38,8 +38,8 @@ describe('limits.ts', () => {
         maxColumns: 10,
         priorityProcessing: true,
         noWatermark: true,
-        fileHistory: false,
-        fileHistoryDays: undefined,
+        fileHistory: true,
+        fileHistoryDays: 30,
       })
     })
 

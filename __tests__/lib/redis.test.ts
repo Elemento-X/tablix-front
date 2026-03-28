@@ -8,6 +8,8 @@ jest.mock('@upstash/redis', () => ({
     set: jest.fn(),
     incr: jest.fn(),
     expire: jest.fn(),
+    eval: jest.fn(),
+    del: jest.fn(),
   })),
 }))
 
@@ -43,7 +45,7 @@ describe('redis.ts', () => {
 
       expect(client).toBeNull()
       expect(console.warn).toHaveBeenCalledWith(
-        expect.stringContaining('[Redis] Upstash Redis not configured')
+        expect.stringContaining('[Redis] Upstash Redis not configured'),
       )
     })
 
@@ -74,10 +76,13 @@ describe('redis.ts', () => {
       const client = getRedisClient()
 
       expect(client).not.toBeNull()
-      expect(Redis).toHaveBeenCalledWith({
-        url: 'https://redis.upstash.io',
-        token: 'token123',
-      })
+      expect(Redis).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: 'https://redis.upstash.io',
+          token: 'token123',
+          retry: expect.objectContaining({ retries: 2 }),
+        }),
+      )
     })
 
     it('should return Redis instance when configured', () => {
@@ -207,7 +212,7 @@ describe('redis.ts', () => {
         await storage.incr('ttl-counter')
 
         // Value should still exist after a short delay
-        await new Promise(resolve => setTimeout(resolve, 10))
+        await new Promise((resolve) => setTimeout(resolve, 10))
         const value = await storage.get('ttl-counter')
         expect(value).toBe(1)
       })
@@ -283,10 +288,7 @@ describe('redis.ts', () => {
         const value = await storage.get('error-key')
 
         expect(value).toBeNull()
-        expect(console.error).toHaveBeenCalledWith(
-          '[Redis] Error getting key:',
-          expect.any(Error)
-        )
+        expect(console.error).toHaveBeenCalledWith('[Redis] Error getting key:', expect.any(Error))
       })
 
       it('should handle null response from Redis', async () => {
@@ -315,7 +317,7 @@ describe('redis.ts', () => {
 
         expect(console.error).toHaveBeenCalledWith(
           '[Redis] Error incrementing key:',
-          expect.any(Error)
+          expect.any(Error),
         )
       })
     })
@@ -337,7 +339,7 @@ describe('redis.ts', () => {
 
         expect(console.error).toHaveBeenCalledWith(
           '[Redis] Error setting expiration:',
-          expect.any(Error)
+          expect.any(Error),
         )
       })
     })
@@ -364,10 +366,7 @@ describe('redis.ts', () => {
 
         await expect(storage.set('fail-key', 100)).rejects.toThrow('Failed to set value')
 
-        expect(console.error).toHaveBeenCalledWith(
-          '[Redis] Error setting key:',
-          expect.any(Error)
-        )
+        expect(console.error).toHaveBeenCalledWith('[Redis] Error setting key:', expect.any(Error))
       })
 
       it('should throw error on Redis failure with TTL', async () => {
@@ -390,6 +389,146 @@ describe('redis.ts', () => {
         await storage.set('large-number', 999999999, 60)
 
         expect(mockRedis.set).toHaveBeenCalledWith('large-number', 999999999, { ex: 60 })
+      })
+    })
+  })
+
+  describe('getAndDel', () => {
+    describe('with Redis', () => {
+      let mockRedis: jest.Mocked<Redis>
+
+      beforeEach(() => {
+        process.env.UPSTASH_REDIS_REST_URL = 'https://redis.upstash.io'
+        process.env.UPSTASH_REDIS_REST_TOKEN = 'token123'
+        const client = getRedisClient()
+        mockRedis = client as jest.Mocked<Redis>
+      })
+
+      it('should atomically get and delete via Lua script', async () => {
+        mockRedis.eval.mockResolvedValue('token-value')
+
+        const value = await storage.getAndDel('token-key')
+
+        expect(value).toBe('token-value')
+        expect(mockRedis.eval).toHaveBeenCalledWith(
+          expect.stringContaining('redis.call'),
+          ['token-key'],
+          [],
+        )
+      })
+
+      it('should return null when key does not exist', async () => {
+        mockRedis.eval.mockResolvedValue(null)
+
+        const value = await storage.getAndDel('missing-key')
+
+        expect(value).toBeNull()
+      })
+
+      it('should return null on Redis error', async () => {
+        mockRedis.eval.mockRejectedValue(new Error('Redis error'))
+
+        const value = await storage.getAndDel('error-key')
+
+        expect(value).toBeNull()
+        expect(console.error).toHaveBeenCalledWith(
+          '[Redis] Error in get-and-delete:',
+          expect.any(Error),
+        )
+      })
+    })
+
+    describe('with InMemoryStore', () => {
+      beforeEach(() => {
+        delete process.env.UPSTASH_REDIS_REST_URL
+        delete process.env.UPSTASH_REDIS_REST_TOKEN
+      })
+
+      it('should get and delete key from in-memory store', async () => {
+        await storage.set('mem-token', 1, 60)
+
+        const value = await storage.getAndDel('mem-token')
+        expect(value).toBe('1')
+
+        // Key should be deleted
+        const after = await storage.get('mem-token')
+        expect(after).toBeNull()
+      })
+
+      it('should return null for non-existent key', async () => {
+        const value = await storage.getAndDel('non-existent')
+        expect(value).toBeNull()
+      })
+    })
+  })
+
+  describe('atomicCheckAndIncr', () => {
+    describe('with Redis', () => {
+      let mockRedis: jest.Mocked<Redis>
+
+      beforeEach(() => {
+        process.env.UPSTASH_REDIS_REST_URL = 'https://redis.upstash.io'
+        process.env.UPSTASH_REDIS_REST_TOKEN = 'token123'
+        const client = getRedisClient()
+        mockRedis = client as jest.Mocked<Redis>
+      })
+
+      it('should return new count when under limit', async () => {
+        mockRedis.eval.mockResolvedValue(1)
+
+        const result = await storage.atomicCheckAndIncr('counter', 5, 3600)
+
+        expect(result).toBe(1)
+        expect(mockRedis.eval).toHaveBeenCalledWith(
+          expect.stringContaining('INCR'),
+          ['counter'],
+          [5, 3600],
+        )
+      })
+
+      it('should return -1 when limit reached', async () => {
+        mockRedis.eval.mockResolvedValue(-1)
+
+        const result = await storage.atomicCheckAndIncr('counter', 1, 3600)
+
+        expect(result).toBe(-1)
+      })
+
+      it('should throw on Redis error', async () => {
+        mockRedis.eval.mockRejectedValue(new Error('Redis error'))
+
+        await expect(storage.atomicCheckAndIncr('counter', 5, 3600)).rejects.toThrow(
+          'Failed to check and increment counter',
+        )
+      })
+    })
+
+    describe('with InMemoryStore', () => {
+      beforeEach(() => {
+        delete process.env.UPSTASH_REDIS_REST_URL
+        delete process.env.UPSTASH_REDIS_REST_TOKEN
+      })
+
+      it('should increment when under limit', async () => {
+        const result = await storage.atomicCheckAndIncr('mem-counter', 5, 3600)
+        expect(result).toBe(1)
+      })
+
+      it('should return -1 when at limit', async () => {
+        await storage.set('limit-counter', 3, 3600)
+
+        const result = await storage.atomicCheckAndIncr('limit-counter', 3, 3600)
+        expect(result).toBe(-1)
+      })
+
+      it('should increment up to limit', async () => {
+        await storage.atomicCheckAndIncr('inc-counter', 2, 3600)
+        const result = await storage.atomicCheckAndIncr('inc-counter', 2, 3600)
+        expect(result).toBe(2)
+
+        // Third attempt should fail
+        const blocked = await storage.atomicCheckAndIncr('inc-counter', 2, 3600)
+        expect(blocked).toBe(-1)
       })
     })
   })

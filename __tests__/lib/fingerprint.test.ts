@@ -9,10 +9,12 @@ import {
 
 describe('fingerprint.ts', () => {
   describe('getUserFingerprint', () => {
-    const createRequest = (options: {
-      headers?: Record<string, string>
-      cookie?: string
-    } = {}): NextRequest => {
+    const createRequest = (
+      options: {
+        headers?: Record<string, string>
+        cookie?: string
+      } = {},
+    ): NextRequest => {
       const url = 'http://localhost:3000/test'
       const headers = new Headers(options.headers || {})
 
@@ -258,12 +260,12 @@ describe('fingerprint.ts', () => {
       expect(cookie?.httpOnly).toBe(true)
     })
 
-    it('should set sameSite to lax', () => {
+    it('should set sameSite to strict', () => {
       const response = NextResponse.json({})
       setFingerprintCookie(response, 'test-123')
 
       const cookie = response.cookies.get('tablix_fp')
-      expect(cookie?.sameSite).toBe('lax')
+      expect(cookie?.sameSite).toBe('strict')
     })
 
     it('should set path to /', () => {
@@ -337,47 +339,12 @@ describe('fingerprint.ts', () => {
       expect(plan).toBe('free')
     })
 
-    it('should return "pro" when x-tablix-plan header is "pro"', () => {
-      const request = createRequest({ 'x-tablix-plan': 'pro' })
-      const plan = getUserPlan(request)
-
-      expect(plan).toBe('pro')
-    })
-
-    it('should return "enterprise" when x-tablix-plan header is "enterprise"', () => {
-      const request = createRequest({ 'x-tablix-plan': 'enterprise' })
-      const plan = getUserPlan(request)
-
-      expect(plan).toBe('enterprise')
-    })
-
-    it('should return "free" when x-tablix-plan header is invalid', () => {
-      const request = createRequest({ 'x-tablix-plan': 'invalid' })
-      const plan = getUserPlan(request)
-
-      expect(plan).toBe('free')
-    })
-
-    it('should return "free" when x-tablix-plan header is "free"', () => {
-      const request = createRequest({ 'x-tablix-plan': 'free' })
-      const plan = getUserPlan(request)
-
-      expect(plan).toBe('free')
-    })
-
-    it('should return "free" when x-tablix-plan header is empty', () => {
-      const request = createRequest({ 'x-tablix-plan': '' })
-      const plan = getUserPlan(request)
-
-      expect(plan).toBe('free')
-    })
-
-    it('should be case-sensitive for plan names', () => {
-      const requestPro = createRequest({ 'x-tablix-plan': 'Pro' })
-      const requestEnterprise = createRequest({ 'x-tablix-plan': 'Enterprise' })
-
-      expect(getUserPlan(requestPro)).toBe('free')
-      expect(getUserPlan(requestEnterprise)).toBe('free')
+    it('should always return "free" regardless of x-tablix-plan header', () => {
+      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'pro' }))).toBe('free')
+      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'enterprise' }))).toBe('free')
+      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'Pro' }))).toBe('free')
+      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'invalid' }))).toBe('free')
+      expect(getUserPlan(createRequest({ 'x-tablix-plan': '' }))).toBe('free')
     })
   })
 

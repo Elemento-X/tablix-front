@@ -1,27 +1,34 @@
-import { z } from "zod"
+import { z } from 'zod'
 
 // Column name validation
 export const columnNameSchema = z
   .string()
-  .min(1, "Column name cannot be empty")
-  .max(255, "Column name too long")
-  .regex(/^[a-zA-Z0-9\s_\-À-ÿ]+$/, "Column name contains invalid characters")
+  .min(1, 'Column name cannot be empty')
+  .max(255, 'Column name too long')
+  .regex(/^[a-zA-Z0-9\s_\-À-ÿ]+$/, 'Column name contains invalid characters')
 
 // Array of column names
 export const columnsArraySchema = z
   .array(columnNameSchema)
-  .min(1, "At least one column must be selected")
-  .max(50, "Too many columns selected (max 50)")
+  .min(1, 'At least one column must be selected')
+  .max(50, 'Too many columns selected (max 50)')
 
 // File metadata validation
 export const fileMetadataSchema = z.object({
   name: z
     .string()
-    .min(1, "File name is required")
-    .max(255, "File name too long")
-    .regex(/^[^<>:"|?*\0]+$/, "File name contains invalid characters"),
-  size: z.number().positive("File size must be positive").max(10 * 1024 * 1024, "File too large (max 10MB)"),
-  type: z.enum(["text/csv", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]),
+    .min(1, 'File name is required')
+    .max(255, 'File name too long')
+    .regex(/^[^<>:"|?*\0]+$/, 'File name contains invalid characters'),
+  size: z
+    .number()
+    .positive('File size must be positive')
+    .max(10 * 1024 * 1024, 'File too large (max 10MB)'),
+  type: z.enum([
+    'text/csv',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ]),
 })
 
 // Process request validation
@@ -45,8 +52,8 @@ export const planLimitSchema = z.object({
 // Sanitize string inputs
 export function sanitizeString(input: string): string {
   return input
-    .replace(/[<>]/g, "") // Remove potential HTML tags
-    .replace(/[^\x20-\x7E\u00C0-\u024F]/g, "") // Remove non-printable and special chars (keep accents)
+    .replace(/[<>]/g, '') // Remove potential HTML tags
+    .replace(/[^\x20-\x7E\u00C0-\u024F]/g, '') // Remove non-printable and special chars (keep accents)
     .trim()
 }
 
@@ -66,25 +73,49 @@ export function validateColumnSelection(columns: unknown): {
     const sanitized = sanitizeStringArray(parsed)
 
     if (sanitized.length === 0) {
-      return { valid: false, error: "No valid columns after sanitization" }
+      return { valid: false, error: 'No valid columns after sanitization' }
     }
 
     return { valid: true, data: sanitized }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { valid: false, error: error.errors[0]?.message || "Invalid column selection" }
+      return { valid: false, error: error.errors[0]?.message || 'Invalid column selection' }
     }
-    return { valid: false, error: "Invalid column selection" }
+    return { valid: false, error: 'Invalid column selection' }
   }
 }
 
+// Validate Content-Type header
+export function validateContentType(
+  request: { headers: { get(name: string): string | null } },
+  expected: 'multipart' | 'json',
+): { valid: boolean; error?: string } {
+  const contentType = request.headers.get('content-type') || ''
+
+  if (expected === 'multipart') {
+    if (!contentType.includes('multipart/form-data')) {
+      return { valid: false, error: 'Content-Type must be multipart/form-data' }
+    }
+  } else if (expected === 'json') {
+    if (!contentType.includes('application/json')) {
+      return { valid: false, error: 'Content-Type must be application/json' }
+    }
+  }
+
+  return { valid: true }
+}
+
 // Validate file size and count limits
-export function validateFileLimits(files: File[], maxFiles: number = 1, maxSize: number = 10 * 1024 * 1024): {
+export function validateFileLimits(
+  files: File[],
+  maxFiles: number = 1,
+  maxSize: number = 10 * 1024 * 1024,
+): {
   valid: boolean
   error?: string
 } {
   if (files.length === 0) {
-    return { valid: false, error: "No files provided" }
+    return { valid: false, error: 'No files provided' }
   }
 
   if (files.length > maxFiles) {
@@ -93,7 +124,10 @@ export function validateFileLimits(files: File[], maxFiles: number = 1, maxSize:
 
   for (const file of files) {
     if (file.size > maxSize) {
-      return { valid: false, error: `File "${file.name}" exceeds maximum size of ${maxSize / (1024 * 1024)}MB` }
+      return {
+        valid: false,
+        error: `File "${file.name}" exceeds maximum size of ${maxSize / (1024 * 1024)}MB`,
+      }
     }
 
     if (file.size === 0) {

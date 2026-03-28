@@ -1,32 +1,39 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { rateLimiters } from "@/lib/security/rate-limit"
-import { sanitizeFileName } from "@/lib/security/file-validator"
-import { validateFileLimits } from "@/lib/security/validation-schemas"
-import { checkUnificationLimit, incrementUnificationCount, checkFileSizeLimit } from "@/lib/usage-tracker"
-import { getUserFingerprint, setFingerprintCookie, getUserPlan } from "@/lib/fingerprint"
+import { type NextRequest, NextResponse } from 'next/server'
+import { rateLimiters } from '@/lib/security/rate-limit'
+import { sanitizeFileName } from '@/lib/security/file-validator'
+import { validateFileLimits, validateContentType } from '@/lib/security/validation-schemas'
+import { checkUnificationLimit, checkFileSizeLimit } from '@/lib/usage-tracker'
+import { getUserFingerprint, setFingerprintCookie, getUserPlan } from '@/lib/fingerprint'
+import { generateUnificationToken } from '@/lib/security/unification-token'
 
 const MAX_FILES = 1 // Only 1 file per upload
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate Content-Type
+    const contentTypeCheck = validateContentType(request, 'multipart')
+    if (!contentTypeCheck.valid) {
+      return NextResponse.json({ error: contentTypeCheck.error }, { status: 415 })
+    }
+
     // Apply rate limiting (anti-DDoS protection)
     const rateLimitResult = await rateLimiters.upload.check(request)
 
     if (!rateLimitResult.success) {
       return NextResponse.json(
-        { error: "Too many requests. Please try again later." },
+        { error: 'Too many requests. Please try again later.' },
         {
           status: 429,
           headers: {
-            "X-RateLimit-Remaining": "0",
-            "Retry-After": "60",
+            'X-RateLimit-Remaining': '0',
+            'Retry-After': '60',
           },
-        }
+        },
       )
     }
 
     // Get user fingerprint and plan
-    const { isNew, cookieId } = getUserFingerprint(request)
+    const { isNew, cookieId, fingerprint } = getUserFingerprint(request)
     const plan = getUserPlan(request)
 
     // Check unification limit (monthly quota)
@@ -43,7 +50,7 @@ export async function POST(request: NextRequest) {
             remaining: unificationCheck.remainingUnifications,
           },
         },
-        { status: 403 }
+        { status: 403 },
       )
 
       // Set cookie even on error to track user
@@ -55,15 +62,15 @@ export async function POST(request: NextRequest) {
     }
 
     const formData = await request.formData()
-    const files = formData.getAll("files") as File[]
+    const files = formData.getAll('files') as File[]
 
     // Validate file count (only 1 file allowed)
     if (files.length === 0) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 })
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
     if (files.length > MAX_FILES) {
-      return NextResponse.json({ error: "Only 1 file allowed per upload" }, { status: 400 })
+      return NextResponse.json({ error: 'Only 1 file allowed per upload' }, { status: 400 })
     }
 
     const file = files[0]
@@ -78,28 +85,35 @@ export async function POST(request: NextRequest) {
           errorCode: fileSizeCheck.errorCode,
           maxSize: fileSizeCheck.maxSize,
         },
-        { status: 403 }
+        { status: 403 },
       )
     }
 
     // Validate file types
-    const allowedTypes = ["text/csv", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]
+    const allowedTypes = [
+      'text/csv',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ]
 
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: `Invalid file type. Only CSV and XLSX files are allowed.` }, { status: 400 })
+      return NextResponse.json(
+        { error: `Invalid file type. Only CSV and XLSX files are allowed.` },
+        { status: 400 },
+      )
     }
 
     // Validate file extension
     const fileName = file.name.toLowerCase()
-    if (!fileName.endsWith(".csv") && !fileName.endsWith(".xlsx") && !fileName.endsWith(".xls")) {
-      return NextResponse.json({ error: `Invalid file extension. Only .csv and .xlsx files are allowed.` }, { status: 400 })
+    if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+      return NextResponse.json(
+        { error: `Invalid file extension. Only .csv and .xlsx files are allowed.` },
+        { status: 400 },
+      )
     }
 
     // Sanitize file name
-    const sanitizedName = sanitizeFileName(file.name)
-    if (sanitizedName !== file.name) {
-      console.warn(`File name sanitized: ${file.name} -> ${sanitizedName}`)
-    }
+    sanitizeFileName(file.name)
 
     // TODO: Implement actual file parsing logic
     // For now, simulate column detection
@@ -107,39 +121,38 @@ export async function POST(request: NextRequest) {
 
     // Example columns - replace with actual parsing logic
     const columns = [
-      "ID",
-      "Nome",
-      "Email",
-      "Telefone",
-      "Endereço",
-      "Cidade",
-      "Estado",
-      "CEP",
-      "Data de Cadastro",
-      "Status",
+      'ID',
+      'Nome',
+      'Email',
+      'Telefone',
+      'Endereço',
+      'Cidade',
+      'Estado',
+      'CEP',
+      'Data de Cadastro',
+      'Status',
     ]
 
-    // ✅ INCREMENT UNIFICATION COUNTER (only after successful validation)
-    // NOTE: This should only be called when generating the unified file, not on preview
-    // TODO: Move this to the /api/process endpoint when implemented
-    const newUnificationCount = await incrementUnificationCount(request)
-    console.log(`[Unification] User created unification. New count: ${newUnificationCount}/${unificationCheck.maxUnifications}`)
+    // Generate one-time token for /api/unification/complete (prevents replay attacks)
+    const unificationToken = await generateUnificationToken(fingerprint)
 
-    // Create response with usage info
+    // Create response with usage info and token
+    // NOTE: Unification counter is incremented in /api/unification/complete after successful merge
     const response = NextResponse.json(
       {
         columns,
+        unificationToken,
         usage: {
-          current: newUnificationCount,
+          current: unificationCheck.currentUnifications,
           max: unificationCheck.maxUnifications,
-          remaining: unificationCheck.maxUnifications - newUnificationCount,
+          remaining: unificationCheck.remainingUnifications,
         },
       },
       {
         headers: {
-          "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
         },
-      }
+      },
     )
 
     // Set fingerprint cookie if new user
@@ -149,7 +162,7 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error("Preview API error:", error)
-    return NextResponse.json({ error: "Error processing file" }, { status: 500 })
+    console.error('Preview API error:', error)
+    return NextResponse.json({ error: 'Error processing file' }, { status: 500 })
   }
 }

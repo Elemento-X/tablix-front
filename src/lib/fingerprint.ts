@@ -1,7 +1,7 @@
-import type { NextRequest, NextResponse } from "next/server"
-import { createHash } from "crypto"
+import type { NextRequest, NextResponse } from 'next/server'
+import { createHash } from 'crypto'
 
-const FINGERPRINT_COOKIE_NAME = "tablix_fp"
+const FINGERPRINT_COOKIE_NAME = 'tablix_fp'
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year in seconds
 
 /**
@@ -9,12 +9,12 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year in seconds
  */
 function getClientIP(request: NextRequest): string {
   // Try various headers for IP address (proxy-aware)
-  const forwarded = request.headers.get("x-forwarded-for")
-  const realIp = request.headers.get("x-real-ip")
-  const cfConnectingIp = request.headers.get("cf-connecting-ip")
+  const forwarded = request.headers.get('x-forwarded-for')
+  const realIp = request.headers.get('x-real-ip')
+  const cfConnectingIp = request.headers.get('cf-connecting-ip')
 
   if (forwarded) {
-    return forwarded.split(",")[0].trim()
+    return forwarded.split(',')[0].trim()
   }
 
   if (realIp) {
@@ -26,7 +26,7 @@ function getClientIP(request: NextRequest): string {
   }
 
   // Fallback for local development
-  return "127.0.0.1"
+  return '127.0.0.1'
 }
 
 /**
@@ -42,8 +42,8 @@ function generateFingerprintId(): string {
  * Hash fingerprint components for privacy
  */
 function hashFingerprint(components: string[]): string {
-  const combined = components.join("|")
-  return createHash("sha256").update(combined).digest("hex").substring(0, 32)
+  const combined = components.join('|')
+  return createHash('sha256').update(combined).digest('hex').substring(0, 32)
 }
 
 /**
@@ -88,10 +88,10 @@ export function getUserFingerprint(request: NextRequest): {
 export function setFingerprintCookie(response: NextResponse, cookieId: string): void {
   response.cookies.set(FINGERPRINT_COOKIE_NAME, cookieId, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
     maxAge: COOKIE_MAX_AGE,
-    path: "/",
+    path: '/',
   })
 }
 
@@ -100,20 +100,14 @@ export function setFingerprintCookie(response: NextResponse, cookieId: string): 
  * For now, always returns 'free' since there's no authentication
  * TODO: Implement plan detection when authentication is added
  */
-export function getUserPlan(request: NextRequest): "free" | "pro" | "enterprise" {
-  // Check for plan override in header (for testing)
-  const planHeader = request.headers.get("x-tablix-plan")
-  if (planHeader === "pro" || planHeader === "enterprise") {
-    return planHeader
-  }
-
-  // TODO: When authentication is implemented, get plan from user token/session
+export function getUserPlan(_request: NextRequest): 'free' | 'pro' | 'enterprise' {
+  // TODO: When authentication is implemented, get plan from JWT token
   // const token = request.headers.get('authorization')
   // const user = await verifyToken(token)
   // return user.plan
 
-  // Default to free plan
-  return "free"
+  // Always return free until backend auth (Fastify JWT) is integrated
+  return 'free'
 }
 
 /**
@@ -122,7 +116,7 @@ export function getUserPlan(request: NextRequest): "free" | "pro" | "enterprise"
 export function getCurrentMonthKey(): string {
   const now = new Date()
   const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, "0")
+  const month = String(now.getMonth() + 1).padStart(2, '0')
   return `${year}-${month}`
 }
 

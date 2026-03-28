@@ -1,35 +1,64 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { incrementUnificationCount, checkUnificationLimit } from '@/lib/usage-tracker'
+import { atomicIncrementUnification } from '@/lib/usage-tracker'
 import { setFingerprintCookie, getUserFingerprint } from '@/lib/fingerprint'
+import { consumeUnificationToken } from '@/lib/security/unification-token'
+import { validateContentType } from '@/lib/security/validation-schemas'
 
 /**
  * POST /api/unification/complete
- * Increments the unification counter after successful client-side merge
+ * Atomically checks limit and increments the unification counter
+ * Requires a one-time token from /api/preview (prevents replay attacks)
+ * Uses Redis Lua script to prevent TOCTOU race conditions
  */
 export async function POST(request: NextRequest) {
   try {
-    // Get user fingerprint
-    const { isNew, cookieId } = getUserFingerprint(request)
-
-    // Check if user has remaining unifications
-    const limitCheck = await checkUnificationLimit(request)
-    if (!limitCheck.allowed) {
-      return NextResponse.json(
-        { error: limitCheck.error, code: limitCheck.errorCode },
-        { status: 403 }
-      )
+    // Validate Content-Type
+    const contentTypeCheck = validateContentType(request, 'json')
+    if (!contentTypeCheck.valid) {
+      return NextResponse.json({ error: contentTypeCheck.error }, { status: 415 })
     }
 
-    // Increment the counter
-    const newCount = await incrementUnificationCount(request)
+    // Get user fingerprint
+    const { isNew, cookieId, fingerprint } = getUserFingerprint(request)
+
+    // Parse and validate request body
+    let body: { token?: string }
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    }
+
+    // Validate one-time token (must come from /api/preview)
+    if (!body.token) {
+      return NextResponse.json({ error: 'Missing unification token' }, { status: 400 })
+    }
+
+    const tokenValid = await consumeUnificationToken(body.token, fingerprint)
+    if (!tokenValid) {
+      return NextResponse.json({ error: 'Invalid or expired unification token' }, { status: 403 })
+    }
+
+    // Atomic check + increment (no TOCTOU race condition)
+    const result = await atomicIncrementUnification(request)
+
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error: `Unification limit reached for your plan.`,
+          code: 'LIMIT_EXCEEDED',
+        },
+        { status: 403 },
+      )
+    }
 
     // Create response
     const response = NextResponse.json({
       success: true,
       unifications: {
-        current: newCount,
-        max: limitCheck.maxUnifications,
-        remaining: limitCheck.maxUnifications - newCount,
+        current: result.newCount,
+        max: result.maxUnifications,
+        remaining: result.maxUnifications - result.newCount,
       },
     })
 
@@ -41,9 +70,6 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     console.error('[Unification Complete API] Error:', error)
-    return NextResponse.json(
-      { error: 'Failed to record unification' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to record unification' }, { status: 500 })
   }
 }
