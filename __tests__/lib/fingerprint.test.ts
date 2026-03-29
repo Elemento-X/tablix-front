@@ -71,7 +71,7 @@ describe('fingerprint.ts', () => {
         expect(result.ip).toBe('10.0.0.5')
       })
 
-      it('should prefer x-forwarded-for over x-real-ip', () => {
+      it('should prefer x-real-ip over x-forwarded-for', () => {
         const request = createRequest({
           headers: {
             'x-forwarded-for': '192.168.1.100',
@@ -80,7 +80,7 @@ describe('fingerprint.ts', () => {
         })
         const result = getUserFingerprint(request)
 
-        expect(result.ip).toBe('192.168.1.100')
+        expect(result.ip).toBe('10.0.0.5')
       })
 
       it('should extract IP from cf-connecting-ip header (Cloudflare)', () => {
@@ -101,7 +101,7 @@ describe('fingerprint.ts', () => {
         expect(result.ip).toBe('203.0.113.0')
       })
 
-      it('should prefer x-forwarded-for over cf-connecting-ip', () => {
+      it('should prefer cf-connecting-ip over x-forwarded-for', () => {
         const request = createRequest({
           headers: {
             'x-forwarded-for': '192.168.1.100',
@@ -110,10 +110,10 @@ describe('fingerprint.ts', () => {
         })
         const result = getUserFingerprint(request)
 
-        expect(result.ip).toBe('192.168.1.100')
+        expect(result.ip).toBe('203.0.113.0')
       })
 
-      it('should prefer x-real-ip over cf-connecting-ip', () => {
+      it('should prefer cf-connecting-ip over x-real-ip', () => {
         const request = createRequest({
           headers: {
             'x-real-ip': '10.0.0.5',
@@ -122,7 +122,7 @@ describe('fingerprint.ts', () => {
         })
         const result = getUserFingerprint(request)
 
-        expect(result.ip).toBe('10.0.0.5')
+        expect(result.ip).toBe('203.0.113.0')
       })
 
       it('should fallback to 127.0.0.1 when no IP headers present', () => {

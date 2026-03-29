@@ -1,5 +1,5 @@
 import type { NextRequest, NextResponse } from 'next/server'
-import { createHash } from 'crypto'
+import { createHash, randomBytes } from 'crypto'
 
 const FINGERPRINT_COOKIE_NAME = 'tablix_fp'
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year in seconds
@@ -8,21 +8,22 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year in seconds
  * Extract IP address from request
  */
 function getClientIP(request: NextRequest): string {
-  // Try various headers for IP address (proxy-aware)
-  const forwarded = request.headers.get('x-forwarded-for')
-  const realIp = request.headers.get('x-real-ip')
+  // Priority: cf-connecting-ip (set by Cloudflare, not spoofable by client)
+  // > x-real-ip (set by reverse proxy) > x-forwarded-for (can be spoofed)
   const cfConnectingIp = request.headers.get('cf-connecting-ip')
+  const realIp = request.headers.get('x-real-ip')
+  const forwarded = request.headers.get('x-forwarded-for')
 
-  if (forwarded) {
-    return forwarded.split(',')[0].trim()
+  if (cfConnectingIp) {
+    return cfConnectingIp.trim()
   }
 
   if (realIp) {
     return realIp.trim()
   }
 
-  if (cfConnectingIp) {
-    return cfConnectingIp.trim()
+  if (forwarded) {
+    return forwarded.split(',')[0].trim()
   }
 
   // Fallback for local development
@@ -34,7 +35,7 @@ function getClientIP(request: NextRequest): string {
  */
 function generateFingerprintId(): string {
   const timestamp = Date.now().toString(36)
-  const random = Math.random().toString(36).substring(2, 15)
+  const random = randomBytes(8).toString('hex')
   return `${timestamp}-${random}`
 }
 

@@ -27,7 +27,7 @@ export async function consumeUnificationToken(
   token: string,
   fingerprint: string,
 ): Promise<boolean> {
-  if (!token || typeof token !== 'string' || token.length !== 64) {
+  if (!token || typeof token !== 'string' || !/^[0-9a-f]{64}$/.test(token)) {
     return false
   }
 

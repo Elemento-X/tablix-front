@@ -22,7 +22,7 @@ describe('middleware', () => {
       const response = middleware(request)
 
       expect(response.headers.get('Strict-Transport-Security')).toBe(
-        'max-age=63072000; includeSubDomains; preload'
+        'max-age=63072000; includeSubDomains; preload',
       )
     })
 
@@ -114,13 +114,18 @@ describe('middleware', () => {
       expect(csp).toContain("default-src 'self'")
     })
 
-    it('should have script-src directive', () => {
+    it('should have script-src directive without unsafe-inline', () => {
       const request = createRequest()
       const response = middleware(request)
 
       const csp = response.headers.get('Content-Security-Policy')
       expect(csp).toContain("script-src 'self'")
       expect(csp).toContain('https://vercel.live')
+
+      // Extract script-src directive and verify no unsafe-inline
+      const scriptSrc = csp!.split(';').find((d) => d.trim().startsWith('script-src'))
+      expect(scriptSrc).not.toContain('unsafe-inline')
+      expect(scriptSrc).not.toContain('unsafe-eval')
     })
 
     it('should have style-src directive', () => {

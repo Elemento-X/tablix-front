@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import {
   checkUnificationLimit,
+  atomicIncrementUnification,
   incrementUnificationCount,
   checkFileSizeLimit,
   getUserUsage,
@@ -15,6 +16,7 @@ jest.mock('@/lib/redis', () => ({
     get: jest.fn(),
     incr: jest.fn(),
     expire: jest.fn(),
+    atomicCheckAndIncr: jest.fn(),
   },
 }))
 
@@ -473,6 +475,123 @@ describe('usage-tracker.ts', () => {
       expect(usage).toHaveProperty('maxTotalSize')
       expect(usage).toHaveProperty('maxRows')
       expect(usage).toHaveProperty('maxColumns')
+    })
+  })
+
+  describe('atomicIncrementUnification', () => {
+    beforeEach(() => {
+      jest.useFakeTimers()
+      jest.setSystemTime(new Date('2024-06-15T10:00:00Z'))
+      mockGetUserPlan.mockReturnValue('free')
+      ;(mockStorage.atomicCheckAndIncr as jest.Mock).mockResolvedValue(1)
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+    })
+
+    it('should return success true with new count when under limit', async () => {
+      ;(mockStorage.atomicCheckAndIncr as jest.Mock).mockResolvedValue(1)
+
+      const request = createMockRequest()
+      const result = await atomicIncrementUnification(request)
+
+      expect(result.success).toBe(true)
+      expect(result.newCount).toBe(1)
+      expect(result.plan).toBe('free')
+      expect(result.maxUnifications).toBe(1)
+    })
+
+    it('should return success false when limit reached (result === -1)', async () => {
+      ;(mockStorage.atomicCheckAndIncr as jest.Mock).mockResolvedValue(-1)
+
+      const request = createMockRequest()
+      const result = await atomicIncrementUnification(request)
+
+      expect(result.success).toBe(false)
+      expect(result.newCount).toBe(1) // maxUnifications for free plan
+      expect(result.plan).toBe('free')
+      expect(result.maxUnifications).toBe(1)
+    })
+
+    it('should call atomicCheckAndIncr with correct key and plan limit', async () => {
+      const request = createMockRequest()
+      await atomicIncrementUnification(request)
+
+      expect(mockStorage.atomicCheckAndIncr).toHaveBeenCalledWith(
+        'upload:test-fingerprint-123:2024-01',
+        1, // free plan limit
+        expect.any(Number), // TTL
+      )
+    })
+
+    it('should pass positive TTL (seconds until end of next month)', async () => {
+      const request = createMockRequest()
+      await atomicIncrementUnification(request)
+
+      const [, , ttl] = (mockStorage.atomicCheckAndIncr as jest.Mock).mock.calls[0]
+      expect(ttl).toBeGreaterThan(0)
+      expect(ttl).toBeLessThan(62 * 24 * 60 * 60) // Less than 62 days
+    })
+
+    it('should work with Pro plan (limit 40)', async () => {
+      mockGetUserPlan.mockReturnValue('pro')
+      ;(mockStorage.atomicCheckAndIncr as jest.Mock).mockResolvedValue(25)
+
+      const request = createMockRequest()
+      const result = await atomicIncrementUnification(request)
+
+      expect(result.success).toBe(true)
+      expect(result.newCount).toBe(25)
+      expect(result.plan).toBe('pro')
+      expect(result.maxUnifications).toBe(40)
+
+      expect(mockStorage.atomicCheckAndIncr).toHaveBeenCalledWith(
+        expect.any(String),
+        40, // pro plan limit
+        expect.any(Number),
+      )
+    })
+
+    it('should work with Enterprise plan (unlimited — Infinity limit)', async () => {
+      mockGetUserPlan.mockReturnValue('enterprise')
+      ;(mockStorage.atomicCheckAndIncr as jest.Mock).mockResolvedValue(100)
+
+      const request = createMockRequest()
+      const result = await atomicIncrementUnification(request)
+
+      expect(result.success).toBe(true)
+      expect(result.newCount).toBe(100)
+      expect(result.plan).toBe('enterprise')
+      expect(result.maxUnifications).toBe(Infinity)
+    })
+
+    it('should use correct fingerprint and month key', async () => {
+      const request = createMockRequest()
+      await atomicIncrementUnification(request)
+
+      expect(mockGetUserFingerprint).toHaveBeenCalledWith(request)
+      expect(mockGetCurrentMonthKey).toHaveBeenCalled()
+      expect(mockCreateUploadCountKey).toHaveBeenCalledWith('test-fingerprint-123', '2024-01')
+    })
+
+    it('should propagate storage errors', async () => {
+      ;(mockStorage.atomicCheckAndIncr as jest.Mock).mockRejectedValue(new Error('Redis down'))
+
+      const request = createMockRequest()
+      await expect(atomicIncrementUnification(request)).rejects.toThrow('Redis down')
+    })
+
+    it('should calculate correct TTL for end of December scenario', async () => {
+      jest.setSystemTime(new Date('2024-12-15T10:00:00Z'))
+
+      const request = createMockRequest()
+      await atomicIncrementUnification(request)
+
+      const [, , ttl] = (mockStorage.atomicCheckAndIncr as jest.Mock).mock.calls[0]
+      // End of January 2025 from Dec 15 = ~47 days
+      expect(ttl).toBeGreaterThan(44 * 24 * 60 * 60)
+      expect(ttl).toBeLessThan(50 * 24 * 60 * 60)
     })
   })
 })
