@@ -60,6 +60,25 @@
 - NÃO ignorar erros de lint ou TypeScript — corrigir antes de considerar a tarefa concluída
 - NÃO rodar a suíte de testes inteira — sempre rodar testes específicos do arquivo ou módulo alterado (`npm test -- --testPathPattern=<pattern>`)
 
+## Pipeline QA (obrigatorio)
+
+Toda entrega de codigo passa pelo pipeline completo, sem excecao:
+
+```
+@tester → @security → @reviewer → @planner → Trello
+```
+
+- **@tester** valida funcionalidade, coverage, edge cases, testes passando
+- **@security** audita seguranca: OWASP, injection, headers, rate limit
+- **@reviewer** consolida os dois relatorios e decide: aprovado ou reprovado
+- **@planner** formata o resultado para o Trello — SEMPRE, aprovado ou reprovado
+- 1 comentario consolidado por card por execucao do pipeline (contendo VALIDACAO, AUDITORIA, REVISAO, PLANO)
+- Reprovacao de QUALQUER agente reinicia o ciclo completo apos correcao
+- Correcoes vao no card existente; descobertas novas viram card novo
+- Historico de reprovacoes no Trello e sagrado — nunca apagar, nunca pular
+
+Regra detalhada em `.claude/rules/qa-pipeline.md`
+
 ## Documentação e qualidade
 
 - Toda feature nova precisa de testes (mínimo 90% coverage em `src/lib/` e `src/hooks/`)
