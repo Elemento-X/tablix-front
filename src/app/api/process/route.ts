@@ -16,7 +16,8 @@ import {
   getUserPlan,
 } from '@/lib/fingerprint'
 import { getPlanLimits } from '@/lib/limits'
-import { checkUnificationLimit } from '@/lib/usage-tracker'
+import { atomicIncrementUnification } from '@/lib/usage-tracker'
+import { consumeUnificationToken } from '@/lib/security/unification-token'
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,32 +47,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user fingerprint and plan
-    const { isNew, cookieId } = getUserFingerprint(request)
+    const { isNew, cookieId, fingerprint } = getUserFingerprint(request)
     const plan = getUserPlan(request)
     const limits = getPlanLimits(plan)
-
-    // Check unification limit (monthly quota)
-    const unificationCheck = await checkUnificationLimit(request)
-
-    if (!unificationCheck.allowed) {
-      const response = NextResponse.json(
-        {
-          error: unificationCheck.error,
-          errorCode: unificationCheck.errorCode,
-        },
-        { status: 403 },
-      )
-
-      if (isNew) {
-        setFingerprintCookie(response, cookieId)
-      }
-
-      return response
-    }
 
     const formData = await request.formData()
     const files = formData.getAll('files') as File[]
     const columnsJson = formData.get('columns') as string
+    const token = formData.get('token') as string
+
+    // Validate token presence early (cheap check, no Redis call)
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Missing unification token' },
+        { status: 400 },
+      )
+    }
 
     // Validate file count and per-file size using plan limits
     const fileLimitValidation = validateFileLimits(
@@ -165,6 +156,34 @@ export async function POST(request: NextRequest) {
           { status: 400 },
         )
       }
+    }
+
+    // All validations passed — now consume resources (token + quota)
+    // Token consumed AFTER all validations to avoid wasting it on invalid requests
+    const tokenValid = await consumeUnificationToken(token, fingerprint)
+    if (!tokenValid) {
+      return NextResponse.json(
+        { error: 'Invalid or expired unification token' },
+        { status: 403 },
+      )
+    }
+
+    // Atomic check + increment quota (after token, so quota only counts real processing)
+    const quotaResult = await atomicIncrementUnification(request)
+    if (!quotaResult.success) {
+      const response = NextResponse.json(
+        {
+          error: 'Unification limit reached for your plan.',
+          errorCode: 'LIMIT_EXCEEDED',
+        },
+        { status: 403 },
+      )
+
+      if (isNew) {
+        setFingerprintCookie(response, cookieId)
+      }
+
+      return response
     }
 
     // TODO: Implement actual file processing logic

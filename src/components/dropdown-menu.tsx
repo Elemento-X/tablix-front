@@ -8,7 +8,9 @@ interface DropdownMenuContextValue {
   setOpen: (open: boolean) => void
 }
 
-const DropdownMenuContext = React.createContext<DropdownMenuContextValue | undefined>(undefined)
+const DropdownMenuContext = React.createContext<
+  DropdownMenuContextValue | undefined
+>(undefined)
 
 function useDropdownMenu() {
   const context = React.useContext(DropdownMenuContext)
@@ -51,7 +53,10 @@ const DropdownMenuTrigger = React.forwardRef<
 
   if (asChild && React.isValidElement(children)) {
     // React 19 compatible ref handling
-    const childElement = children as React.ReactElement<any>
+    const childElement = children as React.ReactElement<{
+      onClick?: (e: React.MouseEvent) => void
+      ref?: React.Ref<HTMLButtonElement>
+    }>
     const childProps = {
       onClick: (e: React.MouseEvent) => {
         setOpen(!open)
@@ -64,14 +69,21 @@ const DropdownMenuTrigger = React.forwardRef<
 
     // Merge refs if child has ref
     if (ref) {
-      const childRef = (childElement as any).ref
-      const mergedRef = (node: any) => {
+      const childRef = (
+        childElement as unknown as { ref?: React.Ref<HTMLButtonElement> }
+      ).ref
+      const mergedRef = (node: HTMLButtonElement | null) => {
         if (typeof ref === 'function') ref(node)
-        else if (ref) (ref as any).current = node
+        else if (ref)
+          (ref as React.MutableRefObject<HTMLButtonElement | null>).current =
+            node
 
         if (childRef) {
           if (typeof childRef === 'function') childRef(node)
-          else if (childRef) childRef.current = node
+          else if (childRef)
+            (
+              childRef as React.MutableRefObject<HTMLButtonElement | null>
+            ).current = node
         }
       }
       return React.cloneElement(childElement, { ...childProps, ref: mergedRef })
@@ -110,7 +122,10 @@ function DropdownMenuContent({
 
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (contentRef.current && !contentRef.current.contains(e.target as Node)) {
+      if (
+        contentRef.current &&
+        !contentRef.current.contains(e.target as Node)
+      ) {
         const trigger = contentRef.current.previousElementSibling
         if (trigger && !trigger.contains(e.target as Node)) {
           setOpen(false)
@@ -137,10 +152,10 @@ function DropdownMenuContent({
       ref={contentRef}
       data-slot="dropdown-menu-content"
       className={cn(
-        'absolute z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md',
+        'bg-popover text-popover-foreground absolute z-50 min-w-[8rem] overflow-hidden rounded-md border p-1 shadow-md',
         'animate-in fade-in-0 zoom-in-95 slide-in-from-top-2',
         alignmentClasses[align],
-        className
+        className,
       )}
       style={{ top: `calc(100% + ${sideOffset}px)` }}
       {...props}
@@ -161,8 +176,8 @@ function DropdownMenuItem({
     <div
       data-slot="dropdown-menu-item"
       className={cn(
-        'relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
-        className
+        'hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground relative flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm transition-colors outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+        className,
       )}
       onClick={(e) => {
         onClick?.(e)
@@ -180,7 +195,7 @@ function DropdownMenuSeparator({
   return (
     <div
       data-slot="dropdown-menu-separator"
-      className={cn('-mx-1 my-1 h-px bg-muted', className)}
+      className={cn('bg-muted -mx-1 my-1 h-px', className)}
       {...props}
     />
   )

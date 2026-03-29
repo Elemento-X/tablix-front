@@ -27,6 +27,7 @@ yarn-error.log*
 
 # testing
 /coverage
+/coverage-qa-*
 
 # typescript
 *.tsbuildinfo

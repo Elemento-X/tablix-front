@@ -41,9 +41,7 @@ interface RateLimitOptions {
 }
 
 // Lazy load Redis and Ratelimit to avoid ESM issues in tests
-let redisClient: ReturnType<
-  typeof import('@/lib/redis').getRedisClient
-> | null = null
+let redisClient: ReturnType<typeof import('@/lib/redis').getRedisClient> | null = null
 let redisChecked = false
 
 function getRedis() {
@@ -78,10 +76,7 @@ export function rateLimit(options: RateLimitOptions) {
           const { Ratelimit } = require('@upstash/ratelimit')
           upstashLimiter = new Ratelimit({
             redis,
-            limiter: Ratelimit.slidingWindow(
-              options.maxRequests,
-              `${options.interval}ms`,
-            ),
+            limiter: Ratelimit.slidingWindow(options.maxRequests, `${options.interval}ms`),
             analytics: true,
             prefix: `ratelimit:${namespace}`,
           })
@@ -96,9 +91,7 @@ export function rateLimit(options: RateLimitOptions) {
   }
 
   return {
-    check: async (
-      request: NextRequest,
-    ): Promise<{ success: boolean; remaining: number }> => {
+    check: async (request: NextRequest): Promise<{ success: boolean; remaining: number }> => {
       const baseIdentifier = getIdentifier(request)
       const identifier = `${namespace}:${baseIdentifier}`
 
@@ -178,10 +171,10 @@ export const rateLimiters = {
     namespace: 'upload',
   }),
 
-  // 30 requests per minute for processing
+  // 5 requests per minute for processing (heavy operation: file upload + validation + merge)
   process: rateLimit({
     interval: 60 * 1000, // 1 minute
-    maxRequests: 30,
+    maxRequests: 5,
     namespace: 'process',
   }),
 

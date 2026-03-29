@@ -124,9 +124,23 @@ export async function validateFileContent(
       bytes[7] === 0xe1
 
     // Check for CSV/plain text
-    const isText = bytes.every(
-      (byte) => byte < 128 || byte === 0xff || byte === 0xfe,
-    )
+    // If file starts with a BOM, treat as valid text (UTF-8 or UTF-16)
+    const hasUtf16BOM =
+      (bytes[0] === 0xff && bytes[1] === 0xfe) ||
+      (bytes[0] === 0xfe && bytes[1] === 0xff)
+    const hasUtf8BOM =
+      bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf
+
+    const isText =
+      hasUtf16BOM ||
+      hasUtf8BOM ||
+      bytes.every(
+        (byte) =>
+          (byte >= 0x20 && byte <= 0x7e) || // Printable ASCII
+          byte === 0x09 || // Tab
+          byte === 0x0a || // Line feed
+          byte === 0x0d, // Carriage return
+      )
 
     const fileName = file.name.toLowerCase()
 
@@ -151,14 +165,92 @@ export async function validateFileContent(
       }
     }
 
-    // Note: Zip bomb protection for XLSX is handled by:
-    // 1. MAX_FILE_SIZE (10MB) limits the compressed file size
-    // 2. Row limits in use-file-parser.ts and spreadsheet-merge.ts limit parsed data
-    // 3. Client-side processing limits damage to the attacker's own browser
+    // Zip bomb protection: check compression ratio for XLSX files
+    if (isZip && fileName.endsWith('.xlsx')) {
+      const ratioCheck = await checkZipCompressionRatio(file)
+      if (!ratioCheck.valid) {
+        return ratioCheck
+      }
+    }
 
     return { valid: true }
   } catch (error) {
     return { valid: false, error: 'Failed to validate file content' }
+  }
+}
+
+const MAX_COMPRESSION_RATIO = 100 // Reject if uncompressed/compressed > 100:1
+
+async function checkZipCompressionRatio(file: File): Promise<ValidationResult> {
+  try {
+    const buffer = await file.arrayBuffer()
+    const view = new DataView(buffer)
+
+    // Find End of Central Directory record (EOCD)
+    // EOCD signature: 0x06054b50
+    let eocdOffset = -1
+    for (
+      let i = buffer.byteLength - 22;
+      i >= 0 && i >= buffer.byteLength - 65557;
+      i--
+    ) {
+      if (view.getUint32(i, true) === 0x06054b50) {
+        eocdOffset = i
+        break
+      }
+    }
+
+    if (eocdOffset === -1) {
+      // Cannot find EOCD — accept (file too small or non-standard ZIP; size limits still protect)
+      return { valid: true }
+    }
+
+    // Read central directory offset and size from EOCD
+    const cdOffset = view.getUint32(eocdOffset + 16, true)
+    const cdSize = view.getUint32(eocdOffset + 12, true)
+
+    if (cdOffset + cdSize > buffer.byteLength) {
+      // Corrupted directory — accept (conservative; size limits still protect)
+      return { valid: true }
+    }
+
+    // Walk the central directory entries
+    let totalCompressed = 0
+    let totalUncompressed = 0
+    let offset = cdOffset
+
+    while (offset < cdOffset + cdSize) {
+      // Central directory file header signature: 0x02014b50
+      if (view.getUint32(offset, true) !== 0x02014b50) break
+
+      const compressedSize = view.getUint32(offset + 20, true)
+      const uncompressedSize = view.getUint32(offset + 24, true)
+      const fileNameLength = view.getUint16(offset + 28, true)
+      const extraFieldLength = view.getUint16(offset + 30, true)
+      const commentLength = view.getUint16(offset + 32, true)
+
+      totalCompressed += compressedSize
+      totalUncompressed += uncompressedSize
+
+      // Move to next entry
+      offset += 46 + fileNameLength + extraFieldLength + commentLength
+    }
+
+    // Check ratio (only if compressed size > 0 to avoid division by zero)
+    if (totalCompressed > 0) {
+      const ratio = totalUncompressed / totalCompressed
+      if (ratio > MAX_COMPRESSION_RATIO) {
+        return {
+          valid: false,
+          error: 'File rejected: suspicious compression ratio',
+        }
+      }
+    }
+
+    return { valid: true }
+  } catch {
+    // If we can't parse the ZIP structure, reject as invalid
+    return { valid: false, error: 'Invalid XLSX: cannot read ZIP structure' }
   }
 }
 

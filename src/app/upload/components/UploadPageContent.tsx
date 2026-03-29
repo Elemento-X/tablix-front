@@ -11,15 +11,24 @@ import { formatFileSize, useUsage } from '@/hooks/use-usage'
 import { useFileParser } from '@/hooks/use-file-parser'
 import { useLocale } from '@/lib/i18n'
 import { validateFile, validateFileContent } from '@/lib/security'
-import { mergeSpreadsheets, canProcessClientSide, downloadBlob } from '@/lib/spreadsheet-merge'
-import { ArrowLeft, FileSpreadsheet, Info, Loader2, Upload, X } from 'lucide-react'
+import {
+  mergeSpreadsheets,
+  canProcessClientSide,
+  downloadBlob,
+} from '@/lib/spreadsheet-merge'
+import {
+  ArrowLeft,
+  FileSpreadsheet,
+  Info,
+  Loader2,
+  Upload,
+  X,
+} from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
 export function UploadPageContent() {
-  const router = useRouter()
   const { t } = useLocale()
   const { usage, isLoading: isLoadingUsage, refetch: refetchUsage } = useUsage()
   const { parseFile } = useFileParser()
@@ -29,7 +38,7 @@ export function UploadPageContent() {
   const [selectedColumns, setSelectedColumns] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [step, setStep] = useState<'upload' | 'columns'>('upload')
-  const [totalRows, setTotalRows] = useState(0)
+  const [unificationToken, setUnificationToken] = useState<string | null>(null)
 
   // Get limits from usage or use defaults
   const maxInputFiles = usage?.limits.maxInputFiles ?? 3
@@ -50,7 +59,10 @@ export function UploadPageContent() {
     const totalFilesAfterAdd = files.length + selectedFiles.length
     if (totalFilesAfterAdd > maxInputFiles) {
       toast.error(
-        t('messages.tooManyFiles', { max: maxInputFiles, plan: usage?.plan.toUpperCase() ?? 'FREE' })
+        t('messages.tooManyFiles', {
+          max: maxInputFiles,
+          plan: usage?.plan.toUpperCase() ?? 'FREE',
+        }),
       )
       return
     }
@@ -69,20 +81,21 @@ export function UploadPageContent() {
           t('messages.fileTooLarge', {
             name: file.name,
             plan: usage.plan.toUpperCase(),
-            size: formatFileSize(usage.limits.maxFileSize)
-          })
+            size: formatFileSize(usage.limits.maxFileSize),
+          }),
         )
         continue
       }
 
       // Check total size limit
-      const newTotalSize = currentTotalSize + newFiles.reduce((s, f) => s + f.size, 0) + file.size
+      const newTotalSize =
+        currentTotalSize + newFiles.reduce((s, f) => s + f.size, 0) + file.size
       if (newTotalSize > maxTotalSize) {
         toast.error(
           t('messages.totalSizeExceeded', {
             plan: usage?.plan.toUpperCase() ?? 'FREE',
-            size: formatFileSize(maxTotalSize)
-          })
+            size: formatFileSize(maxTotalSize),
+          }),
         )
         break
       }
@@ -90,14 +103,18 @@ export function UploadPageContent() {
       // Validate file format
       const basicValidation = validateFile(file)
       if (!basicValidation.valid) {
-        toast.error(`"${file.name}": ${basicValidation.error || t('upload.error') || 'Invalid file'}`)
+        toast.error(
+          `"${file.name}": ${basicValidation.error || t('upload.error') || 'Invalid file'}`,
+        )
         continue
       }
 
       // Validate file content
       const contentValidation = await validateFileContent(file)
       if (!contentValidation.valid) {
-        toast.error(`"${file.name}": ${contentValidation.error || t('upload.error') || 'Invalid file content'}`)
+        toast.error(
+          `"${file.name}": ${contentValidation.error || t('upload.error') || 'Invalid file content'}`,
+        )
         continue
       }
 
@@ -109,7 +126,7 @@ export function UploadPageContent() {
       toast.success(
         newFiles.length === 1
           ? t('messages.fileAdded')
-          : t('messages.filesAdded', { count: newFiles.length })
+          : t('messages.filesAdded', { count: newFiles.length }),
       )
     }
 
@@ -123,7 +140,9 @@ export function UploadPageContent() {
 
   const handleToggleColumn = (column: string) => {
     setSelectedColumns((prev) =>
-      prev.includes(column) ? prev.filter((c) => c !== column) : [...prev, column]
+      prev.includes(column)
+        ? prev.filter((c) => c !== column)
+        : [...prev, column],
     )
   }
 
@@ -135,8 +154,16 @@ export function UploadPageContent() {
 
     if (usage && selectedColumns.length > usage.limits.maxColumns) {
       toast.error(
-        t('messages.tooManyColumns', { max: usage.limits.maxColumns, plan: usage.plan.toUpperCase() })
+        t('messages.tooManyColumns', {
+          max: usage.limits.maxColumns,
+          plan: usage.plan.toUpperCase(),
+        }),
       )
+      return
+    }
+
+    if (!unificationToken) {
+      toast.error(t('messages.processFailed'))
       return
     }
 
@@ -147,8 +174,27 @@ export function UploadPageContent() {
       const useClientSide = canProcessClientSide(files)
       const addWatermark = usage?.plan === 'free'
 
+      // Helper: consume quota via one-time token (must succeed before download)
+      const consumeQuota = async () => {
+        const completeResponse = await fetch('/api/unification/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: unificationToken }),
+        })
+
+        if (!completeResponse.ok) {
+          const completeData = await completeResponse.json()
+          toast.error(completeData.error || t('messages.processFailed'))
+          return false
+        }
+
+        return true
+      }
+
       if (useClientSide) {
-        // Client-side merge for small files
+        // Client-side: consume quota BEFORE merge (prevents bypass)
+        if (!(await consumeQuota())) return
+
         toast.info(t('messages.processingFiles'))
 
         const result = await mergeSpreadsheets({
@@ -159,34 +205,28 @@ export function UploadPageContent() {
 
         downloadBlob(result.blob, result.filename)
 
-        // Record the unification on the server
-        try {
-          await fetch('/api/unification/complete', { method: 'POST' })
-        } catch {
-          // Continue even if tracking fails - user already has the file
-          console.warn('Failed to record unification')
-        }
-
         toast.success(
-          t('messages.unifiedSuccess', { count: files.length, rows: result.rowCount })
+          t('messages.unifiedSuccess', {
+            count: files.length,
+            rows: result.rowCount,
+          }),
         )
 
-        // Refresh usage to update unification count
         refetchUsage()
 
-        // Reset state for next unification
         setStep('upload')
         setFiles([])
         setDetectedColumns([])
         setSelectedColumns([])
-        setTotalRows(0)
+        setUnificationToken(null)
       } else {
-        // Server-side processing for large files
+        // Server-side: token + quota consumed atomically inside /api/process
         toast.info(t('messages.processingOnServer'))
 
         const formData = new FormData()
         files.forEach((file) => formData.append('files', file))
         formData.append('columns', JSON.stringify(selectedColumns))
+        formData.append('token', unificationToken)
 
         const response = await fetch('/api/process', {
           method: 'POST',
@@ -205,16 +245,17 @@ export function UploadPageContent() {
 
         toast.success(t('messages.processSuccess'))
 
-        // Refresh usage and reset state
         refetchUsage()
         setStep('upload')
         setFiles([])
         setDetectedColumns([])
         setSelectedColumns([])
-        setTotalRows(0)
+        setUnificationToken(null)
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('messages.processFailed'))
+      toast.error(
+        err instanceof Error ? err.message : t('messages.processFailed'),
+      )
     } finally {
       setIsProcessing(false)
     }
@@ -230,8 +271,8 @@ export function UploadPageContent() {
       toast.error(
         t('messages.unificationLimitExceeded', {
           current: usage.unifications.current,
-          max: usage.unifications.max
-        })
+          max: usage.unifications.max,
+        }),
       )
       return
     }
@@ -245,7 +286,13 @@ export function UploadPageContent() {
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
-        toast.info(t('messages.parsingFile', { current: i + 1, total: files.length, name: file.name }))
+        toast.info(
+          t('messages.parsingFile', {
+            current: i + 1,
+            total: files.length,
+            name: file.name,
+          }),
+        )
 
         const result = await parseFile(file)
         allColumns.push(new Set(result.columns))
@@ -258,8 +305,8 @@ export function UploadPageContent() {
           t('messages.rowsExceedLimit', {
             total: totalRowCount,
             max: usage.limits.maxRows,
-            plan: usage.plan.toUpperCase()
-          })
+            plan: usage.plan.toUpperCase(),
+          }),
         )
         setIsUploading(false)
         return
@@ -273,7 +320,7 @@ export function UploadPageContent() {
         // Start with columns from first file
         const firstFileColumns = allColumns[0]
         commonColumns = Array.from(firstFileColumns).filter((col) =>
-          allColumns.every((colSet) => colSet.has(col))
+          allColumns.every((colSet) => colSet.has(col)),
         )
       }
 
@@ -290,18 +337,43 @@ export function UploadPageContent() {
           t('messages.foundCommonColumns', {
             count: commonColumns.length,
             max: usage.limits.maxColumns,
-            plan: usage.plan.toUpperCase()
-          })
+            plan: usage.plan.toUpperCase(),
+          }),
         )
       }
 
       toast.success(
         files.length === 1
-          ? t('messages.parsedSuccessSingle', { columns: commonColumns.length, rows: totalRowCount })
-          : t('messages.parsedSuccessMultiple', { files: files.length, columns: commonColumns.length, rows: totalRowCount })
+          ? t('messages.parsedSuccessSingle', {
+              columns: commonColumns.length,
+              rows: totalRowCount,
+            })
+          : t('messages.parsedSuccessMultiple', {
+              files: files.length,
+              columns: commonColumns.length,
+              rows: totalRowCount,
+            }),
       )
 
-      setTotalRows(totalRowCount)
+      // Validate quota server-side and get one-time unification token
+      const previewFormData = new FormData()
+      previewFormData.append('files', files[0])
+
+      const previewResponse = await fetch('/api/preview', {
+        method: 'POST',
+        body: previewFormData,
+      })
+
+      if (!previewResponse.ok) {
+        const previewData = await previewResponse.json()
+        toast.error(previewData.error || t('messages.processFailed'))
+        setIsUploading(false)
+        return
+      }
+
+      const previewData = await previewResponse.json()
+      setUnificationToken(previewData.unificationToken)
+
       setDetectedColumns(commonColumns)
       // Pre-select columns up to the limit
       const maxSelectable = usage?.limits.maxColumns ?? 3
@@ -324,7 +396,9 @@ export function UploadPageContent() {
               className="flex items-center gap-2 text-neutral-600 hover:text-neutral-900"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span className="text-sm font-medium">{t('upload.back') || 'Voltar'}</span>
+              <span className="text-sm font-medium">
+                {t('upload.back') || 'Voltar'}
+              </span>
             </Link>
 
             <Link href="/" className="text-xl font-semibold text-neutral-900">
@@ -332,7 +406,10 @@ export function UploadPageContent() {
             </Link>
 
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="bg-neutral-100 text-neutral-700">
+              <Badge
+                variant="secondary"
+                className="bg-neutral-100 text-neutral-700"
+              >
                 {t('pricing.plans.free.name')}
               </Badge>
 
@@ -343,49 +420,55 @@ export function UploadPageContent() {
       </header>
 
       <main className="mx-auto max-w-3xl px-6 py-16">
-        <div className="text-center mb-12">
+        <div className="mb-12 text-center">
           <h1 className="text-4xl font-bold text-neutral-900">
             {step === 'upload' ? t('upload.title') : t('columns.title')}
           </h1>
 
           <p className="mt-4 text-lg text-neutral-600">
-            {step === 'upload'
-              ? t('upload.subtitle')
-              : t('columns.subtitle')}
+            {step === 'upload' ? t('upload.subtitle') : t('columns.subtitle')}
           </p>
         </div>
 
         {usage && !isLoadingUsage && (
-          <Card className="border-neutral-200 mb-6 bg-blue-50 border-blue-200">
+          <Card className="mb-6 border-blue-200 border-neutral-200 bg-blue-50">
             <CardContent className="p-4">
               <section className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
                 <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="mb-2 flex items-center justify-between">
                     <span className="text-sm font-medium text-neutral-900">
                       {t('status.plan')}: {usage.plan.toUpperCase()}
                     </span>
 
                     <span className="text-sm font-medium text-neutral-900">
-                      {usage.unifications.remaining}/{usage.unifications.max} {t('status.unificationsRemaining')}
+                      {usage.unifications.remaining}/{usage.unifications.max}{' '}
+                      {t('status.unificationsRemaining')}
                     </span>
                   </div>
 
-                  <div className="w-full bg-neutral-200 rounded-full h-2">
+                  <div className="h-2 w-full rounded-full bg-neutral-200">
                     <div
                       className={`h-2 rounded-full transition-all ${
                         usage.unifications.remaining === 0
                           ? 'bg-red-500'
                           : usage.unifications.remaining === 1
-                          ? 'bg-yellow-500'
-                          : 'bg-green-500'
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
                       }`}
-                      style={{ width: `${(usage.unifications.remaining / usage.unifications.max) * 100}%` }}
+                      style={{
+                        width: `${(usage.unifications.remaining / usage.unifications.max) * 100}%`,
+                      }}
                     />
                   </div>
 
-                  <p className="text-xs text-neutral-600 mt-2">
-                    {t('status.maxFiles')} {usage.limits.maxInputFiles} {t('status.files')} • {t('status.maxTotalSize')}: {formatFileSize(usage.limits.maxTotalSize)} • {t('status.maxFiles')} {usage.limits.maxRows} {t('status.maxRows')} • {t('status.maxFiles')} {usage.limits.maxColumns} {t('status.maxColumns')}
+                  <p className="mt-2 text-xs text-neutral-600">
+                    {t('status.maxFiles')} {usage.limits.maxInputFiles}{' '}
+                    {t('status.files')} • {t('status.maxTotalSize')}:{' '}
+                    {formatFileSize(usage.limits.maxTotalSize)} •{' '}
+                    {t('status.maxFiles')} {usage.limits.maxRows}{' '}
+                    {t('status.maxRows')} • {t('status.maxFiles')}{' '}
+                    {usage.limits.maxColumns} {t('status.maxColumns')}
                   </p>
                 </div>
               </section>
@@ -393,7 +476,7 @@ export function UploadPageContent() {
           </Card>
         )}
 
-{step === 'upload' && (
+        {step === 'upload' && (
           <Card className="border-neutral-200">
             <CardContent className="p-8">
               <section className="flex flex-col items-center gap-6">
@@ -408,12 +491,12 @@ export function UploadPageContent() {
                   >
                     <Upload className="h-8 w-8 text-neutral-600" />
                     <div className="text-center">
-                      <span className="text-base font-medium text-neutral-700 block">
+                      <span className="block text-base font-medium text-neutral-700">
                         {files.length > 0
                           ? `${files.length} ${t('upload.dropzoneWithFiles')}`
                           : t('upload.dropzone')}
                       </span>
-                      <span className="text-sm text-neutral-500 mt-2 block">
+                      <span className="mt-2 block text-sm text-neutral-500">
                         {t('upload.maxSize')}
                       </span>
                     </div>
@@ -429,26 +512,33 @@ export function UploadPageContent() {
                 </div>
 
                 {files.length > 0 && (
-                  <div className="w-full space-y-2 bg-neutral-50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
+                  <div className="w-full space-y-2 rounded-lg bg-neutral-50 p-4">
+                    <div className="mb-2 flex items-center justify-between">
                       <span className="text-sm font-medium text-neutral-700">
-                        {files.length} {t('columns.of')} {maxInputFiles} {t('status.files')}
+                        {files.length} {t('columns.of')} {maxInputFiles}{' '}
+                        {t('status.files')}
                       </span>
                       <span className="text-xs text-neutral-500">
-                        {formatFileSize(currentTotalSize)} {t('columns.of')} {formatFileSize(maxTotalSize)}
+                        {formatFileSize(currentTotalSize)} {t('columns.of')}{' '}
+                        {formatFileSize(maxTotalSize)}
                       </span>
                     </div>
                     {files.map((file, index) => (
-                      <div key={index} className="flex items-center gap-3 text-sm bg-white rounded-md p-2 border border-neutral-200">
-                        <FileSpreadsheet className="h-4 w-4 text-neutral-600 flex-shrink-0" />
-                        <span className="truncate text-neutral-900 flex-1">{file.name}</span>
-                        <span className="text-xs text-neutral-500 flex-shrink-0">
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 rounded-md border border-neutral-200 bg-white p-2 text-sm"
+                      >
+                        <FileSpreadsheet className="h-4 w-4 flex-shrink-0 text-neutral-600" />
+                        <span className="flex-1 truncate text-neutral-900">
+                          {file.name}
+                        </span>
+                        <span className="flex-shrink-0 text-xs text-neutral-500">
                           {formatFileSize(file.size)}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleRemoveFile(index)}
-                          className="p-1 hover:bg-neutral-100 rounded-md transition-colors flex-shrink-0"
+                          className="flex-shrink-0 rounded-md p-1 transition-colors hover:bg-neutral-100"
                           aria-label={`Remove ${file.name}`}
                         >
                           <X className="h-4 w-4 text-neutral-500 hover:text-red-500" />
@@ -456,21 +546,23 @@ export function UploadPageContent() {
                       </div>
                     ))}
                     {files.length < maxInputFiles && (
-                      <p className="text-xs text-neutral-500 text-center pt-2">
+                      <p className="pt-2 text-center text-xs text-neutral-500">
                         {t('status.clickToAddMore')}
                       </p>
                     )}
                   </div>
                 )}
 
-                <div className="w-full text-center py-4">
-                  <p className="text-sm text-neutral-600">{t('upload.securityNote')}</p>
+                <div className="w-full py-4 text-center">
+                  <p className="text-sm text-neutral-600">
+                    {t('upload.securityNote')}
+                  </p>
                 </div>
 
                 <Button
                   onClick={handleUpload}
                   disabled={files.length === 0 || isUploading}
-                  className="w-full bg-neutral-900 hover:bg-neutral-800 text-white h-12"
+                  className="h-12 w-full bg-neutral-900 text-white hover:bg-neutral-800"
                   size="lg"
                 >
                   {isUploading ? (
@@ -496,9 +588,11 @@ export function UploadPageContent() {
                     <h3 className="text-lg font-semibold text-neutral-900">
                       {t('columns.detected')} ({detectedColumns.length})
                     </h3>
-                    <p className="text-sm text-neutral-600 mt-1">
-                      {selectedColumns.length} {t('columns.of')} {detectedColumns.length} {t('columns.selected')}
-                      {usage && ` (${t('columns.max')} ${usage.limits.maxColumns})`}
+                    <p className="mt-1 text-sm text-neutral-600">
+                      {selectedColumns.length} {t('columns.of')}{' '}
+                      {detectedColumns.length} {t('columns.selected')}
+                      {usage &&
+                        ` (${t('columns.max')} ${usage.limits.maxColumns})`}
                     </p>
                   </div>
                   <Button
@@ -509,36 +603,39 @@ export function UploadPageContent() {
                       setDetectedColumns([])
                       setSelectedColumns([])
                       setFiles([])
+                      setUnificationToken(null)
                     }}
                   >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    <ArrowLeft className="mr-2 h-4 w-4" />
                     {t('columns.startOver')}
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-96 overflow-y-auto p-2">
+                <div className="grid max-h-96 grid-cols-2 gap-3 overflow-y-auto p-2 sm:grid-cols-3">
                   {detectedColumns.map((column) => (
                     <button
                       key={column}
                       onClick={() => handleToggleColumn(column)}
-                      className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-all text-left ${
+                      className={`flex items-center gap-2 rounded-lg border-2 p-3 text-left transition-all ${
                         selectedColumns.includes(column)
                           ? 'border-neutral-900 bg-neutral-900 text-white'
                           : 'border-neutral-200 bg-white text-neutral-900 hover:border-neutral-300'
                       }`}
                     >
                       <div
-                        className={`flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center ${
+                        className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border-2 ${
                           selectedColumns.includes(column)
                             ? 'border-white bg-white'
                             : 'border-neutral-300'
                         }`}
                       >
                         {selectedColumns.includes(column) && (
-                          <div className="w-2 h-2 bg-neutral-900 rounded-sm" />
+                          <div className="h-2 w-2 rounded-sm bg-neutral-900" />
                         )}
                       </div>
-                      <span className="text-sm font-medium truncate">{column}</span>
+                      <span className="truncate text-sm font-medium">
+                        {column}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -565,7 +662,7 @@ export function UploadPageContent() {
                 <Button
                   onClick={handleProcess}
                   disabled={selectedColumns.length === 0 || isProcessing}
-                  className="w-full bg-neutral-900 hover:bg-neutral-800 text-white h-12"
+                  className="h-12 w-full bg-neutral-900 text-white hover:bg-neutral-800"
                   size="lg"
                 >
                   {isProcessing ? (

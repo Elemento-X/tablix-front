@@ -38,6 +38,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Reject oversized bodies (expected: ~90 bytes for {"token":"<64 hex>"})
+    const contentLength = request.headers.get('content-length')
+    if (contentLength && parseInt(contentLength, 10) > 1024) {
+      return NextResponse.json(
+        { error: 'Request body too large' },
+        { status: 413 },
+      )
+    }
+
     // Get user fingerprint
     const { isNew, cookieId, fingerprint } = getUserFingerprint(request)
 

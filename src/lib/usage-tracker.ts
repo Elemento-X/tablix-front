@@ -27,7 +27,9 @@ export interface UnificationCheckResult {
  * Check if user can create a unification
  * Returns detailed information about usage and limits
  */
-export async function checkUnificationLimit(request: NextRequest): Promise<UnificationCheckResult> {
+export async function checkUnificationLimit(
+  request: NextRequest,
+): Promise<UnificationCheckResult> {
   // Get user fingerprint and plan
   const { fingerprint } = getUserFingerprint(request)
   const plan = getUserPlan(request)
@@ -38,7 +40,7 @@ export async function checkUnificationLimit(request: NextRequest): Promise<Unifi
   const unificationKey = createUploadCountKey(fingerprint, monthKey)
 
   // Get current unification count from storage
-  let currentUnifications = (await storage.get(unificationKey)) || 0
+  const currentUnifications = (await storage.get(unificationKey)) || 0
 
   // Check if user has exceeded unification limit
   if (!isUnificationAllowed(currentUnifications, plan)) {
@@ -67,7 +69,9 @@ export async function checkUnificationLimit(request: NextRequest): Promise<Unifi
  * Uses Redis Lua script to prevent TOCTOU race conditions
  * Returns new count on success, or null if limit reached
  */
-export async function atomicIncrementUnification(request: NextRequest): Promise<{
+export async function atomicIncrementUnification(
+  request: NextRequest,
+): Promise<{
   success: boolean
   newCount: number
   plan: PlanType
@@ -81,8 +85,17 @@ export async function atomicIncrementUnification(request: NextRequest): Promise<
 
   // Calculate TTL: end of next month
   const now = new Date()
-  const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59)
-  const ttlSeconds = Math.floor((endOfNextMonth.getTime() - now.getTime()) / 1000)
+  const endOfNextMonth = new Date(
+    now.getFullYear(),
+    now.getMonth() + 2,
+    0,
+    23,
+    59,
+    59,
+  )
+  const ttlSeconds = Math.floor(
+    (endOfNextMonth.getTime() - now.getTime()) / 1000,
+  )
 
   const result = await storage.atomicCheckAndIncr(
     unificationKey,
@@ -111,7 +124,9 @@ export async function atomicIncrementUnification(request: NextRequest): Promise<
  * Increment unification counter for user (non-atomic, kept for backwards compatibility)
  * Prefer atomicIncrementUnification for race-condition-safe operations
  */
-export async function incrementUnificationCount(request: NextRequest): Promise<number> {
+export async function incrementUnificationCount(
+  request: NextRequest,
+): Promise<number> {
   const { fingerprint } = getUserFingerprint(request)
   const monthKey = getCurrentMonthKey()
   const unificationKey = createUploadCountKey(fingerprint, monthKey)
@@ -121,8 +136,17 @@ export async function incrementUnificationCount(request: NextRequest): Promise<n
 
   // Set expiration to end of next month (to ensure data cleanup)
   const now = new Date()
-  const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59)
-  const secondsUntilExpiry = Math.floor((endOfNextMonth.getTime() - now.getTime()) / 1000)
+  const endOfNextMonth = new Date(
+    now.getFullYear(),
+    now.getMonth() + 2,
+    0,
+    23,
+    59,
+    59,
+  )
+  const secondsUntilExpiry = Math.floor(
+    (endOfNextMonth.getTime() - now.getTime()) / 1000,
+  )
 
   await storage.expire(unificationKey, secondsUntilExpiry)
 
