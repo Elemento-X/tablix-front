@@ -22,9 +22,18 @@ jest.mock('@/lib/security/validation-schemas', () => ({
   validateContentType: jest.fn(() => ({ valid: true })),
 }))
 
+jest.mock('@/lib/security/rate-limit', () => ({
+  rateLimiters: {
+    api: {
+      check: jest.fn(),
+    },
+  },
+}))
+
 import { atomicIncrementUnification } from '@/lib/usage-tracker'
 import { getUserFingerprint, setFingerprintCookie } from '@/lib/fingerprint'
 import { consumeUnificationToken } from '@/lib/security/unification-token'
+import { rateLimiters } from '@/lib/security/rate-limit'
 
 describe('POST /api/unification/complete', () => {
   const createRequest = (body: Record<string, unknown> = { token: 'valid-token-abc123' }) => {
@@ -37,12 +46,36 @@ describe('POST /api/unification/complete', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+
+    // Default: rate limit passes
+    ;(rateLimiters.api.check as jest.Mock).mockResolvedValue({
+      success: true,
+      remaining: 99,
+    })
     ;(getUserFingerprint as jest.Mock).mockReturnValue({
       isNew: false,
       cookieId: 'existing-user',
       fingerprint: 'test-fingerprint-hash',
     })
     ;(consumeUnificationToken as jest.Mock).mockResolvedValue(true)
+  })
+
+  describe('rate limiting', () => {
+    it('should return 429 when rate limited', async () => {
+      ;(rateLimiters.api.check as jest.Mock).mockResolvedValue({
+        success: false,
+        remaining: 0,
+      })
+
+      const request = createRequest()
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(429)
+      expect(data.error).toBe('Too many requests. Please try again later.')
+      expect(response.headers.get('X-RateLimit-Remaining')).toBe('0')
+      expect(response.headers.get('Retry-After')).toBe('60')
+    })
   })
 
   describe('token validation', () => {

@@ -1,6 +1,7 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { getUserUsage } from "@/lib/usage-tracker"
-import { setFingerprintCookie, getUserFingerprint } from "@/lib/fingerprint"
+import { type NextRequest, NextResponse } from 'next/server'
+import { getUserUsage } from '@/lib/usage-tracker'
+import { setFingerprintCookie, getUserFingerprint } from '@/lib/fingerprint'
+import { rateLimiters } from '@/lib/security/rate-limit'
 
 /**
  * GET /api/usage
@@ -8,6 +9,22 @@ import { setFingerprintCookie, getUserFingerprint } from "@/lib/fingerprint"
  */
 export async function GET(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimitResult = await rateLimiters.api.check(request)
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Remaining': '0',
+            'Retry-After': '60',
+          },
+        },
+      )
+    }
+
     // Get user fingerprint
     const { isNew, cookieId } = getUserFingerprint(request)
 
@@ -38,7 +55,13 @@ export async function GET(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error("[Usage API] Error:", error)
-    return NextResponse.json({ error: "Failed to get usage statistics" }, { status: 500 })
+    console.error(
+      '[Usage API] Error:',
+      error instanceof Error ? error.message : 'Unknown error',
+    )
+    return NextResponse.json(
+      { error: 'Failed to get usage statistics' },
+      { status: 500 },
+    )
   }
 }

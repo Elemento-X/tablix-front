@@ -90,7 +90,11 @@ class InMemoryStore {
     }
   }
 
-  async atomicCheckAndIncr(key: string, limit: number, ttlSeconds: number): Promise<number> {
+  async atomicCheckAndIncr(
+    key: string,
+    limit: number,
+    ttlSeconds: number,
+  ): Promise<number> {
     const current = (await this.get(key)) || 0
     if (current >= limit) {
       return -1
@@ -170,7 +174,10 @@ export const storage = {
       try {
         return await redis.get<number>(key)
       } catch (error) {
-        console.error('[Redis] Error getting key:', error)
+        console.error(
+          '[Redis] Error getting key:',
+          error instanceof Error ? error.message : 'Unknown error',
+        )
         return null
       }
     }
@@ -185,7 +192,10 @@ export const storage = {
       try {
         return await redis.incr(key)
       } catch (error) {
-        console.error('[Redis] Error incrementing key:', error)
+        console.error(
+          '[Redis] Error incrementing key:',
+          error instanceof Error ? error.message : 'Unknown error',
+        )
         throw new Error('Failed to increment counter')
       }
     }
@@ -200,7 +210,10 @@ export const storage = {
       try {
         await redis.expire(key, seconds)
       } catch (error) {
-        console.error('[Redis] Error setting expiration:', error)
+        console.error(
+          '[Redis] Error setting expiration:',
+          error instanceof Error ? error.message : 'Unknown error',
+        )
       }
       return
     }
@@ -219,7 +232,10 @@ export const storage = {
           await redis.set(key, value)
         }
       } catch (error) {
-        console.error('[Redis] Error setting key:', error)
+        console.error(
+          '[Redis] Error setting key:',
+          error instanceof Error ? error.message : 'Unknown error',
+        )
         throw new Error('Failed to set value')
       }
       return
@@ -240,7 +256,10 @@ export const storage = {
         const result = await redis.eval(ATOMIC_GET_AND_DEL_SCRIPT, [key], [])
         return result !== null ? String(result) : null
       } catch (error) {
-        console.error('[Redis] Error in get-and-delete:', error)
+        console.error(
+          '[Redis] Error in get-and-delete:',
+          error instanceof Error ? error.message : 'Unknown error',
+        )
         return null
       }
     }
@@ -256,15 +275,26 @@ export const storage = {
    * Atomic check-and-increment: increments key only if current value < limit
    * Returns new count on success, -1 if limit reached
    */
-  async atomicCheckAndIncr(key: string, limit: number, ttlSeconds: number): Promise<number> {
+  async atomicCheckAndIncr(
+    key: string,
+    limit: number,
+    ttlSeconds: number,
+  ): Promise<number> {
     const redis = getRedisClient()
 
     if (redis) {
       try {
-        const result = await redis.eval(ATOMIC_CHECK_AND_INCR_SCRIPT, [key], [limit, ttlSeconds])
+        const result = await redis.eval(
+          ATOMIC_CHECK_AND_INCR_SCRIPT,
+          [key],
+          [limit, ttlSeconds],
+        )
         return result as number
       } catch (error) {
-        console.error('[Redis] Error in atomic check-and-increment:', error)
+        console.error(
+          '[Redis] Error in atomic check-and-increment:',
+          error instanceof Error ? error.message : 'Unknown error',
+        )
         throw new Error('Failed to check and increment counter')
       }
     }

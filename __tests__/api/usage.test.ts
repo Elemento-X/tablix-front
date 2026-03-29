@@ -14,8 +14,17 @@ jest.mock('@/lib/fingerprint', () => ({
   setFingerprintCookie: jest.fn(),
 }))
 
+jest.mock('@/lib/security/rate-limit', () => ({
+  rateLimiters: {
+    api: {
+      check: jest.fn(),
+    },
+  },
+}))
+
 import { getUserUsage } from '@/lib/usage-tracker'
 import { getUserFingerprint, setFingerprintCookie } from '@/lib/fingerprint'
+import { rateLimiters } from '@/lib/security/rate-limit'
 
 describe('GET /api/usage', () => {
   const createRequest = () => {
@@ -26,6 +35,12 @@ describe('GET /api/usage', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+
+    // Default: rate limit passes
+    ;(rateLimiters.api.check as jest.Mock).mockResolvedValue({
+      success: true,
+      remaining: 99,
+    })
   })
 
   describe('successful requests', () => {
@@ -34,7 +49,6 @@ describe('GET /api/usage', () => {
         isNew: false,
         cookieId: 'existing-cookie',
       })
-
       ;(getUserUsage as jest.Mock).mockResolvedValue({
         plan: 'free',
         currentUnifications: 0,
@@ -77,7 +91,6 @@ describe('GET /api/usage', () => {
         isNew: true,
         cookieId: 'new-cookie-id',
       })
-
       ;(getUserUsage as jest.Mock).mockResolvedValue({
         plan: 'free',
         currentUnifications: 0,
@@ -102,7 +115,6 @@ describe('GET /api/usage', () => {
         isNew: false,
         cookieId: 'pro-user',
       })
-
       ;(getUserUsage as jest.Mock).mockResolvedValue({
         plan: 'pro',
         currentUnifications: 10,
@@ -130,7 +142,6 @@ describe('GET /api/usage', () => {
         isNew: false,
         cookieId: 'enterprise-user',
       })
-
       ;(getUserUsage as jest.Mock).mockResolvedValue({
         plan: 'enterprise',
         currentUnifications: 100,
@@ -152,13 +163,30 @@ describe('GET /api/usage', () => {
     })
   })
 
+  describe('rate limiting', () => {
+    it('should return 429 when rate limited', async () => {
+      ;(rateLimiters.api.check as jest.Mock).mockResolvedValue({
+        success: false,
+        remaining: 0,
+      })
+
+      const request = createRequest()
+      const response = await GET(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(429)
+      expect(data.error).toBe('Too many requests. Please try again later.')
+      expect(response.headers.get('X-RateLimit-Remaining')).toBe('0')
+      expect(response.headers.get('Retry-After')).toBe('60')
+    })
+  })
+
   describe('error handling', () => {
     it('should return 500 on getUserUsage error', async () => {
       ;(getUserFingerprint as jest.Mock).mockReturnValue({
         isNew: false,
         cookieId: 'user',
       })
-
       ;(getUserUsage as jest.Mock).mockRejectedValue(new Error('Database error'))
 
       // Mock console.error to avoid polluting test output
@@ -198,7 +226,6 @@ describe('GET /api/usage', () => {
         isNew: false,
         cookieId: 'user-at-limit',
       })
-
       ;(getUserUsage as jest.Mock).mockResolvedValue({
         plan: 'free',
         currentUnifications: 1,
