@@ -297,5 +297,204 @@ describe('file-validator.ts', () => {
       const result = await validateFileContent(file)
       expect(result.valid).toBe(true)
     })
+
+    describe('isText robustness (card 3.8)', () => {
+      it('should accept CSV with printable ASCII', async () => {
+        // "Name,Age" in ASCII
+        const file = createFileWithBytes(
+          [0x4e, 0x61, 0x6d, 0x65, 0x2c, 0x41, 0x67, 0x65],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should accept CSV with tabs and newlines', async () => {
+        // Tab (0x09), LF (0x0A), CR (0x0D), and text
+        const file = createFileWithBytes(
+          [0x41, 0x09, 0x42, 0x0a, 0x43, 0x0d, 0x0a, 0x44],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should accept CSV with UTF-8 BOM', async () => {
+        // UTF-8 BOM (EF BB BF) followed by text
+        const file = createFileWithBytes(
+          [0xef, 0xbb, 0xbf, 0x41, 0x42, 0x43, 0x44, 0x45],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should accept CSV with UTF-16 LE BOM', async () => {
+        // UTF-16 LE BOM (FF FE) followed by printable bytes
+        const file = createFileWithBytes(
+          [0xff, 0xfe, 0x41, 0x00, 0x42, 0x00, 0x43, 0x00],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should reject CSV with null bytes (0x00 control char)', async () => {
+        // Null byte is a control character, not printable ASCII
+        const file = createFileWithBytes(
+          [0x00, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+      })
+
+      it('should reject CSV with bell character (0x07)', async () => {
+        const file = createFileWithBytes(
+          [0x41, 0x42, 0x07, 0x43, 0x44, 0x45, 0x46, 0x47],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+      })
+
+      it('should reject CSV with escape character (0x1B)', async () => {
+        const file = createFileWithBytes(
+          [0x41, 0x1b, 0x5b, 0x33, 0x31, 0x6d, 0x58, 0x58],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+      })
+
+      it('should reject CSV with form feed (0x0C)', async () => {
+        const file = createFileWithBytes(
+          [0x41, 0x0c, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+      })
+
+      it('should reject CSV with high non-BOM bytes (0x80-0xEE, 0xF0+)', async () => {
+        // 0x80 is not printable ASCII, not a BOM marker
+        const file = createFileWithBytes(
+          [0x80, 0x81, 0x82, 0x41, 0x42, 0x43, 0x44, 0x45],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+      })
+    })
+
+    describe('zip bomb ratio check (card 3.X)', () => {
+      function createXlsxWithRatio(compressedSize: number, uncompressedSize: number): File {
+        // Build a minimal ZIP with one entry that has specific compressed/uncompressed sizes
+        // Local file header (30 bytes) + Central directory entry (46 bytes) + EOCD (22 bytes)
+        const fileName = 'xl/worksheets/sheet1.xml'
+        const fnBytes = new TextEncoder().encode(fileName)
+        const fnLen = fnBytes.length
+
+        // Local file header
+        const localHeader = new Uint8Array(30 + fnLen + compressedSize)
+        const localView = new DataView(localHeader.buffer)
+        localView.setUint32(0, 0x04034b50, true) // Local file header signature
+        localView.setUint16(4, 20, true) // Version needed
+        localView.setUint16(8, 8, true) // Compression method: deflate
+        localView.setUint32(18, compressedSize, true)
+        localView.setUint32(22, uncompressedSize, true)
+        localView.setUint16(26, fnLen, true) // File name length
+        localHeader.set(fnBytes, 30)
+        // Fill compressed data with zeros
+        for (let i = 0; i < compressedSize; i++) {
+          localHeader[30 + fnLen + i] = 0
+        }
+
+        const cdOffset = localHeader.length
+
+        // Central directory entry
+        const cdEntry = new Uint8Array(46 + fnLen)
+        const cdView = new DataView(cdEntry.buffer)
+        cdView.setUint32(0, 0x02014b50, true) // Central directory signature
+        cdView.setUint16(4, 20, true) // Version made by
+        cdView.setUint16(6, 20, true) // Version needed
+        cdView.setUint16(10, 8, true) // Compression method: deflate
+        cdView.setUint32(20, compressedSize, true)
+        cdView.setUint32(24, uncompressedSize, true)
+        cdView.setUint16(28, fnLen, true) // File name length
+        cdEntry.set(fnBytes, 46)
+
+        const cdSize = cdEntry.length
+
+        // EOCD
+        const eocd = new Uint8Array(22)
+        const eocdView = new DataView(eocd.buffer)
+        eocdView.setUint32(0, 0x06054b50, true) // EOCD signature
+        eocdView.setUint16(8, 1, true) // Total entries
+        eocdView.setUint16(10, 1, true) // Total entries
+        eocdView.setUint32(12, cdSize, true) // CD size
+        eocdView.setUint32(16, cdOffset, true) // CD offset
+
+        // Combine all parts
+        const fullBuffer = new Uint8Array(localHeader.length + cdEntry.length + eocd.length)
+        fullBuffer.set(localHeader, 0)
+        fullBuffer.set(cdEntry, localHeader.length)
+        fullBuffer.set(eocd, localHeader.length + cdEntry.length)
+
+        const blob = new Blob([fullBuffer])
+        const file = new File([blob], 'test.xlsx', {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+
+        // Override slice for magic number check
+        const originalSlice = file.slice.bind(file)
+        Object.defineProperty(file, 'slice', {
+          value: (start?: number, end?: number) => {
+            const slicedBlob = originalSlice(start, end)
+            Object.defineProperty(slicedBlob, 'arrayBuffer', {
+              value: async () => fullBuffer.slice(start || 0, end || fullBuffer.length).buffer,
+            })
+            return slicedBlob
+          },
+        })
+
+        // Override arrayBuffer for full file read
+        Object.defineProperty(file, 'arrayBuffer', {
+          value: async () => fullBuffer.buffer,
+        })
+
+        return file
+      }
+
+      it('should accept XLSX with normal compression ratio (< 100:1)', async () => {
+        // 1000 bytes compressed, 50000 bytes uncompressed = 50:1 ratio
+        const file = createXlsxWithRatio(100, 5000)
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should reject XLSX with suspicious compression ratio (> 100:1)', async () => {
+        // 10 bytes compressed, 5000 bytes uncompressed = 500:1 ratio
+        const file = createXlsxWithRatio(10, 5000)
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+        expect(result.error).toBe('File rejected: suspicious compression ratio')
+      })
+
+      it('should accept XLSX with exactly 100:1 ratio', async () => {
+        // 100 bytes compressed, 10000 bytes uncompressed = 100:1 ratio (at limit)
+        const file = createXlsxWithRatio(100, 10000)
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should reject XLSX with ratio just over 100:1', async () => {
+        // 100 bytes compressed, 10100 bytes uncompressed = 101:1 ratio
+        const file = createXlsxWithRatio(100, 10100)
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+        expect(result.error).toBe('File rejected: suspicious compression ratio')
+      })
+    })
   })
 })

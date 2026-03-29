@@ -4,6 +4,26 @@
 import { NextRequest } from 'next/server'
 import { POST } from '@/app/api/process/route'
 
+import { rateLimiters } from '@/lib/security/rate-limit'
+import {
+  sanitizeFileName,
+  validateFileContent,
+} from '@/lib/security/file-validator'
+import {
+  validateFileLimits,
+  validateColumnSelection,
+  sanitizeString,
+  validateContentType,
+} from '@/lib/security/validation-schemas'
+import {
+  getUserFingerprint,
+  setFingerprintCookie,
+  getUserPlan,
+} from '@/lib/fingerprint'
+import { getPlanLimits } from '@/lib/limits'
+import { atomicIncrementUnification } from '@/lib/usage-tracker'
+import { consumeUnificationToken } from '@/lib/security/unification-token'
+
 // Mock dependencies
 jest.mock('@/lib/security/rate-limit', () => ({
   rateLimiters: {
@@ -47,31 +67,27 @@ jest.mock('@/lib/limits', () => ({
 }))
 
 jest.mock('@/lib/usage-tracker', () => ({
-  checkUnificationLimit: jest.fn(() => ({
-    allowed: true,
-    currentUnifications: 0,
+  atomicIncrementUnification: jest.fn(() => ({
+    success: true,
+    newCount: 1,
     maxUnifications: 1,
-    remainingUnifications: 1,
   })),
 }))
 
-import { rateLimiters } from '@/lib/security/rate-limit'
-import { sanitizeFileName, validateFileContent } from '@/lib/security/file-validator'
-import {
-  validateFileLimits,
-  validateColumnSelection,
-  sanitizeString,
-  validateContentType,
-} from '@/lib/security/validation-schemas'
-import { getUserFingerprint, getUserPlan } from '@/lib/fingerprint'
-import { getPlanLimits } from '@/lib/limits'
-import { checkUnificationLimit } from '@/lib/usage-tracker'
+jest.mock('@/lib/security/unification-token', () => ({
+  consumeUnificationToken: jest.fn(() => true),
+}))
 
 describe('POST /api/process', () => {
-  const createRequest = (files: File[] = [], columns: string[] = ['Name', 'Email']) => {
+  const createRequest = (
+    files: File[] = [],
+    columns: string[] = ['Name', 'Email'],
+    token = 'valid-test-token',
+  ) => {
     const formData = new FormData()
     files.forEach((file) => formData.append('files', file))
     formData.append('columns', JSON.stringify(columns))
+    if (token) formData.append('token', token)
 
     return new NextRequest('http://localhost:3000/api/process', {
       method: 'POST',
@@ -79,7 +95,11 @@ describe('POST /api/process', () => {
     })
   }
 
-  const createValidFile = (name = 'test.csv', type = 'text/csv', size = 1024) => {
+  const createValidFile = (
+    name = 'test.csv',
+    type = 'text/csv',
+    size = 1024,
+  ) => {
     const file = new File(['content'], name, { type })
     Object.defineProperty(file, 'size', { value: size })
     return file
@@ -118,11 +138,11 @@ describe('POST /api/process', () => {
       maxColumns: 3,
       unificationsPerMonth: 1,
     })
-    ;(checkUnificationLimit as jest.Mock).mockResolvedValue({
-      allowed: true,
-      currentUnifications: 0,
+    ;(consumeUnificationToken as jest.Mock).mockResolvedValue(true)
+    ;(atomicIncrementUnification as jest.Mock).mockResolvedValue({
+      success: true,
+      newCount: 1,
       maxUnifications: 1,
-      remainingUnifications: 1,
     })
   })
 
@@ -139,19 +159,38 @@ describe('POST /api/process', () => {
       const data = await response.json()
 
       expect(response.status).toBe(415)
-      expect(data.error).toBe('Invalid Content-Type. Expected multipart/form-data.')
+      expect(data.error).toBe(
+        'Invalid Content-Type. Expected multipart/form-data.',
+      )
     })
   })
 
-  describe('unification quota', () => {
+  describe('unification token and quota', () => {
+    it('should return 400 when token is missing', async () => {
+      const file = createValidFile()
+      const request = createRequest([file], ['Name', 'Email'], '')
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.error).toBe('Missing unification token')
+    })
+
+    it('should return 403 when token is invalid or expired', async () => {
+      ;(consumeUnificationToken as jest.Mock).mockResolvedValue(false)
+
+      const file = createValidFile()
+      const request = createRequest([file])
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(403)
+      expect(data.error).toBe('Invalid or expired unification token')
+    })
+
     it('should return 403 when unification limit reached', async () => {
-      ;(checkUnificationLimit as jest.Mock).mockResolvedValue({
-        allowed: false,
-        error: 'Monthly limit reached',
-        errorCode: 'LIMIT_EXCEEDED',
-        currentUnifications: 1,
-        maxUnifications: 1,
-        remainingUnifications: 0,
+      ;(atomicIncrementUnification as jest.Mock).mockResolvedValue({
+        success: false,
       })
 
       const file = createValidFile()
@@ -160,7 +199,7 @@ describe('POST /api/process', () => {
       const data = await response.json()
 
       expect(response.status).toBe(403)
-      expect(data.error).toBe('Monthly limit reached')
+      expect(data.error).toBe('Unification limit reached for your plan.')
       expect(data.errorCode).toBe('LIMIT_EXCEEDED')
     })
   })
@@ -219,7 +258,9 @@ describe('POST /api/process', () => {
     })
 
     it('should return 400 for invalid file type', async () => {
-      const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
+      const file = new File(['content'], 'test.pdf', {
+        type: 'application/pdf',
+      })
       Object.defineProperty(file, 'size', { value: 1024 })
 
       const request = createRequest([file])
@@ -227,7 +268,9 @@ describe('POST /api/process', () => {
       const data = await response.json()
 
       expect(response.status).toBe(400)
-      expect(data.error).toBe('Invalid file type. Only CSV and XLSX files are allowed.')
+      expect(data.error).toBe(
+        'Invalid file type. Only CSV and XLSX files are allowed.',
+      )
     })
   })
 
@@ -236,6 +279,7 @@ describe('POST /api/process', () => {
       const formData = new FormData()
       formData.append('files', createValidFile())
       formData.append('columns', 'invalid-json')
+      formData.append('token', 'valid-test-token')
 
       const request = new NextRequest('http://localhost:3000/api/process', {
         method: 'POST',
@@ -336,7 +380,9 @@ describe('POST /api/process', () => {
       expect(response.headers.get('Content-Type')).toBe(
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       )
-      expect(response.headers.get('Content-Disposition')).toContain('attachment')
+      expect(response.headers.get('Content-Disposition')).toContain(
+        'attachment',
+      )
       expect(response.headers.get('X-RateLimit-Remaining')).toBe('29')
     })
 
@@ -345,7 +391,9 @@ describe('POST /api/process', () => {
       const request = createRequest([file])
       const response = await POST(request)
 
-      expect(response.headers.get('Content-Disposition')).toContain('tablix-output.xlsx')
+      expect(response.headers.get('Content-Disposition')).toContain(
+        'tablix-output.xlsx',
+      )
     })
 
     it('should sanitize output filename', async () => {
@@ -376,7 +424,9 @@ describe('POST /api/process', () => {
       const file = createValidFile('bad<name>.csv')
       ;(sanitizeFileName as jest.Mock).mockReturnValue('bad_name_.csv')
 
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      const consoleSpy = jest
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {})
 
       const request = createRequest([file])
       await POST(request)
@@ -390,7 +440,9 @@ describe('POST /api/process', () => {
 
   describe('error handling', () => {
     it('should return 500 on unexpected error', async () => {
-      ;(rateLimiters.process.check as jest.Mock).mockRejectedValue(new Error('Unexpected error'))
+      ;(rateLimiters.process.check as jest.Mock).mockRejectedValue(
+        new Error('Unexpected error'),
+      )
 
       jest.spyOn(console, 'error').mockImplementation(() => {})
 
@@ -401,6 +453,31 @@ describe('POST /api/process', () => {
 
       expect(response.status).toBe(500)
       expect(data.error).toBe('Error processing files')
+
+      jest.restoreAllMocks()
+    })
+
+    it('should return 500 on non-Error thrown value (covers unknown error branch)', async () => {
+      // Throw a non-Error value to exercise the `'Unknown error'` branch in catch
+      ;(rateLimiters.process.check as jest.Mock).mockRejectedValue(
+        'string-error',
+      )
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
+
+      const file = createValidFile()
+      const request = createRequest([file])
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(500)
+      expect(data.error).toBe('Error processing files')
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[Process API] Error:',
+        'Unknown error',
+      )
 
       jest.restoreAllMocks()
     })
@@ -443,6 +520,246 @@ describe('POST /api/process', () => {
       const response = await POST(request)
 
       expect(response.status).toBe(200)
+    })
+
+    it('should return 400 when total file size exceeds plan limit', async () => {
+      // Use smaller plan limit so we don't need huge buffers in tests
+      ;(getPlanLimits as jest.Mock).mockReturnValue({
+        name: 'Free',
+        maxInputFiles: 3,
+        maxFileSize: 1 * 1024 * 1024,
+        maxTotalSize: 10, // 10 bytes total limit
+        maxColumns: 3,
+        unificationsPerMonth: 1,
+      })
+      ;(validateFileLimits as jest.Mock).mockReturnValue({ valid: true })
+
+      // Two files with real content exceeding 10 bytes total
+      const file1 = new File(['abcdefgh'], 'file1.csv', { type: 'text/csv' }) // 8 bytes
+      const file2 = new File(['abcdefgh'], 'file2.csv', { type: 'text/csv' }) // 8 bytes
+
+      const request = createRequest([file1, file2])
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.error).toContain('Total file size exceeds limit')
+    })
+
+    it('should return 400 when file extension is invalid after sanitization', async () => {
+      // File has valid MIME type but sanitization removes extension
+      const file = createValidFile('test.csv', 'text/csv')
+      ;(sanitizeFileName as jest.Mock).mockReturnValue(
+        'malicious_file_no_extension',
+      )
+
+      const request = createRequest([file])
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.error).toBe('Invalid file extension after sanitization')
+    })
+
+    it('should set fingerprint cookie on successful processing for new user', async () => {
+      ;(getUserFingerprint as jest.Mock).mockReturnValue({
+        isNew: true,
+        cookieId: 'new-user-cookie-id',
+        fingerprint: 'new-user-fingerprint',
+      })
+
+      const file = createValidFile()
+      const request = createRequest([file])
+      const response = await POST(request)
+
+      expect(response.status).toBe(200)
+      expect(setFingerprintCookie).toHaveBeenCalledWith(
+        response,
+        'new-user-cookie-id',
+      )
+    })
+
+    it('should set fingerprint cookie on quota exceeded for new user', async () => {
+      ;(getUserFingerprint as jest.Mock).mockReturnValue({
+        isNew: true,
+        cookieId: 'new-user-cookie-id',
+        fingerprint: 'new-user-fingerprint',
+      })
+      ;(atomicIncrementUnification as jest.Mock).mockResolvedValue({
+        success: false,
+      })
+
+      const file = createValidFile()
+      const request = createRequest([file])
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(403)
+      expect(data.errorCode).toBe('LIMIT_EXCEEDED')
+      expect(setFingerprintCookie).toHaveBeenCalledWith(
+        response,
+        'new-user-cookie-id',
+      )
+    })
+  })
+
+  describe('order-of-operations: token and quota must not be consumed on validation failures', () => {
+    it('should NOT consume token when content-type is invalid', async () => {
+      ;(validateContentType as jest.Mock).mockReturnValue({
+        valid: false,
+        error: 'Invalid Content-Type. Expected multipart/form-data.',
+      })
+
+      const file = createValidFile()
+      const request = createRequest([file])
+      await POST(request)
+
+      expect(consumeUnificationToken).not.toHaveBeenCalled()
+      expect(atomicIncrementUnification).not.toHaveBeenCalled()
+    })
+
+    it('should NOT consume token when rate limit is exceeded', async () => {
+      ;(rateLimiters.process.check as jest.Mock).mockResolvedValue({
+        success: false,
+        remaining: 0,
+      })
+
+      const file = createValidFile()
+      const request = createRequest([file])
+      await POST(request)
+
+      expect(consumeUnificationToken).not.toHaveBeenCalled()
+      expect(atomicIncrementUnification).not.toHaveBeenCalled()
+    })
+
+    it('should NOT consume token when file limits validation fails', async () => {
+      ;(validateFileLimits as jest.Mock).mockReturnValue({
+        valid: false,
+        error: 'Too many files uploaded',
+      })
+
+      const files = Array(10)
+        .fill(null)
+        .map((_, i) => createValidFile(`file${i}.csv`))
+      const request = createRequest(files)
+      await POST(request)
+
+      expect(consumeUnificationToken).not.toHaveBeenCalled()
+      expect(atomicIncrementUnification).not.toHaveBeenCalled()
+    })
+
+    it('should NOT consume token when total file size exceeds plan limit', async () => {
+      ;(getPlanLimits as jest.Mock).mockReturnValue({
+        name: 'Free',
+        maxInputFiles: 3,
+        maxFileSize: 1 * 1024 * 1024,
+        maxTotalSize: 10,
+        maxColumns: 3,
+        unificationsPerMonth: 1,
+      })
+      ;(validateFileLimits as jest.Mock).mockReturnValue({ valid: true })
+
+      const file1 = new File(['abcdefgh'], 'file1.csv', { type: 'text/csv' })
+      const file2 = new File(['abcdefgh'], 'file2.csv', { type: 'text/csv' })
+      const request = createRequest([file1, file2])
+      await POST(request)
+
+      expect(consumeUnificationToken).not.toHaveBeenCalled()
+      expect(atomicIncrementUnification).not.toHaveBeenCalled()
+    })
+
+    it('should NOT consume token when column validation fails', async () => {
+      ;(validateColumnSelection as jest.Mock).mockReturnValue({
+        valid: false,
+        error: 'Invalid column selection',
+      })
+
+      const file = createValidFile()
+      const request = createRequest([file], [])
+      await POST(request)
+
+      expect(consumeUnificationToken).not.toHaveBeenCalled()
+      expect(atomicIncrementUnification).not.toHaveBeenCalled()
+    })
+
+    it('should NOT consume token when file type is invalid', async () => {
+      const file = new File(['content'], 'test.pdf', {
+        type: 'application/pdf',
+      })
+      Object.defineProperty(file, 'size', { value: 1024 })
+
+      const request = createRequest([file])
+      await POST(request)
+
+      expect(consumeUnificationToken).not.toHaveBeenCalled()
+      expect(atomicIncrementUnification).not.toHaveBeenCalled()
+    })
+
+    it('should NOT consume token when file content validation fails (zip bomb / magic numbers)', async () => {
+      ;(validateFileContent as jest.Mock).mockResolvedValue({
+        valid: false,
+        error: 'File content does not match expected format',
+      })
+
+      const file = createValidFile()
+      const request = createRequest([file])
+      await POST(request)
+
+      expect(consumeUnificationToken).not.toHaveBeenCalled()
+      expect(atomicIncrementUnification).not.toHaveBeenCalled()
+    })
+
+    it('should NOT increment quota when token is invalid or expired', async () => {
+      ;(consumeUnificationToken as jest.Mock).mockResolvedValue(false)
+
+      const file = createValidFile()
+      const request = createRequest([file])
+      await POST(request)
+
+      expect(atomicIncrementUnification).not.toHaveBeenCalled()
+    })
+
+    it('should consume token with correct (token, fingerprint) binding', async () => {
+      ;(getUserFingerprint as jest.Mock).mockReturnValue({
+        isNew: false,
+        cookieId: 'existing-user',
+        fingerprint: 'fp-abc123',
+      })
+
+      const file = createValidFile()
+      const request = createRequest(
+        [file],
+        ['Name', 'Email'],
+        'valid-test-token',
+      )
+      await POST(request)
+
+      expect(consumeUnificationToken).toHaveBeenCalledWith(
+        'valid-test-token',
+        'fp-abc123',
+      )
+    })
+
+    it('should return 403 for a token present but malformed (path traversal attempt)', async () => {
+      // consumeUnificationToken internally rejects non-hex-64 tokens
+      // Simulate what the real implementation does with a malformed token
+      ;(consumeUnificationToken as jest.Mock).mockResolvedValue(false)
+
+      const formData = new FormData()
+      formData.append('files', createValidFile())
+      formData.append('columns', JSON.stringify(['Name', 'Email']))
+      formData.append('token', '../../../etc/passwd')
+
+      const request = new NextRequest('http://localhost:3000/api/process', {
+        method: 'POST',
+        body: formData,
+      })
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(403)
+      expect(data.error).toBe('Invalid or expired unification token')
+      expect(atomicIncrementUnification).not.toHaveBeenCalled()
     })
   })
 })

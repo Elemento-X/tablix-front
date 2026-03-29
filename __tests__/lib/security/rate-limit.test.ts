@@ -373,16 +373,16 @@ describe('rate-limit.ts', () => {
       expect(result.success).toBe(false)
     })
 
-    it('should have process limiter with 30 requests per minute', async () => {
+    it('should have process limiter with 5 requests per minute', async () => {
       const request = createRequest({ 'x-forwarded-for': '192.168.1.101' })
 
-      // Should allow 30 requests
-      for (let i = 0; i < 30; i++) {
+      // Should allow 5 requests
+      for (let i = 0; i < 5; i++) {
         const result = await rateLimiters.process.check(request)
         expect(result.success).toBe(true)
       }
 
-      // 31st request should be blocked
+      // 6th request should be blocked
       const result = await rateLimiters.process.check(request)
       expect(result.success).toBe(false)
     })
@@ -410,7 +410,7 @@ describe('rate-limit.ts', () => {
       // Process limiter should be independent
       const result = await rateLimiters.process.check(request)
       expect(result.success).toBe(true)
-      expect(result.remaining).toBe(29) // First request to process limiter
+      expect(result.remaining).toBe(4) // First request to process limiter
     })
 
     it('should reset upload limiter after 1 minute', async () => {

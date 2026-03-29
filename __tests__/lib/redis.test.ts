@@ -321,7 +321,19 @@ describe('redis.ts', () => {
         const value = await storage.get('error-key')
 
         expect(value).toBeNull()
-        expect(console.error).toHaveBeenCalledWith('[Redis] Error getting key:', expect.any(Error))
+        expect(console.error).toHaveBeenCalledWith(
+          '[Redis] Error getting key:',
+          'Redis connection failed',
+        )
+      })
+
+      it('should log Unknown error when non-Error is thrown', async () => {
+        mockRedis.get.mockRejectedValue('string error')
+
+        const value = await storage.get('error-key')
+
+        expect(value).toBeNull()
+        expect(console.error).toHaveBeenCalledWith('[Redis] Error getting key:', 'Unknown error')
       })
 
       it('should handle null response from Redis', async () => {
@@ -348,9 +360,17 @@ describe('redis.ts', () => {
 
         await expect(storage.incr('fail-counter')).rejects.toThrow('Failed to increment counter')
 
+        expect(console.error).toHaveBeenCalledWith('[Redis] Error incrementing key:', 'Redis error')
+      })
+
+      it('should log Unknown error when non-Error is thrown on incr', async () => {
+        mockRedis.incr.mockRejectedValue(42)
+
+        await expect(storage.incr('fail-counter')).rejects.toThrow('Failed to increment counter')
+
         expect(console.error).toHaveBeenCalledWith(
           '[Redis] Error incrementing key:',
-          expect.any(Error),
+          'Unknown error',
         )
       })
     })
@@ -372,7 +392,18 @@ describe('redis.ts', () => {
 
         expect(console.error).toHaveBeenCalledWith(
           '[Redis] Error setting expiration:',
-          expect.any(Error),
+          'Redis error',
+        )
+      })
+
+      it('should log Unknown error when non-Error is thrown on expire', async () => {
+        mockRedis.expire.mockRejectedValue('string error')
+
+        await expect(storage.expire('fail-key', 60)).resolves.toBeUndefined()
+
+        expect(console.error).toHaveBeenCalledWith(
+          '[Redis] Error setting expiration:',
+          'Unknown error',
         )
       })
     })
@@ -399,13 +430,21 @@ describe('redis.ts', () => {
 
         await expect(storage.set('fail-key', 100)).rejects.toThrow('Failed to set value')
 
-        expect(console.error).toHaveBeenCalledWith('[Redis] Error setting key:', expect.any(Error))
+        expect(console.error).toHaveBeenCalledWith('[Redis] Error setting key:', 'Redis error')
       })
 
       it('should throw error on Redis failure with TTL', async () => {
         mockRedis.set.mockRejectedValue(new Error('Redis error'))
 
         await expect(storage.set('fail-key-ttl', 100, 60)).rejects.toThrow('Failed to set value')
+      })
+
+      it('should log Unknown error when non-Error is thrown on set', async () => {
+        mockRedis.set.mockRejectedValue(null)
+
+        await expect(storage.set('fail-key', 100)).rejects.toThrow('Failed to set value')
+
+        expect(console.error).toHaveBeenCalledWith('[Redis] Error setting key:', 'Unknown error')
       })
 
       it('should handle zero as value', async () => {
@@ -466,7 +505,19 @@ describe('redis.ts', () => {
         expect(value).toBeNull()
         expect(console.error).toHaveBeenCalledWith(
           '[Redis] Error in get-and-delete:',
-          expect.any(Error),
+          'Redis error',
+        )
+      })
+
+      it('should log Unknown error when non-Error is thrown on getAndDel', async () => {
+        mockRedis.eval.mockRejectedValue(undefined)
+
+        const value = await storage.getAndDel('error-key')
+
+        expect(value).toBeNull()
+        expect(console.error).toHaveBeenCalledWith(
+          '[Redis] Error in get-and-delete:',
+          'Unknown error',
         )
       })
     })
@@ -534,6 +585,19 @@ describe('redis.ts', () => {
           'Failed to check and increment counter',
         )
       })
+
+      it('should log Unknown error when non-Error is thrown on atomicCheckAndIncr', async () => {
+        mockRedis.eval.mockRejectedValue('network failure')
+
+        await expect(storage.atomicCheckAndIncr('counter', 5, 3600)).rejects.toThrow(
+          'Failed to check and increment counter',
+        )
+
+        expect(console.error).toHaveBeenCalledWith(
+          '[Redis] Error in atomic check-and-increment:',
+          'Unknown error',
+        )
+      })
     })
 
     describe('with InMemoryStore', () => {
@@ -567,6 +631,34 @@ describe('redis.ts', () => {
   })
 
   describe('InMemoryStore cleanup', () => {
+    it('should handle environment without setInterval', async () => {
+      jest.resetModules()
+      jest.doMock('@upstash/redis', () => ({
+        Redis: jest.fn().mockImplementation(() => ({
+          get: jest.fn(),
+          set: jest.fn(),
+          incr: jest.fn(),
+          expire: jest.fn(),
+          eval: jest.fn(),
+          del: jest.fn(),
+        })),
+      }))
+
+      const originalSetInterval = globalThis.setInterval
+      // @ts-expect-error — simulating environment without setInterval
+      delete globalThis.setInterval
+
+      const originalWarn = console.warn
+      console.warn = jest.fn()
+
+      // Import should not throw even without setInterval
+      const freshModule = await import('@/lib/redis')
+      expect(freshModule.storage).toBeDefined()
+
+      console.warn = originalWarn
+      globalThis.setInterval = originalSetInterval
+    })
+
     it('should cleanup expired entries when triggered by setInterval', async () => {
       jest.useFakeTimers()
 
