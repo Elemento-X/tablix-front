@@ -163,7 +163,7 @@ describe('rate-limit.ts', () => {
       ])
 
       // All should succeed
-      expect(results.every(r => r.success)).toBe(true)
+      expect(results.every((r) => r.success)).toBe(true)
 
       // Remaining should decrease
       const finalResult = await limiter.check(request)
@@ -271,13 +271,13 @@ describe('rate-limit.ts', () => {
       expect(result.success).toBe(false)
     })
 
-    it('should prefer x-forwarded-for over x-real-ip', async () => {
+    it('should prefer cf-connecting-ip over x-forwarded-for', async () => {
       const limiter = rateLimit({ interval: 60000, maxRequests: 1 })
       const request1 = createRequest({
+        'cf-connecting-ip': '203.0.113.0',
         'x-forwarded-for': '192.168.1.100',
-        'x-real-ip': '10.0.0.5',
       })
-      const request2 = createRequest({ 'x-forwarded-for': '192.168.1.100' })
+      const request2 = createRequest({ 'cf-connecting-ip': '203.0.113.0' })
 
       await limiter.check(request1)
       const result = await limiter.check(request2)
@@ -307,13 +307,13 @@ describe('rate-limit.ts', () => {
       expect(result.success).toBe(false)
     })
 
-    it('should prefer x-forwarded-for over cf-connecting-ip', async () => {
+    it('should prefer cf-connecting-ip over x-real-ip', async () => {
       const limiter = rateLimit({ interval: 60000, maxRequests: 1 })
       const request1 = createRequest({
-        'x-forwarded-for': '192.168.1.100',
         'cf-connecting-ip': '203.0.113.0',
+        'x-real-ip': '10.0.0.5',
       })
-      const request2 = createRequest({ 'x-forwarded-for': '192.168.1.100' })
+      const request2 = createRequest({ 'cf-connecting-ip': '203.0.113.0' })
 
       await limiter.check(request1)
       const result = await limiter.check(request2)
@@ -321,11 +321,11 @@ describe('rate-limit.ts', () => {
       expect(result.success).toBe(false)
     })
 
-    it('should prefer x-real-ip over cf-connecting-ip', async () => {
+    it('should prefer x-real-ip over x-forwarded-for', async () => {
       const limiter = rateLimit({ interval: 60000, maxRequests: 1 })
       const request1 = createRequest({
         'x-real-ip': '10.0.0.5',
-        'cf-connecting-ip': '203.0.113.0',
+        'x-forwarded-for': '192.168.1.100',
       })
       const request2 = createRequest({ 'x-real-ip': '10.0.0.5' })
 
@@ -335,16 +335,17 @@ describe('rate-limit.ts', () => {
       expect(result.success).toBe(false)
     })
 
-    it('should generate random identifier when no headers present', async () => {
+    it('should use fixed fallback identifier when no headers present', async () => {
       const limiter = rateLimit({ interval: 60000, maxRequests: 1 })
-      const request1 = createRequest()
-      const request2 = createRequest()
+      // Create requests without any IP headers (bypass createRequest auto-IP)
+      const request1 = new NextRequest('http://localhost:3000/test', { headers: new Headers({}) })
+      const request2 = new NextRequest('http://localhost:3000/test', { headers: new Headers({}) })
 
       await limiter.check(request1)
       const result = await limiter.check(request2)
 
-      // Different random identifiers should both be allowed
-      expect(result.success).toBe(true)
+      // Same fallback IP (127.0.0.1) means same identifier — should be rate limited
+      expect(result.success).toBe(false)
     })
 
     it('should handle empty header values', async () => {
@@ -464,6 +465,215 @@ describe('rate-limit.ts', () => {
       const result = await limiter.check(request)
 
       expect(result.remaining).toBe(0)
+    })
+  })
+
+  describe('cleanup of expired entries', () => {
+    it('should clean up expired entries when interval fires', async () => {
+      const limiter = rateLimit({ interval: 1000, maxRequests: 2 })
+      const request = createRequest({ 'x-forwarded-for': '10.0.0.1' })
+
+      // Use up limit
+      await limiter.check(request)
+      await limiter.check(request)
+
+      let result = await limiter.check(request)
+      expect(result.success).toBe(false)
+
+      // Advance time well past interval to trigger expiry + cleanup
+      jest.advanceTimersByTime(10 * 60 * 1000 + 2000) // 10 min + 2s to trigger cleanup interval
+      jest.setSystemTime(Date.now() + 10 * 60 * 1000 + 2000)
+
+      // Entry should have expired, new request allowed
+      result = await limiter.check(request)
+      expect(result.success).toBe(true)
+    })
+
+    it('should execute setInterval cleanup callback and delete expired entries', async () => {
+      jest.resetModules()
+
+      const { rateLimit: rl } = require('@/lib/security/rate-limit')
+      const limiter = rl({ interval: 1000, maxRequests: 1 })
+      const request = new NextRequest('http://localhost:3000/test', {
+        headers: new Headers({ 'x-forwarded-for': '99.99.99.99' }),
+      })
+
+      await limiter.check(request)
+      let result = await limiter.check(request)
+      expect(result.success).toBe(false)
+
+      // Advance past entry's resetTime (1s) and past cleanup interval (10min)
+      jest.advanceTimersByTime(10 * 60 * 1000 + 2000)
+      jest.setSystemTime(Date.now() + 10 * 60 * 1000 + 2000)
+
+      result = await limiter.check(request)
+      expect(result.success).toBe(true)
+    })
+
+    it('should handle interval without unref method', async () => {
+      jest.resetModules()
+
+      // Mock setInterval to return object without unref
+      const originalSetInterval = global.setInterval
+      const mockSetInterval = (...args: Parameters<typeof setInterval>) => {
+        const id = originalSetInterval(...args)
+        const idWithoutUnref = Object.create(id)
+        idWithoutUnref.unref = undefined
+        return idWithoutUnref
+      }
+      global.setInterval = mockSetInterval as typeof setInterval
+
+      // Re-require module — the `if (typeof cleanupInterval.unref === 'function')` false branch is now hit
+      const { rateLimit: rl } = require('@/lib/security/rate-limit')
+      const limiter = rl({ interval: 60000, maxRequests: 5 })
+      const request = new NextRequest('http://localhost:3000/test', {
+        headers: new Headers({ 'x-forwarded-for': '77.77.77.77' }),
+      })
+
+      const result = await limiter.check(request)
+      expect(result.success).toBe(true)
+
+      global.setInterval = originalSetInterval
+    })
+
+    it('should NOT delete entries that have not yet expired during cleanup', async () => {
+      jest.resetModules()
+
+      const { rateLimit: rl } = require('@/lib/security/rate-limit')
+      // Long interval (30min) — entry won't expire when cleanup runs at 10min
+      const limiter = rl({ interval: 30 * 60 * 1000, maxRequests: 1 })
+      const request = new NextRequest('http://localhost:3000/test', {
+        headers: new Headers({ 'x-forwarded-for': '88.88.88.88' }),
+      })
+
+      await limiter.check(request)
+
+      // Trigger cleanup (10min) but entry resetTime is 30min away
+      jest.advanceTimersByTime(10 * 60 * 1000 + 1000)
+      jest.setSystemTime(Date.now() + 10 * 60 * 1000 + 1000)
+
+      // Entry still valid — should remain blocked
+      const result = await limiter.check(request)
+      expect(result.success).toBe(false)
+    })
+  })
+
+  describe('Upstash Redis path', () => {
+    afterEach(() => {
+      jest.restoreAllMocks()
+    })
+
+    it('should use Upstash when available, then fall back on error', async () => {
+      jest.resetModules()
+
+      const mockLimitFn = jest.fn().mockResolvedValue({ success: true, remaining: 7 })
+
+      jest.doMock('@/lib/redis', () => ({
+        getRedisClient: () => ({}),
+      }))
+
+      jest.doMock('@upstash/ratelimit', () => ({
+        Ratelimit: class MockRatelimit {
+          static slidingWindow() {
+            return {}
+          }
+          limit = mockLimitFn
+        },
+      }))
+
+      const { rateLimit: rl } = require('@/lib/security/rate-limit')
+      const limiter = rl({ interval: 60000, maxRequests: 10 })
+      const request = new NextRequest('http://localhost:3000/test', {
+        headers: new Headers({ 'x-forwarded-for': '1.2.3.4' }),
+      })
+
+      // Success path — Upstash returns its result
+      const result = await limiter.check(request)
+      expect(result.success).toBe(true)
+      expect(result.remaining).toBe(7)
+      expect(mockLimitFn).toHaveBeenCalled()
+
+      // Failure path — Upstash throws, falls back to in-memory
+      mockLimitFn.mockRejectedValueOnce(new Error('Redis connection lost'))
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+
+      const fallbackResult = await limiter.check(request)
+      expect(fallbackResult.success).toBe(true)
+      expect(fallbackResult.remaining).toBe(9) // in-memory fresh count
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[Rate Limit] Redis failed, falling back to in-memory:',
+        'Redis connection lost',
+      )
+    })
+
+    it('should fall back to in-memory when @upstash/ratelimit or Redis is unavailable', async () => {
+      // Test 1: @upstash/ratelimit throws on require
+      jest.resetModules()
+
+      jest.doMock('@/lib/redis', () => ({
+        getRedisClient: () => ({}),
+      }))
+
+      jest.doMock('@upstash/ratelimit', () => {
+        throw new Error('Module not found')
+      })
+
+      const { rateLimit: rl1 } = require('@/lib/security/rate-limit')
+      const limiter1 = rl1({ interval: 60000, maxRequests: 5 })
+      const request = new NextRequest('http://localhost:3000/test', {
+        headers: new Headers({ 'x-forwarded-for': '1.2.3.4' }),
+      })
+
+      let result = await limiter1.check(request)
+      expect(result.success).toBe(true)
+      expect(result.remaining).toBe(4)
+
+      // Test 2: @/lib/redis throws on require
+      jest.resetModules()
+
+      jest.doMock('@/lib/redis', () => {
+        throw new Error('Redis module not found')
+      })
+
+      const { rateLimit: rl2 } = require('@/lib/security/rate-limit')
+      const limiter2 = rl2({ interval: 60000, maxRequests: 5 })
+
+      result = await limiter2.check(request)
+      expect(result.success).toBe(true)
+      expect(result.remaining).toBe(4)
+    })
+  })
+
+  describe('namespace isolation', () => {
+    it('should use custom namespace when provided', async () => {
+      const limiter1 = rateLimit({ interval: 60000, maxRequests: 1, namespace: 'ns-A' })
+      const limiter2 = rateLimit({ interval: 60000, maxRequests: 1, namespace: 'ns-B' })
+      const request = createRequest({ 'x-forwarded-for': '192.168.1.200' })
+
+      await limiter1.check(request)
+      // limiter1 should be blocked
+      const blocked = await limiter1.check(request)
+      expect(blocked.success).toBe(false)
+
+      // limiter2 should be independent (different namespace)
+      const allowed = await limiter2.check(request)
+      expect(allowed.success).toBe(true)
+    })
+
+    it('should use auto-generated namespace when none provided', async () => {
+      // Two limiters with same options but no namespace should be independent
+      // The auto-generated namespace uses Date.now(), so advance time between creations
+      const limiter1 = rateLimit({ interval: 60000, maxRequests: 1 })
+      jest.advanceTimersByTime(1) // ensure different timestamp for namespace
+      const limiter2 = rateLimit({ interval: 60000, maxRequests: 1 })
+      const request = createRequest({ 'x-forwarded-for': '192.168.1.201' })
+
+      await limiter1.check(request)
+      const blocked = await limiter1.check(request)
+      expect(blocked.success).toBe(false)
+
+      const allowed = await limiter2.check(request)
+      expect(allowed.success).toBe(true)
     })
   })
 })

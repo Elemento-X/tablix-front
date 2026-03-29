@@ -1,6 +1,9 @@
-import type { NextRequest } from "next/server"
+import type { NextRequest } from 'next/server'
 
 // In-memory fallback implementation
+// WARNING: This fallback is for DEVELOPMENT ONLY.
+// In serverless environments (Vercel, AWS Lambda), each invocation gets fresh memory,
+// making in-memory rate limiting ineffective. Production MUST use Redis (Upstash).
 interface RateLimitStore {
   count: number
   resetTime: number
@@ -9,14 +12,17 @@ interface RateLimitStore {
 const inMemoryStore = new Map<string, RateLimitStore>()
 
 // Cleanup old entries every 10 minutes
-const cleanupInterval = setInterval(() => {
-  const now = Date.now()
-  for (const [key, value] of inMemoryStore.entries()) {
-    if (now > value.resetTime) {
-      inMemoryStore.delete(key)
+const cleanupInterval = setInterval(
+  () => {
+    const now = Date.now()
+    for (const [key, value] of inMemoryStore.entries()) {
+      if (now > value.resetTime) {
+        inMemoryStore.delete(key)
+      }
     }
-  }
-}, 10 * 60 * 1000)
+  },
+  10 * 60 * 1000,
+)
 
 // Prevent interval from keeping process alive in tests
 if (typeof cleanupInterval.unref === 'function') {
@@ -35,15 +41,17 @@ interface RateLimitOptions {
 }
 
 // Lazy load Redis and Ratelimit to avoid ESM issues in tests
-let redisClient: any = null
+let redisClient: ReturnType<
+  typeof import('@/lib/redis').getRedisClient
+> | null = null
 let redisChecked = false
 
 function getRedis() {
   if (!redisChecked) {
     try {
-      const { getRedisClient } = require("@/lib/redis")
+      const { getRedisClient } = require('@/lib/redis')
       redisClient = getRedisClient()
-    } catch (error) {
+    } catch {
       // Redis not available in test environment
       redisClient = null
     }
@@ -57,7 +65,9 @@ export function rateLimit(options: RateLimitOptions) {
   const namespace = options.namespace ?? `limiter-${Date.now()}`
 
   // Lazy create Upstash Rate Limit instance
-  let upstashLimiter: any = null
+  let upstashLimiter: {
+    limit: (id: string) => Promise<{ success: boolean; remaining: number }>
+  } | null = null
   let upstashChecked = false
 
   function getUpstashLimiter() {
@@ -65,17 +75,17 @@ export function rateLimit(options: RateLimitOptions) {
       const redis = getRedis()
       if (redis) {
         try {
-          const { Ratelimit } = require("@upstash/ratelimit")
+          const { Ratelimit } = require('@upstash/ratelimit')
           upstashLimiter = new Ratelimit({
             redis,
             limiter: Ratelimit.slidingWindow(
               options.maxRequests,
-              `${options.interval}ms`
+              `${options.interval}ms`,
             ),
             analytics: true,
             prefix: `ratelimit:${namespace}`,
           })
-        } catch (error) {
+        } catch {
           // Upstash not available in test environment
           upstashLimiter = null
         }
@@ -86,7 +96,9 @@ export function rateLimit(options: RateLimitOptions) {
   }
 
   return {
-    check: async (request: NextRequest): Promise<{ success: boolean; remaining: number }> => {
+    check: async (
+      request: NextRequest,
+    ): Promise<{ success: boolean; remaining: number }> => {
       const baseIdentifier = getIdentifier(request)
       const identifier = `${namespace}:${baseIdentifier}`
 
@@ -100,7 +112,10 @@ export function rateLimit(options: RateLimitOptions) {
             remaining: result.remaining,
           }
         } catch (error) {
-          console.warn('Redis rate limit failed, falling back to in-memory:', error)
+          console.warn(
+            '[Rate Limit] Redis failed, falling back to in-memory:',
+            error instanceof Error ? error.message : 'Unknown error',
+          )
           // Fall through to in-memory implementation
         }
       }
@@ -132,25 +147,26 @@ export function rateLimit(options: RateLimitOptions) {
 }
 
 function getIdentifier(request: NextRequest): string {
-  // Try to get IP from various headers
-  const forwarded = request.headers.get("x-forwarded-for")
-  const realIp = request.headers.get("x-real-ip")
-  const cfConnectingIp = request.headers.get("cf-connecting-ip")
+  // Priority: cf-connecting-ip (set by Cloudflare, not spoofable by client)
+  // > x-real-ip (set by reverse proxy) > x-forwarded-for (can be spoofed)
+  const cfConnectingIp = request.headers.get('cf-connecting-ip')
+  const realIp = request.headers.get('x-real-ip')
+  const forwarded = request.headers.get('x-forwarded-for')
 
-  if (forwarded) {
-    return forwarded.split(",")[0].trim()
+  if (cfConnectingIp) {
+    return cfConnectingIp.trim()
   }
 
   if (realIp) {
     return realIp.trim()
   }
 
-  if (cfConnectingIp) {
-    return cfConnectingIp.trim()
+  if (forwarded) {
+    return forwarded.split(',')[0].trim()
   }
 
-  // Fallback to a random identifier (not ideal but prevents crashes)
-  return "unknown-" + Math.random().toString(36).substring(7)
+  // Fallback for local development
+  return '127.0.0.1'
 }
 
 // Preset configurations
