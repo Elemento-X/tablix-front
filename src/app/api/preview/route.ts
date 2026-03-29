@@ -1,9 +1,19 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { rateLimiters } from '@/lib/security/rate-limit'
-import { sanitizeFileName } from '@/lib/security/file-validator'
-import { validateFileLimits, validateContentType } from '@/lib/security/validation-schemas'
+import {
+  sanitizeFileName,
+  validateFileContent,
+} from '@/lib/security/file-validator'
+import {
+  validateContentType,
+  sanitizeString,
+} from '@/lib/security/validation-schemas'
 import { checkUnificationLimit, checkFileSizeLimit } from '@/lib/usage-tracker'
-import { getUserFingerprint, setFingerprintCookie, getUserPlan } from '@/lib/fingerprint'
+import {
+  getUserFingerprint,
+  setFingerprintCookie,
+  getUserPlan,
+} from '@/lib/fingerprint'
 import { generateUnificationToken } from '@/lib/security/unification-token'
 
 const MAX_FILES = 1 // Only 1 file per upload
@@ -13,7 +23,10 @@ export async function POST(request: NextRequest) {
     // Validate Content-Type
     const contentTypeCheck = validateContentType(request, 'multipart')
     if (!contentTypeCheck.valid) {
-      return NextResponse.json({ error: contentTypeCheck.error }, { status: 415 })
+      return NextResponse.json(
+        { error: contentTypeCheck.error },
+        { status: 415 },
+      )
     }
 
     // Apply rate limiting (anti-DDoS protection)
@@ -70,7 +83,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (files.length > MAX_FILES) {
-      return NextResponse.json({ error: 'Only 1 file allowed per upload' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Only 1 file allowed per upload' },
+        { status: 400 },
+      )
     }
 
     const file = files[0]
@@ -103,24 +119,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file extension
-    const fileName = file.name.toLowerCase()
-    if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+    // Sanitize file name and use sanitized version from here on
+    const safeName = sanitizeFileName(file.name)
+    const safeNameLower = safeName.toLowerCase()
+
+    // Validate file extension on sanitized name
+    if (
+      !safeNameLower.endsWith('.csv') &&
+      !safeNameLower.endsWith('.xlsx') &&
+      !safeNameLower.endsWith('.xls')
+    ) {
       return NextResponse.json(
-        { error: `Invalid file extension. Only .csv and .xlsx files are allowed.` },
+        {
+          error: `Invalid file extension. Only .csv, .xls and .xlsx files are allowed.`,
+        },
         { status: 400 },
       )
     }
 
-    // Sanitize file name
-    sanitizeFileName(file.name)
+    // Validate file content (magic numbers + zip bomb check)
+    const contentValidation = await validateFileContent(file)
+    if (!contentValidation.valid) {
+      return NextResponse.json(
+        { error: contentValidation.error },
+        { status: 400 },
+      )
+    }
 
     // TODO: Implement actual file parsing logic
-    // For now, simulate column detection
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
     // Example columns - replace with actual parsing logic
-    const columns = [
+    const rawColumns = [
       'ID',
       'Nome',
       'Email',
@@ -132,6 +162,9 @@ export async function POST(request: NextRequest) {
       'Data de Cadastro',
       'Status',
     ]
+
+    // Sanitize column names to prevent XSS via spreadsheet content
+    const columns = rawColumns.map((col) => sanitizeString(col))
 
     // Generate one-time token for /api/unification/complete (prevents replay attacks)
     const unificationToken = await generateUnificationToken(fingerprint)
@@ -162,7 +195,13 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error('Preview API error:', error)
-    return NextResponse.json({ error: 'Error processing file' }, { status: 500 })
+    console.error(
+      '[Preview API] Error:',
+      error instanceof Error ? error.message : 'Unknown error',
+    )
+    return NextResponse.json(
+      { error: 'Error processing file' },
+      { status: 500 },
+    )
   }
 }

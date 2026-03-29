@@ -15,11 +15,13 @@ jest.mock('@/lib/security/rate-limit', () => ({
 
 jest.mock('@/lib/security/file-validator', () => ({
   sanitizeFileName: jest.fn((name) => name),
+  validateFileContent: jest.fn().mockResolvedValue({ valid: true }),
 }))
 
 jest.mock('@/lib/security/validation-schemas', () => ({
   validateFileLimits: jest.fn(),
   validateContentType: jest.fn(() => ({ valid: true })),
+  sanitizeString: jest.fn((str) => str),
 }))
 
 jest.mock('@/lib/usage-tracker', () => ({
@@ -38,10 +40,11 @@ jest.mock('@/lib/security/unification-token', () => ({
 }))
 
 import { rateLimiters } from '@/lib/security/rate-limit'
-import { sanitizeFileName } from '@/lib/security/file-validator'
+import { sanitizeFileName, validateFileContent } from '@/lib/security/file-validator'
 import { checkUnificationLimit, checkFileSizeLimit } from '@/lib/usage-tracker'
 import { getUserFingerprint, setFingerprintCookie, getUserPlan } from '@/lib/fingerprint'
 import { generateUnificationToken } from '@/lib/security/unification-token'
+import { validateContentType } from '@/lib/security/validation-schemas'
 
 describe('POST /api/preview', () => {
   const createRequest = (files: File[] = []) => {
@@ -83,8 +86,27 @@ describe('POST /api/preview', () => {
     ;(checkFileSizeLimit as jest.Mock).mockReturnValue({
       allowed: true,
     })
+    ;(validateContentType as jest.Mock).mockReturnValue({ valid: true })
     ;(sanitizeFileName as jest.Mock).mockImplementation((name) => name)
+    ;(validateFileContent as jest.Mock).mockResolvedValue({ valid: true })
     ;(generateUnificationToken as jest.Mock).mockResolvedValue('mock-token-abc123')
+  })
+
+  describe('Content-Type validation', () => {
+    it('should return 415 when Content-Type is invalid', async () => {
+      ;(validateContentType as jest.Mock).mockReturnValue({
+        valid: false,
+        error: 'Invalid Content-Type. Expected multipart/form-data.',
+      })
+
+      const file = createValidFile()
+      const request = createRequest([file])
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(415)
+      expect(data.error).toBe('Invalid Content-Type. Expected multipart/form-data.')
+    })
   })
 
   describe('rate limiting', () => {
@@ -206,6 +228,22 @@ describe('POST /api/preview', () => {
       expect(data.error).toBe('Invalid file type. Only CSV and XLSX files are allowed.')
     })
 
+    it('should return 400 when file content validation fails (magic numbers/zip bomb)', async () => {
+      ;(validateFileContent as jest.Mock).mockResolvedValue({
+        valid: false,
+        error: 'File content does not match expected format',
+      })
+
+      const file = createValidFile()
+      const request = createRequest([file])
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.error).toBe('File content does not match expected format')
+      expect(validateFileContent).toHaveBeenCalledWith(file)
+    })
+
     it('should return 400 for invalid file extension', async () => {
       // File with CSV MIME type but wrong extension
       const file = new File(['content'], 'test.txt', { type: 'text/csv' })
@@ -216,7 +254,9 @@ describe('POST /api/preview', () => {
       const data = await response.json()
 
       expect(response.status).toBe(400)
-      expect(data.error).toBe('Invalid file extension. Only .csv and .xlsx files are allowed.')
+      expect(data.error).toBe(
+        'Invalid file extension. Only .csv, .xls and .xlsx files are allowed.',
+      )
     })
   })
 

@@ -15,6 +15,7 @@ jest.mock('@/lib/security/rate-limit', () => ({
 
 jest.mock('@/lib/security/file-validator', () => ({
   sanitizeFileName: jest.fn((name) => name),
+  validateFileContent: jest.fn().mockResolvedValue({ valid: true }),
 }))
 
 jest.mock('@/lib/security/validation-schemas', () => ({
@@ -55,7 +56,7 @@ jest.mock('@/lib/usage-tracker', () => ({
 }))
 
 import { rateLimiters } from '@/lib/security/rate-limit'
-import { sanitizeFileName } from '@/lib/security/file-validator'
+import { sanitizeFileName, validateFileContent } from '@/lib/security/file-validator'
 import {
   validateFileLimits,
   validateColumnSelection,
@@ -101,6 +102,7 @@ describe('POST /api/process', () => {
       data: ['Name', 'Email'],
     })
     ;(sanitizeFileName as jest.Mock).mockImplementation((name) => name)
+    ;(validateFileContent as jest.Mock).mockResolvedValue({ valid: true })
     ;(sanitizeString as jest.Mock).mockImplementation((str) => str)
     ;(getUserFingerprint as jest.Mock).mockReturnValue({
       isNew: false,
@@ -121,6 +123,23 @@ describe('POST /api/process', () => {
       currentUnifications: 0,
       maxUnifications: 1,
       remainingUnifications: 1,
+    })
+  })
+
+  describe('Content-Type validation', () => {
+    it('should return 415 when Content-Type is invalid', async () => {
+      ;(validateContentType as jest.Mock).mockReturnValue({
+        valid: false,
+        error: 'Invalid Content-Type. Expected multipart/form-data.',
+      })
+
+      const file = createValidFile()
+      const request = createRequest([file])
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(415)
+      expect(data.error).toBe('Invalid Content-Type. Expected multipart/form-data.')
     })
   })
 
@@ -181,6 +200,22 @@ describe('POST /api/process', () => {
 
       expect(response.status).toBe(400)
       expect(data.error).toBe('Too many files uploaded')
+    })
+
+    it('should return 400 when file content validation fails (magic numbers/zip bomb)', async () => {
+      ;(validateFileContent as jest.Mock).mockResolvedValue({
+        valid: false,
+        error: 'File content does not match expected format',
+      })
+
+      const file = createValidFile()
+      const request = createRequest([file])
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.error).toBe('File content does not match expected format')
+      expect(validateFileContent).toHaveBeenCalledWith(file)
     })
 
     it('should return 400 for invalid file type', async () => {
