@@ -1,10 +1,12 @@
 import * as XLSX from 'xlsx'
 import Papa from 'papaparse'
+import { PLAN_LIMITS, type PlanType } from '@/lib/limits'
 
 export interface MergeOptions {
   files: File[]
   selectedColumns: string[]
   addWatermark: boolean // For Free plan
+  plan?: PlanType
 }
 
 export interface MergeResult {
@@ -15,6 +17,24 @@ export interface MergeResult {
 
 interface RowData {
   [key: string]: string | number | boolean | null
+}
+
+/**
+ * Sanitize cell value to prevent formula injection in spreadsheets.
+ * Cells starting with =, +, -, @, tab, or carriage return can trigger
+ * formula execution when opened in Excel/Google Sheets (CSV injection / DDE attacks).
+ */
+function sanitizeCellValue(
+  value: string | number | boolean | null,
+): string | number | boolean | null {
+  if (typeof value !== 'string') return value
+
+  const dangerousPrefixes = ['=', '+', '-', '@', '\t', '\r', '\n']
+  if (dangerousPrefixes.some((prefix) => value.startsWith(prefix))) {
+    return `'${value}`
+  }
+
+  return value
 }
 
 /**
@@ -77,8 +97,11 @@ async function parseFileData(file: File): Promise<RowData[]> {
  * - Concatenates all rows
  * - Optionally adds watermark for Free plan
  */
-export async function mergeSpreadsheets(options: MergeOptions): Promise<MergeResult> {
-  const { files, selectedColumns, addWatermark } = options
+export async function mergeSpreadsheets(
+  options: MergeOptions,
+): Promise<MergeResult> {
+  const { files, selectedColumns, addWatermark, plan = 'free' } = options
+  const limits = PLAN_LIMITS[plan]
 
   if (files.length === 0) {
     throw new Error('No files to merge')
@@ -94,13 +117,21 @@ export async function mergeSpreadsheets(options: MergeOptions): Promise<MergeRes
   for (const file of files) {
     const fileData = await parseFileData(file)
 
-    // Filter to only selected columns and add to merged data
+    // Filter to only selected columns, sanitize values, and add to merged data
     for (const row of fileData) {
+      // Enforce row limit based on plan
+      if (allRows.length >= limits.maxRows) {
+        throw new Error(
+          `Row limit exceeded: max ${limits.maxRows} rows for ${limits.name} plan`,
+        )
+      }
+
       const filteredRow: RowData = {}
 
       for (const col of selectedColumns) {
-        // Handle column with value or empty
-        filteredRow[col] = row[col] !== undefined ? row[col] : null
+        // Sanitize cell value to prevent formula injection (CSV injection / DDE)
+        const rawValue = row[col] !== undefined ? row[col] : null
+        filteredRow[col] = sanitizeCellValue(rawValue)
       }
 
       // Add watermark column for Free plan
@@ -138,11 +169,17 @@ export async function mergeSpreadsheets(options: MergeOptions): Promise<MergeRes
       { Info: 'Arquivo gerado por', Valor: 'Tablix' },
       { Info: 'Website', Valor: 'https://tablix.com.br' },
       { Info: 'Plano', Valor: 'Free' },
-      { Info: 'Data de geração', Valor: new Date().toLocaleDateString('pt-BR') },
+      {
+        Info: 'Data de geração',
+        Valor: new Date().toLocaleDateString('pt-BR'),
+      },
       { Info: 'Total de linhas', Valor: allRows.length.toString() },
       { Info: 'Arquivos unificados', Valor: files.length.toString() },
       { Info: '', Valor: '' },
-      { Info: 'Upgrade para Pro', Valor: 'Remova marca d\'água e aumente os limites!' },
+      {
+        Info: 'Upgrade para Pro',
+        Valor: "Remova marca d'água e aumente os limites!",
+      },
     ]
 
     const aboutSheet = XLSX.utils.json_to_sheet(aboutData)

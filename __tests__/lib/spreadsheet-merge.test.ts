@@ -140,8 +140,12 @@ describe('spreadsheet-merge.ts', () => {
       })
 
       it('should merge multiple CSV files', async () => {
-        const file1 = new File(['Name,Email\nJohn,john@test.com'], 'test1.csv', { type: 'text/csv' })
-        const file2 = new File(['Name,Email\nJane,jane@test.com'], 'test2.csv', { type: 'text/csv' })
+        const file1 = new File(['Name,Email\nJohn,john@test.com'], 'test1.csv', {
+          type: 'text/csv',
+        })
+        const file2 = new File(['Name,Email\nJane,jane@test.com'], 'test2.csv', {
+          type: 'text/csv',
+        })
 
         const options: MergeOptions = {
           files: [file1, file2],
@@ -250,7 +254,9 @@ describe('spreadsheet-merge.ts', () => {
 
     describe('column filtering', () => {
       it('should only include selected columns in output', async () => {
-        const file = new File(['Name,Email,Phone\nJohn,john@test.com,123'], 'test.csv', { type: 'text/csv' })
+        const file = new File(['Name,Email,Phone\nJohn,john@test.com,123'], 'test.csv', {
+          type: 'text/csv',
+        })
 
         const options: MergeOptions = {
           files: [file],
@@ -265,7 +271,7 @@ describe('spreadsheet-merge.ts', () => {
           expect.any(Array),
           expect.objectContaining({
             header: ['Name'],
-          })
+          }),
         )
       })
 
@@ -298,7 +304,7 @@ describe('spreadsheet-merge.ts', () => {
         const result = await mergeSpreadsheets(options)
 
         expect(result.blob.type).toBe(
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         )
       })
 
@@ -411,6 +417,183 @@ describe('spreadsheet-merge.ts', () => {
       // Restore original mock
       // @ts-ignore
       global.FileReader = MockFileReader
+    })
+  })
+
+  describe('formula injection protection', () => {
+    it('should prefix cell values starting with = with single quote', async () => {
+      const Papa = require('papaparse')
+      ;(Papa.parse as jest.Mock).mockReturnValueOnce({
+        data: [{ Name: '=SUM(A1:A10)', Email: 'normal@test.com' }],
+        errors: [],
+        meta: { fields: ['Name', 'Email'] },
+      })
+
+      const file = new File(['content'], 'formula.csv', { type: 'text/csv' })
+      const options: MergeOptions = {
+        files: [file],
+        selectedColumns: ['Name', 'Email'],
+        addWatermark: false,
+      }
+
+      await mergeSpreadsheets(options)
+
+      // Check that json_to_sheet was called with sanitized data
+      expect(XLSX.utils.json_to_sheet).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ Name: "'=SUM(A1:A10)", Email: 'normal@test.com' }),
+        ]),
+        expect.anything(),
+      )
+    })
+
+    it('should prefix cell values starting with +, -, @, tab, CR, LF', async () => {
+      const Papa = require('papaparse')
+      ;(Papa.parse as jest.Mock).mockReturnValueOnce({
+        data: [
+          { Col: '+cmd|/C calc' },
+          { Col: '-1+1' },
+          { Col: '@SUM(A1)' },
+          { Col: '\tcmd' },
+          { Col: '\rcmd' },
+          { Col: '\ncmd' },
+        ],
+        errors: [],
+        meta: { fields: ['Col'] },
+      })
+
+      const file = new File(['content'], 'evil.csv', { type: 'text/csv' })
+      const options: MergeOptions = {
+        files: [file],
+        selectedColumns: ['Col'],
+        addWatermark: false,
+      }
+
+      await mergeSpreadsheets(options)
+
+      expect(XLSX.utils.json_to_sheet).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ Col: "'+cmd|/C calc" }),
+          expect.objectContaining({ Col: "'-1+1" }),
+          expect.objectContaining({ Col: "'@SUM(A1)" }),
+          expect.objectContaining({ Col: "'\tcmd" }),
+          expect.objectContaining({ Col: "'\rcmd" }),
+          expect.objectContaining({ Col: "'\ncmd" }),
+        ]),
+        expect.anything(),
+      )
+    })
+
+    it('should not sanitize non-string values (numbers, booleans, null)', async () => {
+      const Papa = require('papaparse')
+      ;(Papa.parse as jest.Mock).mockReturnValueOnce({
+        data: [{ Num: 42, Bool: true, Empty: null }],
+        errors: [],
+        meta: { fields: ['Num', 'Bool', 'Empty'] },
+      })
+
+      const file = new File(['content'], 'types.csv', { type: 'text/csv' })
+      const options: MergeOptions = {
+        files: [file],
+        selectedColumns: ['Num', 'Bool', 'Empty'],
+        addWatermark: false,
+      }
+
+      await mergeSpreadsheets(options)
+
+      expect(XLSX.utils.json_to_sheet).toHaveBeenCalledWith(
+        expect.arrayContaining([expect.objectContaining({ Num: 42, Bool: true, Empty: null })]),
+        expect.anything(),
+      )
+    })
+
+    it('should not sanitize strings without dangerous prefixes', async () => {
+      const Papa = require('papaparse')
+      ;(Papa.parse as jest.Mock).mockReturnValueOnce({
+        data: [{ Name: 'Normal text', Calc: 'A=B+C' }],
+        errors: [],
+        meta: { fields: ['Name', 'Calc'] },
+      })
+
+      const file = new File(['content'], 'safe.csv', { type: 'text/csv' })
+      const options: MergeOptions = {
+        files: [file],
+        selectedColumns: ['Name', 'Calc'],
+        addWatermark: false,
+      }
+
+      await mergeSpreadsheets(options)
+
+      expect(XLSX.utils.json_to_sheet).toHaveBeenCalledWith(
+        expect.arrayContaining([expect.objectContaining({ Name: 'Normal text', Calc: 'A=B+C' })]),
+        expect.anything(),
+      )
+    })
+  })
+
+  describe('row limit enforcement', () => {
+    it('should reject merge exceeding free plan row limit (500)', async () => {
+      const Papa = require('papaparse')
+      const rows = Array.from({ length: 501 }, (_, i) => ({ Name: `Row${i}` }))
+      ;(Papa.parse as jest.Mock).mockReturnValueOnce({
+        data: rows,
+        errors: [],
+        meta: { fields: ['Name'] },
+      })
+
+      const file = new File(['content'], 'big.csv', { type: 'text/csv' })
+      const options: MergeOptions = {
+        files: [file],
+        selectedColumns: ['Name'],
+        addWatermark: false,
+        plan: 'free',
+      }
+
+      await expect(mergeSpreadsheets(options)).rejects.toThrow(
+        'Row limit exceeded: max 500 rows for Free plan',
+      )
+    })
+
+    it('should accept merge within free plan row limit', async () => {
+      const Papa = require('papaparse')
+      const rows = Array.from({ length: 500 }, (_, i) => ({ Name: `Row${i}` }))
+      ;(Papa.parse as jest.Mock).mockReturnValueOnce({
+        data: rows,
+        errors: [],
+        meta: { fields: ['Name'] },
+      })
+
+      const file = new File(['content'], 'ok.csv', { type: 'text/csv' })
+      const options: MergeOptions = {
+        files: [file],
+        selectedColumns: ['Name'],
+        addWatermark: false,
+        plan: 'free',
+      }
+
+      const result = await mergeSpreadsheets(options)
+      expect(result.rowCount).toBe(500)
+    })
+
+    it('should allow more rows with pro plan', async () => {
+      const Papa = require('papaparse')
+      const rows = Array.from({ length: 1000 }, (_, i) => ({ Name: `Row${i}` }))
+      ;(Papa.parse as jest.Mock).mockReturnValueOnce({
+        data: rows,
+        errors: [],
+        meta: { fields: ['Name'] },
+      })
+
+      const file = new File(['content'], 'pro.csv', { type: 'text/csv' })
+      const options: MergeOptions = {
+        files: [file],
+        selectedColumns: ['Name'],
+        addWatermark: false,
+        plan: 'pro',
+      }
+
+      const result = await mergeSpreadsheets(options)
+      expect(result.rowCount).toBe(1000)
     })
   })
 })

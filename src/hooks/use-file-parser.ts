@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import * as XLSX from 'xlsx'
 import Papa from 'papaparse'
+import { PLAN_LIMITS, type PlanType } from '@/lib/limits'
+import { sanitizeString } from '@/lib/security/validation-schemas'
 
 export interface ParseResult {
   columns: string[]
   rowCount: number
-  preview?: any[] // First 5 rows for preview
+  preview?: Record<string, string | number | boolean | null>[]
 }
 
 export interface ParseError {
@@ -26,8 +28,14 @@ export function useFileParser() {
   /**
    * Parse file in browser (client-side)
    * Supports .xlsx, .xls, .csv
+   * Enforces row limits based on plan and sanitizes column names
    */
-  const parseFileInBrowser = async (file: File): Promise<ParseResult> => {
+  const parseFileInBrowser = async (
+    file: File,
+    plan: PlanType = 'free',
+  ): Promise<ParseResult> => {
+    const limits = PLAN_LIMITS[plan]
+
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
 
@@ -42,23 +50,39 @@ export function useFileParser() {
           // CSV files
           if (file.name.endsWith('.csv')) {
             const text = new TextDecoder().decode(data as ArrayBuffer)
-            const parsed = Papa.parse(text, {
+
+            // First pass: count total rows to validate against limit
+            const fullParse = Papa.parse(text, {
               header: true,
               skipEmptyLines: true,
-              preview: 5, // Only parse first 5 rows for preview
             })
 
-            if (parsed.errors.length > 0) {
-              throw new Error(parsed.errors[0].message)
+            if (fullParse.errors.length > 0) {
+              throw new Error(fullParse.errors[0].message)
             }
 
-            const columns = parsed.meta.fields || []
-            const rowCount = parsed.data.length
+            const totalRows = fullParse.data.length
+            if (totalRows > limits.maxRows) {
+              throw new Error(
+                `File exceeds row limit: ${totalRows} rows (max ${limits.maxRows} for ${limits.name} plan)`,
+              )
+            }
+
+            // Sanitize column names to prevent XSS
+            const rawColumns = fullParse.meta.fields || []
+            const columns = rawColumns
+              .map((col) => sanitizeString(col))
+              .filter((col) => col.length > 0)
 
             resolve({
               columns,
-              rowCount,
-              preview: parsed.data,
+              rowCount: totalRows,
+              preview: (
+                fullParse.data as Record<
+                  string,
+                  string | number | boolean | null
+                >[]
+              ).slice(0, 5),
             })
             return
           }
@@ -78,23 +102,34 @@ export function useFileParser() {
             throw new Error('Empty spreadsheet')
           }
 
-          // First row = column names
-          const columns = (jsonData[0] as any[])
-            .filter(col => col !== null && col !== undefined && col !== '')
-            .map(col => String(col).trim())
+          // First row = column names — sanitize to prevent XSS
+          const columns = (jsonData[0] as (string | number | boolean | null)[])
+            .filter((col) => col !== null && col !== undefined && col !== '')
+            .map((col) => sanitizeString(String(col).trim()))
+            .filter((col) => col.length > 0)
 
           if (columns.length === 0) {
             throw new Error('No columns found in first row')
           }
 
-          // Get row count (excluding header)
+          // Get row count (excluding header) and enforce limit
           const rowCount = jsonData.length - 1
+          if (rowCount > limits.maxRows) {
+            throw new Error(
+              `File exceeds row limit: ${rowCount} rows (max ${limits.maxRows} for ${limits.name} plan)`,
+            )
+          }
 
           // Get preview (first 5 rows)
-          const preview = XLSX.utils.sheet_to_json(firstSheet, {
-            header: columns,
-            range: 1, // Skip header row
-          }).slice(0, 5)
+          const preview = XLSX.utils
+            .sheet_to_json<Record<string, string | number | boolean | null>>(
+              firstSheet,
+              {
+                header: columns,
+                range: 1, // Skip header row
+              },
+            )
+            .slice(0, 5)
 
           resolve({
             columns,
@@ -141,7 +176,10 @@ export function useFileParser() {
   /**
    * Smart parsing: client-side for small files, server-side for large files
    */
-  const parseFile = async (file: File): Promise<ParseResult> => {
+  const parseFile = async (
+    file: File,
+    plan: PlanType = 'free',
+  ): Promise<ParseResult> => {
     setIsLoading(true)
     setError(null)
 
@@ -150,11 +188,9 @@ export function useFileParser() {
 
       if (file.size < MAX_CLIENT_PARSE_SIZE) {
         // Small file: parse in browser (instant, no server load)
-        console.log(`[Parser] Client-side parsing (${(file.size / 1024).toFixed(0)}KB)`)
-        result = await parseFileInBrowser(file)
+        result = await parseFileInBrowser(file, plan)
       } else {
         // Large file: parse on server (avoid browser freeze)
-        console.log(`[Parser] Server-side parsing (${(file.size / 1024 / 1024).toFixed(1)}MB)`)
         result = await parseFileInServer(file)
       }
 

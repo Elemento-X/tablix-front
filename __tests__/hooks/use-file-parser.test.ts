@@ -619,4 +619,126 @@ describe('useFileParser hook', () => {
       expect(result.current.error?.message).toBe('Failed to parse file')
     })
   })
+
+  describe('row limit enforcement', () => {
+    it('should reject CSV files exceeding free plan row limit (500)', async () => {
+      const rows = Array.from({ length: 501 }, (_, i) => ({ Name: `Row${i}` }))
+      ;(Papa.parse as jest.Mock).mockReturnValue({
+        data: rows,
+        errors: [],
+        meta: { fields: ['Name'] },
+      })
+
+      const file = new File([''], 'big.csv', { type: 'text/csv' })
+      Object.defineProperty(file, 'size', { value: 1024 })
+
+      const { result } = renderHook(() => useFileParser())
+
+      await act(async () => {
+        await expect(result.current.parseFile(file, 'free')).rejects.toEqual({
+          message: 'File exceeds row limit: 501 rows (max 500 for Free plan)',
+          code: 'PARSE_ERROR',
+        })
+      })
+    })
+
+    it('should accept CSV files within free plan row limit', async () => {
+      const rows = Array.from({ length: 500 }, (_, i) => ({ Name: `Row${i}` }))
+      ;(Papa.parse as jest.Mock).mockReturnValue({
+        data: rows,
+        errors: [],
+        meta: { fields: ['Name'] },
+      })
+
+      const file = new File([''], 'ok.csv', { type: 'text/csv' })
+      Object.defineProperty(file, 'size', { value: 1024 })
+
+      const { result } = renderHook(() => useFileParser())
+
+      let parseResult: ReturnType<typeof result.current.parseFile> extends Promise<infer T>
+        ? T
+        : never
+      await act(async () => {
+        parseResult = await result.current.parseFile(file, 'free')
+      })
+
+      expect(parseResult!.rowCount).toBe(500)
+    })
+
+    it('should reject XLSX files exceeding free plan row limit', async () => {
+      const mockWorkbook = {
+        SheetNames: ['Sheet1'],
+        Sheets: { Sheet1: {} },
+      }
+
+      // 502 rows: 1 header + 501 data rows
+      const jsonData = [['Name'], ...Array.from({ length: 501 }, (_, i) => [`Row${i}`])]
+
+      ;(XLSX.read as jest.Mock).mockReturnValue(mockWorkbook)
+      ;(XLSX.utils.sheet_to_json as jest.Mock).mockReturnValueOnce(jsonData)
+
+      const file = new File([''], 'big.xlsx', {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      Object.defineProperty(file, 'size', { value: 1024 })
+
+      const { result } = renderHook(() => useFileParser())
+
+      await act(async () => {
+        await expect(result.current.parseFile(file, 'free')).rejects.toEqual({
+          message: 'File exceeds row limit: 501 rows (max 500 for Free plan)',
+          code: 'PARSE_ERROR',
+        })
+      })
+    })
+
+    it('should allow more rows with pro plan', async () => {
+      const rows = Array.from({ length: 1000 }, (_, i) => ({ Name: `Row${i}` }))
+      ;(Papa.parse as jest.Mock).mockReturnValue({
+        data: rows,
+        errors: [],
+        meta: { fields: ['Name'] },
+      })
+
+      const file = new File([''], 'ok.csv', { type: 'text/csv' })
+      Object.defineProperty(file, 'size', { value: 1024 })
+
+      const { result } = renderHook(() => useFileParser())
+
+      let parseResult: ReturnType<typeof result.current.parseFile> extends Promise<infer T>
+        ? T
+        : never
+      await act(async () => {
+        parseResult = await result.current.parseFile(file, 'pro')
+      })
+
+      expect(parseResult!.rowCount).toBe(1000)
+    })
+  })
+
+  describe('column name sanitization', () => {
+    it('should sanitize column names with special characters', async () => {
+      ;(Papa.parse as jest.Mock).mockReturnValue({
+        data: [{ '<script>alert(1)</script>': 'val' }],
+        errors: [],
+        meta: { fields: ['<script>alert(1)</script>'] },
+      })
+
+      const file = new File([''], 'xss.csv', { type: 'text/csv' })
+      Object.defineProperty(file, 'size', { value: 1024 })
+
+      const { result } = renderHook(() => useFileParser())
+
+      let parseResult: ReturnType<typeof result.current.parseFile> extends Promise<infer T>
+        ? T
+        : never
+      await act(async () => {
+        parseResult = await result.current.parseFile(file)
+      })
+
+      // sanitizeString removes < and >
+      expect(parseResult!.columns[0]).not.toContain('<')
+      expect(parseResult!.columns[0]).not.toContain('>')
+    })
+  })
 })
