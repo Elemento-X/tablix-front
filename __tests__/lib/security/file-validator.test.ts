@@ -61,7 +61,11 @@ describe('file-validator.ts', () => {
       })
 
       it('should accept .xlsx files', () => {
-        const file = createMockFile('data.xlsx', 1000, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        const file = createMockFile(
+          'data.xlsx',
+          1000,
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
         const result = validateFile(file)
         expect(result.valid).toBe(true)
       })
@@ -94,7 +98,11 @@ describe('file-validator.ts', () => {
       })
 
       it('should accept Excel MIME types', () => {
-        const file = createMockFile('test.xlsx', 1000, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        const file = createMockFile(
+          'test.xlsx',
+          1000,
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
         const result = validateFile(file)
         expect(result.valid).toBe(true)
       })
@@ -141,12 +149,7 @@ describe('file-validator.ts', () => {
       })
 
       it('should accept valid filenames', () => {
-        const validNames = [
-          'data.csv',
-          'my-file_123.xlsx',
-          'Report 2024.csv',
-          'sales_data.xlsx',
-        ]
+        const validNames = ['data.csv', 'my-file_123.xlsx', 'Report 2024.csv', 'sales_data.xlsx']
 
         validNames.forEach((filename) => {
           const file = createMockFile(filename, 1000, 'text/csv')
@@ -235,6 +238,24 @@ describe('file-validator.ts', () => {
       expect(result.valid).toBe(true)
     })
 
+    it('should accept .xls files with valid CDF magic bytes', async () => {
+      // Microsoft Compound Document Format signature
+      const cdfBytes = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]
+      const file = createFileWithBytes(cdfBytes, 'data.xls')
+
+      const result = await validateFileContent(file)
+      expect(result.valid).toBe(true)
+    })
+
+    it('should reject .xls files with invalid magic bytes', async () => {
+      const fakeBytes = [0x50, 0x4b, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00]
+      const file = createFileWithBytes(fakeBytes, 'fake.xls')
+
+      const result = await validateFileContent(file)
+      expect(result.valid).toBe(false)
+      expect(result.error).toBe('File claims to be XLS but has invalid format')
+    })
+
     it('should reject CSV files with binary content', async () => {
       // CSV expects text, but 0xff and 0xfe are allowed (BOM markers)
       // To make it fail, we need mostly high bytes
@@ -257,6 +278,24 @@ describe('file-validator.ts', () => {
       const result = await validateFileContent(mockFile)
       expect(result.valid).toBe(false)
       expect(result.error).toBe('Failed to validate file content')
+    })
+
+    it('should accept valid ZIP file (XLSX) regardless of size (zip bomb handled by row limits)', async () => {
+      // Zip bomb protection now relies on MAX_FILE_SIZE (10MB) and row limits,
+      // not on a separate size check in validateFileContent
+      const file = createFileWithBytes([0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0], 'large.xlsx')
+
+      const result = await validateFileContent(file)
+      expect(result.valid).toBe(true)
+    })
+
+    it('should validate ZIP with alternate signature byte (0x05 at position 2)', async () => {
+      // XLSX ZIP can have 0x50 0x4B 0x05 signature
+      const file = createFileWithBytes([0x50, 0x4b, 0x05, 0x06, 0, 0, 0, 0], 'test.xlsx')
+      Object.defineProperty(file, 'size', { value: 1000 })
+
+      const result = await validateFileContent(file)
+      expect(result.valid).toBe(true)
     })
   })
 })
