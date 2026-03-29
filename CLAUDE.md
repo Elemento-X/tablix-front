@@ -65,14 +65,14 @@
 Toda entrega de codigo passa pelo pipeline completo, sem excecao:
 
 ```
-@tester → @security → @reviewer → @planner → Trello
+(@tester + @security) em paralelo → @reviewer → Trello
 ```
 
-- **@tester** valida funcionalidade, coverage, edge cases, testes passando
+- **@tester** escreve testes, valida coverage, edge cases (CI rodara automaticamente no futuro)
 - **@security** audita seguranca: OWASP, injection, headers, rate limit
-- **@reviewer** consolida os dois relatorios e decide: aprovado ou reprovado
-- **@planner** formata o resultado para o Trello — SEMPRE, aprovado ou reprovado
-- 1 comentario consolidado por card por execucao do pipeline (contendo VALIDACAO, AUDITORIA, REVISAO, PLANO)
+- **@reviewer** faz code review direto no codigo, recebe achados dos dois como contexto, emite veredito final
+- **@planner** nao faz parte do pipeline — e chamado sob demanda para planejamento e estruturacao de cards
+- 1 comentario consolidado por card por execucao do pipeline (contendo VALIDACAO, AUDITORIA, REVISAO)
 - Reprovacao de QUALQUER agente reinicia o ciclo completo apos correcao
 - Correcoes vao no card existente; descobertas novas viram card novo
 - Historico de reprovacoes no Trello e sagrado — nunca apagar, nunca pular
