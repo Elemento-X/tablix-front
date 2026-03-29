@@ -7,11 +7,10 @@ export const columnNameSchema = z
   .max(255, 'Column name too long')
   .regex(/^[a-zA-Z0-9\s_\-À-ÿ]+$/, 'Column name contains invalid characters')
 
-// Array of column names
+// Array of column names (base schema — plan-specific max enforced in route)
 export const columnsArraySchema = z
   .array(columnNameSchema)
   .min(1, 'At least one column must be selected')
-  .max(50, 'Too many columns selected (max 50)')
 
 // File metadata validation
 export const fileMetadataSchema = z.object({
@@ -20,10 +19,7 @@ export const fileMetadataSchema = z.object({
     .min(1, 'File name is required')
     .max(255, 'File name too long')
     .regex(/^[^<>:"|?*\0]+$/, 'File name contains invalid characters'),
-  size: z
-    .number()
-    .positive('File size must be positive')
-    .max(10 * 1024 * 1024, 'File too large (max 10MB)'),
+  size: z.number().positive('File size must be positive'),
   type: z.enum([
     'text/csv',
     'application/vnd.ms-excel',
@@ -79,7 +75,10 @@ export function validateColumnSelection(columns: unknown): {
     return { valid: true, data: sanitized }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { valid: false, error: error.errors[0]?.message || 'Invalid column selection' }
+      return {
+        valid: false,
+        error: error.errors[0]?.message || 'Invalid column selection',
+      }
     }
     return { valid: false, error: 'Invalid column selection' }
   }
@@ -108,8 +107,8 @@ export function validateContentType(
 // Validate file size and count limits
 export function validateFileLimits(
   files: File[],
-  maxFiles: number = 1,
-  maxSize: number = 10 * 1024 * 1024,
+  maxFiles: number,
+  maxSize: number,
 ): {
   valid: boolean
   error?: string
@@ -119,19 +118,25 @@ export function validateFileLimits(
   }
 
   if (files.length > maxFiles) {
-    return { valid: false, error: `Too many files. Maximum ${maxFiles} file(s) allowed` }
+    return {
+      valid: false,
+      error: `Too many files. Maximum ${maxFiles} file(s) allowed`,
+    }
   }
 
   for (const file of files) {
+    // Sanitize file name before including in error messages to prevent XSS
+    const safeName = sanitizeString(file.name).slice(0, 50)
+
     if (file.size > maxSize) {
       return {
         valid: false,
-        error: `File "${file.name}" exceeds maximum size of ${maxSize / (1024 * 1024)}MB`,
+        error: `File "${safeName}" exceeds maximum size of ${maxSize / (1024 * 1024)}MB`,
       }
     }
 
     if (file.size === 0) {
-      return { valid: false, error: `File "${file.name}" is empty` }
+      return { valid: false, error: `File "${safeName}" is empty` }
     }
   }
 
