@@ -7,6 +7,9 @@
 - Lint: `npx eslint .`
 - Test (específico): `npm test -- --testPathPattern=<pattern>`
 - Test coverage: `npm run test:coverage`
+- E2E (todos): `npm run test:e2e`
+- E2E (UI mode): `npm run test:e2e:ui`
+- E2E (específico): `npm run test:e2e -- --grep "<pattern>"`
 - ESLint config: @rocketseat/eslint-config (padrão do projeto)
 
 ## Regras de código

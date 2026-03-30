@@ -178,7 +178,83 @@ Testes de seguranca validam que:
 - Quota e incrementada atomicamente (sem race conditions)
 - Erros nao expoe informacoes internas
 
+## Testes E2E (Playwright)
+
+### Stack E2E
+
+- **Playwright** — test runner E2E (chromium)
+- **Page Object Model** — abstração de paginas em classes reutilizaveis
+
+### Comandos E2E
+
+```bash
+npm run test:e2e                            # Roda todos os E2E
+npm run test:e2e:ui                         # Modo interativo
+npm run test:e2e -- --grep "sanity"         # Filtrar por nome
+npm run test:e2e -- --grep "free-flow"
+npm run test:e2e -- --grep "limits"
+npm run test:e2e -- --grep "rate-limiting"
+```
+
+### Estrutura E2E
+
+```
+e2e/
+├── fixtures/
+│   ├── files/           # Gerados no global-setup (gitignored)
+│   └── test.fixture.ts  # Extensao do test com page objects + mocks
+├── pages/               # Page Object Models
+│   ├── landing.page.ts
+│   ├── upload.page.ts
+│   └── columns.page.ts
+├── helpers/
+│   ├── locale.helper.ts   # t() para i18n assertions
+│   ├── toast.helper.ts    # Assertions em toasts Sonner
+│   └── download.helper.ts # Parse de XLSX baixado
+├── specs/
+│   ├── 7.1-sanity.spec.ts        # 6 testes
+│   ├── 7.2-free-flow.spec.ts     # 7 testes
+│   ├── 7.3-limits.spec.ts        # 5 testes
+│   └── 7.4-rate-limiting.spec.ts # 3 testes
+├── global-setup.ts       # Gera fixture files
+└── .eslintrc.json
+playwright.config.ts      # Na raiz
+```
+
+### Specs E2E (21 testes)
+
+**7.1 Sanity (6 testes):** landing page, CTA navigation, dropzone visible, usage status, continue disabled, back link
+
+**7.2 Free Flow (7 testes):** single CSV full flow com validacao de conteudo XLSX, two CSVs merge, XLSX upload, column toggle (select/deselect/individual), start over, file removal, success toast
+
+**7.3 Limits (5 testes):** max 3 arquivos, arquivo > 1MB, > 500 rows, sem colunas em comum, quota esgotada
+
+**7.4 Rate Limiting (3 testes):** mock 429 no preview, mock 429 no process, teste real de rate limit com Retry-After
+
+### Mocks padrao (fixture)
+
+- `GET /api/usage` — plano Free com quota disponivel (mockado no test.fixture.ts)
+- `POST /api/preview` — colunas + token (mockado nos specs)
+- `POST /api/unification/complete` — sucesso (mockado nos specs)
+
+### Fixtures geradas
+
+- `valid-3col-5row.csv` / `.xlsx` — 3 colunas, 5 linhas
+- `valid-common-cols-a.csv` / `b.csv` — CSVs com colunas em comum
+- `no-common-cols.csv` — sem colunas em comum
+- `large-501-rows.csv` — excede limite de 500 linhas
+- `large-1.1mb.csv` — excede limite de 1MB
+
+### Config (playwright.config.ts)
+
+- Browser: chromium
+- Locale: pt-BR
+- webServer: `npm run dev` (porta 3000, timeout 60s)
+- Traces: on-first-retry
+- Screenshots: only-on-failure
+- CI: retries 2, workers 1, reporter github
+
 ---
 
 **Atualizado em:** 2026-03-30
-**Status na data:** 36 suites, 940 testes passando (sujeito a variacao conforme evolucao do codigo)
+**Status na data:** 36 suites Jest (940 testes) + 4 suites Playwright E2E (21 testes) passando (sujeito a variacao conforme evolucao do codigo)
