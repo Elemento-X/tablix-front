@@ -26,7 +26,36 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  const response = NextResponse.next()
+  // Generate nonce for CSP
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  const isDev = process.env.NODE_ENV === 'development'
+
+  const scriptSrc = isDev
+    ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live"
+    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live`
+
+  // unsafe-inline is required for Tailwind/CSS-in-JS; nonce omitted since unsafe-inline overrides it
+  const styleSrc = "style-src 'self' 'unsafe-inline'"
+
+  const cspHeader = [
+    "default-src 'self'",
+    scriptSrc,
+    styleSrc,
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    `connect-src 'self' ${isDev ? 'ws://localhost:* ' : ''}https://vercel.live https://*.vercel-insights.com https://*.vercel-scripts.com`,
+    "frame-ancestors 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ')
+
+  // Pass nonce via request headers (invisible to browser, accessible in server components)
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-nonce', nonce)
+
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  })
 
   // Security Headers
   response.headers.set('X-DNS-Prefetch-Control', 'on')
@@ -60,32 +89,7 @@ export function middleware(request: NextRequest) {
     ].join(', '),
   )
 
-  // Content Security Policy (nonce-based)
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
-  const isDev = process.env.NODE_ENV === 'development'
-
-  const scriptSrc = isDev
-    ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live"
-    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live`
-
-  const styleSrc = isDev
-    ? "style-src 'self' 'unsafe-inline'"
-    : `style-src 'self' 'nonce-${nonce}' 'unsafe-inline'`
-
-  const cspHeader = [
-    "default-src 'self'",
-    scriptSrc,
-    styleSrc,
-    "img-src 'self' data: blob: https:",
-    "font-src 'self' data:",
-    `connect-src 'self' ${isDev ? 'ws://localhost:* ' : ''}https://vercel.live https://*.vercel-insights.com`,
-    "frame-ancestors 'self'",
-    "base-uri 'self'",
-    "form-action 'self'",
-  ].join('; ')
-
   response.headers.set('Content-Security-Policy', cspHeader)
-  response.headers.set('x-nonce', nonce)
 
   return response
 }

@@ -343,6 +343,77 @@ describe('middleware', () => {
     })
   })
 
+  describe('development mode CSP', () => {
+    const originalEnv = process.env.NODE_ENV
+
+    beforeEach(() => {
+      process.env.NODE_ENV = 'development'
+    })
+
+    afterEach(() => {
+      process.env.NODE_ENV = originalEnv
+    })
+
+    it('should include unsafe-eval and unsafe-inline in script-src in dev mode', () => {
+      const request = createRequest()
+      const response = middleware(request)
+      const csp = response.headers.get('Content-Security-Policy')
+
+      const scriptSrc = csp!
+        .split(';')
+        .find((d) => d.trim().startsWith('script-src'))
+      expect(scriptSrc).toContain('unsafe-eval')
+      expect(scriptSrc).toContain('unsafe-inline')
+    })
+
+    it('should include ws://localhost in connect-src in dev mode', () => {
+      const request = createRequest()
+      const response = middleware(request)
+      const csp = response.headers.get('Content-Security-Policy')
+
+      expect(csp).toContain('ws://localhost:*')
+    })
+
+    it('should not include nonce or strict-dynamic in dev mode', () => {
+      const request = createRequest()
+      const response = middleware(request)
+      const csp = response.headers.get('Content-Security-Policy')
+
+      expect(csp).not.toContain('strict-dynamic')
+      expect(csp).not.toMatch(/nonce-/)
+    })
+  })
+
+  describe('production mode CSP', () => {
+    it('should include nonce and strict-dynamic in script-src', () => {
+      const request = createRequest()
+      const response = middleware(request)
+      const csp = response.headers.get('Content-Security-Policy')
+
+      const scriptSrc = csp!
+        .split(';')
+        .find((d) => d.trim().startsWith('script-src'))
+      expect(scriptSrc).toContain('strict-dynamic')
+      expect(scriptSrc).toMatch(/nonce-/)
+    })
+
+    it('should not include ws://localhost in connect-src in prod mode', () => {
+      const request = createRequest()
+      const response = middleware(request)
+      const csp = response.headers.get('Content-Security-Policy')
+
+      expect(csp).not.toContain('ws://localhost')
+    })
+
+    it('should pass nonce via request headers (not response)', () => {
+      const request = createRequest()
+      const response = middleware(request)
+
+      // Nonce should NOT be in response headers (security: not visible to client JS)
+      expect(response.headers.get('x-nonce')).toBeNull()
+    })
+  })
+
   describe('security best practices', () => {
     it('should prevent clickjacking with X-Frame-Options', () => {
       const request = createRequest()

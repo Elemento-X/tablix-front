@@ -2,6 +2,7 @@ import type React from 'react'
 import type { Metadata } from 'next'
 // eslint-disable-next-line camelcase
 import { Geist, Geist_Mono } from 'next/font/google'
+import { headers } from 'next/headers'
 import { Analytics } from '@vercel/analytics/next'
 import { LocaleProvider } from '@/lib/i18n'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -36,17 +37,24 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const nonce = (await headers()).get('x-nonce') ?? ''
+
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body
         className={`${geistSans.className} ${geistMono.className} font-sans antialiased`}
       >
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          nonce={nonce}
+        >
           <LocaleProvider>
             {children}
             <Analytics />
