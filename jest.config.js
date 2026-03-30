@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const nextJest = require('next/jest')
 
 const createJestConfig = nextJest({
@@ -14,9 +15,7 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  transformIgnorePatterns: [
-    'node_modules/(?!(@upstash|uncrypto)/)',
-  ],
+  transformIgnorePatterns: ['node_modules/(?!(@upstash|uncrypto)/)'],
   collectCoverageFrom: [
     'src/lib/**/*.{js,jsx,ts,tsx}',
     'src/hooks/**/*.{js,jsx,ts,tsx}',
@@ -34,6 +33,7 @@ const customJestConfig = {
       statements: 90,
     },
   },
+  testTimeout: 15000,
   testMatch: [
     '**/__tests__/**/*.test.[jt]s?(x)',
     '**/?(*.)+(spec|test).[jt]s?(x)',

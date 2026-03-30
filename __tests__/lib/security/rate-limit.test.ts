@@ -1,5 +1,9 @@
 import { NextRequest } from 'next/server'
-import { rateLimit, rateLimiters, __resetRateLimitStore } from '@/lib/security/rate-limit'
+import {
+  rateLimit,
+  rateLimiters,
+  __resetRateLimitStore,
+} from '@/lib/security/rate-limit'
 
 describe('rate-limit.ts', () => {
   // Contador para gerar IPs únicos em cada teste
@@ -7,9 +11,14 @@ describe('rate-limit.ts', () => {
 
   const createRequest = (headers: Record<string, string> = {}): NextRequest => {
     // Se não houver nenhum header de IP especificado, gerar um único para este teste
-    if (!headers['x-forwarded-for'] && !headers['x-real-ip'] && !headers['cf-connecting-ip']) {
+    if (
+      !headers['x-forwarded-for'] &&
+      !headers['x-real-ip'] &&
+      !headers['cf-connecting-ip']
+    ) {
       testCounter++
-      headers['x-forwarded-for'] = `192.168.${Math.floor(testCounter / 256)}.${testCounter % 256}`
+      headers['x-forwarded-for'] =
+        `192.168.${Math.floor(testCounter / 256)}.${testCounter % 256}`
     }
     return new NextRequest('http://localhost:3000/test', {
       headers: new Headers(headers),
@@ -228,8 +237,12 @@ describe('rate-limit.ts', () => {
 
     it('should use first IP from x-forwarded-for when multiple IPs present', async () => {
       const limiter = rateLimit({ interval: 60000, maxRequests: 1 })
-      const request1 = createRequest({ 'x-forwarded-for': '192.168.1.100, 10.0.0.1, 172.16.0.1' })
-      const request2 = createRequest({ 'x-forwarded-for': '192.168.1.100, 10.0.0.2' })
+      const request1 = createRequest({
+        'x-forwarded-for': '192.168.1.100, 10.0.0.1, 172.16.0.1',
+      })
+      const request2 = createRequest({
+        'x-forwarded-for': '192.168.1.100, 10.0.0.2',
+      })
 
       await limiter.check(request1)
       const result = await limiter.check(request2)
@@ -338,8 +351,12 @@ describe('rate-limit.ts', () => {
     it('should use fixed fallback identifier when no headers present', async () => {
       const limiter = rateLimit({ interval: 60000, maxRequests: 1 })
       // Create requests without any IP headers (bypass createRequest auto-IP)
-      const request1 = new NextRequest('http://localhost:3000/test', { headers: new Headers({}) })
-      const request2 = new NextRequest('http://localhost:3000/test', { headers: new Headers({}) })
+      const request1 = new NextRequest('http://localhost:3000/test', {
+        headers: new Headers({}),
+      })
+      const request2 = new NextRequest('http://localhost:3000/test', {
+        headers: new Headers({}),
+      })
 
       await limiter.check(request1)
       const result = await limiter.check(request2)
@@ -492,6 +509,7 @@ describe('rate-limit.ts', () => {
     it('should execute setInterval cleanup callback and delete expired entries', async () => {
       jest.resetModules()
 
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { rateLimit: rl } = require('@/lib/security/rate-limit')
       const limiter = rl({ interval: 1000, maxRequests: 1 })
       const request = new NextRequest('http://localhost:3000/test', {
@@ -524,6 +542,7 @@ describe('rate-limit.ts', () => {
       global.setInterval = mockSetInterval as typeof setInterval
 
       // Re-require module — the `if (typeof cleanupInterval.unref === 'function')` false branch is now hit
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { rateLimit: rl } = require('@/lib/security/rate-limit')
       const limiter = rl({ interval: 60000, maxRequests: 5 })
       const request = new NextRequest('http://localhost:3000/test', {
@@ -539,6 +558,7 @@ describe('rate-limit.ts', () => {
     it('should NOT delete entries that have not yet expired during cleanup', async () => {
       jest.resetModules()
 
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { rateLimit: rl } = require('@/lib/security/rate-limit')
       // Long interval (30min) — entry won't expire when cleanup runs at 10min
       const limiter = rl({ interval: 30 * 60 * 1000, maxRequests: 1 })
@@ -566,7 +586,9 @@ describe('rate-limit.ts', () => {
     it('should use Upstash when available, then fall back on error', async () => {
       jest.resetModules()
 
-      const mockLimitFn = jest.fn().mockResolvedValue({ success: true, remaining: 7 })
+      const mockLimitFn = jest
+        .fn()
+        .mockResolvedValue({ success: true, remaining: 7 })
 
       jest.doMock('@/lib/redis', () => ({
         getRedisClient: () => ({}),
@@ -577,10 +599,12 @@ describe('rate-limit.ts', () => {
           static slidingWindow() {
             return {}
           }
+
           limit = mockLimitFn
         },
       }))
 
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { rateLimit: rl } = require('@/lib/security/rate-limit')
       const limiter = rl({ interval: 60000, maxRequests: 10 })
       const request = new NextRequest('http://localhost:3000/test', {
@@ -595,13 +619,15 @@ describe('rate-limit.ts', () => {
 
       // Failure path — Upstash throws, falls back to in-memory
       mockLimitFn.mockRejectedValueOnce(new Error('Redis connection lost'))
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      const consoleSpy = jest
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {})
 
       const fallbackResult = await limiter.check(request)
       expect(fallbackResult.success).toBe(true)
       expect(fallbackResult.remaining).toBe(9) // in-memory fresh count
       expect(consoleSpy).toHaveBeenCalledWith(
-        '[Rate Limit] Redis failed, falling back to in-memory:',
+        '[Rate Limit] Redis failed:',
         'Redis connection lost',
       )
     })
@@ -618,6 +644,7 @@ describe('rate-limit.ts', () => {
         throw new Error('Module not found')
       })
 
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { rateLimit: rl1 } = require('@/lib/security/rate-limit')
       const limiter1 = rl1({ interval: 60000, maxRequests: 5 })
       const request = new NextRequest('http://localhost:3000/test', {
@@ -635,6 +662,7 @@ describe('rate-limit.ts', () => {
         throw new Error('Redis module not found')
       })
 
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { rateLimit: rl2 } = require('@/lib/security/rate-limit')
       const limiter2 = rl2({ interval: 60000, maxRequests: 5 })
 
@@ -646,8 +674,16 @@ describe('rate-limit.ts', () => {
 
   describe('namespace isolation', () => {
     it('should use custom namespace when provided', async () => {
-      const limiter1 = rateLimit({ interval: 60000, maxRequests: 1, namespace: 'ns-A' })
-      const limiter2 = rateLimit({ interval: 60000, maxRequests: 1, namespace: 'ns-B' })
+      const limiter1 = rateLimit({
+        interval: 60000,
+        maxRequests: 1,
+        namespace: 'ns-A',
+      })
+      const limiter2 = rateLimit({
+        interval: 60000,
+        maxRequests: 1,
+        namespace: 'ns-B',
+      })
       const request = createRequest({ 'x-forwarded-for': '192.168.1.200' })
 
       await limiter1.check(request)
@@ -674,6 +710,59 @@ describe('rate-limit.ts', () => {
 
       const allowed = await limiter2.check(request)
       expect(allowed.success).toBe(true)
+    })
+  })
+
+  describe('fail-closed behavior in production', () => {
+    afterEach(() => {
+      // Restore NODE_ENV back to 'test' after each test
+      process.env.NODE_ENV = 'test'
+      jest.restoreAllMocks()
+    })
+
+    it('should reject request (fail-closed) when Redis throws in NODE_ENV=production', async () => {
+      jest.resetModules()
+
+      const mockLimitFn = jest
+        .fn()
+        .mockRejectedValue(new Error('Redis unavailable'))
+
+      jest.doMock('@/lib/redis', () => ({
+        getRedisClient: () => ({}),
+      }))
+
+      jest.doMock('@upstash/ratelimit', () => ({
+        Ratelimit: class {
+          static slidingWindow() {
+            return {}
+          }
+
+          limit = mockLimitFn
+        },
+      }))
+
+      // Set NODE_ENV to production — the branch checks process.env.NODE_ENV at call time
+      process.env.NODE_ENV = 'production'
+
+      const consoleSpy = jest
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {})
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { rateLimit: rl } = require('@/lib/security/rate-limit')
+      const limiter = rl({ interval: 60000, maxRequests: 10 })
+      const request = new NextRequest('http://localhost:3000/test', {
+        headers: new Headers({ 'x-forwarded-for': '5.6.7.8' }),
+      })
+
+      const result = await limiter.check(request)
+      // In production, Redis failure must reject — never fall back to in-memory
+      expect(result.success).toBe(false)
+      expect(result.remaining).toBe(0)
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[Rate Limit] Redis failed:',
+        'Redis unavailable',
+      )
     })
   })
 })

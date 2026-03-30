@@ -48,6 +48,7 @@ jest.mock('@/hooks/use-file-parser', () => ({
 jest.mock('@/lib/security', () => ({
   validateFile: jest.fn(() => ({ valid: true })),
   validateFileContent: jest.fn().mockResolvedValue({ valid: true }),
+  sanitizeFileName: jest.fn((name: string) => name),
 }))
 
 jest.mock('@/lib/spreadsheet-merge', () => ({

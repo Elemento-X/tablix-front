@@ -9,6 +9,7 @@ global.Blob = Blob
 
 // Polyfill for Web Crypto API
 if (typeof global.crypto === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { webcrypto } = require('crypto')
   global.crypto = webcrypto
 }

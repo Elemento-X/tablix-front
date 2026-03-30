@@ -23,7 +23,7 @@ jest.mock('xlsx', () => ({
 
 // Mock papaparse
 jest.mock('papaparse', () => ({
-  parse: jest.fn((text, options) => ({
+  parse: jest.fn(() => ({
     data: [
       { Name: 'John', Email: 'john@test.com' },
       { Name: 'Jane', Email: 'jane@test.com' },
@@ -35,11 +35,11 @@ jest.mock('papaparse', () => ({
 
 // Mock FileReader
 class MockFileReader {
-  onload: ((event: any) => void) | null = null
+  onload: ((event: { target: { result: ArrayBuffer } }) => void) | null = null
   onerror: (() => void) | null = null
   result: ArrayBuffer | null = null
 
-  readAsArrayBuffer(file: File) {
+  readAsArrayBuffer() {
     setTimeout(() => {
       this.result = new ArrayBuffer(100)
       if (this.onload) {
@@ -49,7 +49,7 @@ class MockFileReader {
   }
 }
 
-// @ts-ignore
+// @ts-expect-error — MockFileReader satisfies the subset of FileReader used in the module
 global.FileReader = MockFileReader
 
 describe('spreadsheet-merge.ts', () => {
@@ -58,41 +58,54 @@ describe('spreadsheet-merge.ts', () => {
   })
 
   describe('canProcessClientSide', () => {
-    it('should return true for files under 10MB', () => {
-      const smallFile = new File(['content'], 'small.csv', { type: 'text/csv' })
-      Object.defineProperty(smallFile, 'size', { value: 5 * 1024 * 1024 }) // 5MB
+    it('should always return true for free plan (size capped by plan limits)', () => {
+      const file = new File(['content'], 'small.csv', { type: 'text/csv' })
+      Object.defineProperty(file, 'size', { value: 900 * 1024 }) // 900KB (within 1MB free limit)
 
-      expect(canProcessClientSide([smallFile])).toBe(true)
+      expect(canProcessClientSide([file], 'free')).toBe(true)
     })
 
-    it('should return true for multiple files all under 10MB', () => {
+    it('should default to free plan when no plan specified', () => {
+      const file = new File(['content'], 'small.csv', { type: 'text/csv' })
+      Object.defineProperty(file, 'size', { value: 500 * 1024 })
+
+      expect(canProcessClientSide([file])).toBe(true)
+    })
+
+    it('should return true for pro plan when total size is under 10MB', () => {
       const files = [
         new File(['content'], 'file1.csv', { type: 'text/csv' }),
         new File(['content'], 'file2.csv', { type: 'text/csv' }),
       ]
-      files.forEach((f) => Object.defineProperty(f, 'size', { value: 1 * 1024 * 1024 }))
+      files.forEach((f) =>
+        Object.defineProperty(f, 'size', { value: 2 * 1024 * 1024 }),
+      ) // 2MB each = 4MB total
 
-      expect(canProcessClientSide(files)).toBe(true)
+      expect(canProcessClientSide(files, 'pro')).toBe(true)
     })
 
-    it('should return false for files at or over 10MB', () => {
-      const largeFile = new File(['content'], 'large.csv', { type: 'text/csv' })
-      Object.defineProperty(largeFile, 'size', { value: 10 * 1024 * 1024 }) // Exactly 10MB
+    it('should return false for pro plan when total size exceeds 10MB', () => {
+      const files = [
+        new File(['content'], 'file1.csv', { type: 'text/csv' }),
+        new File(['content'], 'file2.csv', { type: 'text/csv' }),
+        new File(['content'], 'file3.csv', { type: 'text/csv' }),
+      ]
+      files.forEach((f) =>
+        Object.defineProperty(f, 'size', { value: 4 * 1024 * 1024 }),
+      ) // 4MB each = 12MB total
 
-      expect(canProcessClientSide([largeFile])).toBe(false)
+      expect(canProcessClientSide(files, 'pro')).toBe(false)
     })
 
-    it('should return false if any file is over 10MB', () => {
-      const smallFile = new File(['content'], 'small.csv', { type: 'text/csv' })
-      const largeFile = new File(['content'], 'large.csv', { type: 'text/csv' })
-      Object.defineProperty(smallFile, 'size', { value: 1 * 1024 * 1024 })
-      Object.defineProperty(largeFile, 'size', { value: 15 * 1024 * 1024 })
+    it('should return true for pro plan at exactly 10MB total', () => {
+      const file = new File(['content'], 'big.xlsx', { type: 'text/csv' })
+      Object.defineProperty(file, 'size', { value: 10 * 1024 * 1024 })
 
-      expect(canProcessClientSide([smallFile, largeFile])).toBe(false)
+      expect(canProcessClientSide([file], 'pro')).toBe(true)
     })
 
     it('should return true for empty file array', () => {
-      expect(canProcessClientSide([])).toBe(true)
+      expect(canProcessClientSide([], 'pro')).toBe(true)
     })
   })
 
@@ -105,7 +118,9 @@ describe('spreadsheet-merge.ts', () => {
           addWatermark: false,
         }
 
-        await expect(mergeSpreadsheets(options)).rejects.toThrow('No files to merge')
+        await expect(mergeSpreadsheets(options)).rejects.toThrow(
+          'No files to merge',
+        )
       })
 
       it('should throw error when no columns selected', async () => {
@@ -116,13 +131,17 @@ describe('spreadsheet-merge.ts', () => {
           addWatermark: false,
         }
 
-        await expect(mergeSpreadsheets(options)).rejects.toThrow('No columns selected')
+        await expect(mergeSpreadsheets(options)).rejects.toThrow(
+          'No columns selected',
+        )
       })
     })
 
     describe('CSV file processing', () => {
       it('should parse CSV file and return merged result', async () => {
-        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', { type: 'text/csv' })
+        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', {
+          type: 'text/csv',
+        })
         Object.defineProperty(file, 'size', { value: 100 })
 
         const options: MergeOptions = {
@@ -136,16 +155,26 @@ describe('spreadsheet-merge.ts', () => {
         expect(result).toHaveProperty('blob')
         expect(result).toHaveProperty('filename')
         expect(result).toHaveProperty('rowCount')
-        expect(result.filename).toMatch(/^tablix-unificado-\d{4}-\d{2}-\d{2}\.xlsx$/)
+        expect(result.filename).toMatch(
+          /^tablix-unificado-\d{4}-\d{2}-\d{2}\.xlsx$/,
+        )
       })
 
       it('should merge multiple CSV files', async () => {
-        const file1 = new File(['Name,Email\nJohn,john@test.com'], 'test1.csv', {
-          type: 'text/csv',
-        })
-        const file2 = new File(['Name,Email\nJane,jane@test.com'], 'test2.csv', {
-          type: 'text/csv',
-        })
+        const file1 = new File(
+          ['Name,Email\nJohn,john@test.com'],
+          'test1.csv',
+          {
+            type: 'text/csv',
+          },
+        )
+        const file2 = new File(
+          ['Name,Email\nJane,jane@test.com'],
+          'test2.csv',
+          {
+            type: 'text/csv',
+          },
+        )
 
         const options: MergeOptions = {
           files: [file1, file2],
@@ -208,13 +237,17 @@ describe('spreadsheet-merge.ts', () => {
           addWatermark: false,
         }
 
-        await expect(mergeSpreadsheets(options)).rejects.toThrow('No sheets found in workbook')
+        await expect(mergeSpreadsheets(options)).rejects.toThrow(
+          'No sheets found in workbook',
+        )
       })
     })
 
     describe('watermark functionality (Free plan)', () => {
       it('should add watermark column when addWatermark is true', async () => {
-        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', { type: 'text/csv' })
+        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', {
+          type: 'text/csv',
+        })
 
         const options: MergeOptions = {
           files: [file],
@@ -222,7 +255,7 @@ describe('spreadsheet-merge.ts', () => {
           addWatermark: true,
         }
 
-        const result = await mergeSpreadsheets(options)
+        await mergeSpreadsheets(options)
 
         // Verify book_append_sheet was called twice (data sheet + About sheet)
         expect(XLSX.utils.book_append_sheet).toHaveBeenCalledTimes(2)
@@ -233,7 +266,9 @@ describe('spreadsheet-merge.ts', () => {
       })
 
       it('should not add watermark when addWatermark is false', async () => {
-        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', { type: 'text/csv' })
+        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', {
+          type: 'text/csv',
+        })
 
         const options: MergeOptions = {
           files: [file],
@@ -254,9 +289,13 @@ describe('spreadsheet-merge.ts', () => {
 
     describe('column filtering', () => {
       it('should only include selected columns in output', async () => {
-        const file = new File(['Name,Email,Phone\nJohn,john@test.com,123'], 'test.csv', {
-          type: 'text/csv',
-        })
+        const file = new File(
+          ['Name,Email,Phone\nJohn,john@test.com,123'],
+          'test.csv',
+          {
+            type: 'text/csv',
+          },
+        )
 
         const options: MergeOptions = {
           files: [file],
@@ -276,7 +315,9 @@ describe('spreadsheet-merge.ts', () => {
       })
 
       it('should handle columns that do not exist in some files', async () => {
-        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', { type: 'text/csv' })
+        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', {
+          type: 'text/csv',
+        })
 
         const options: MergeOptions = {
           files: [file],
@@ -293,7 +334,9 @@ describe('spreadsheet-merge.ts', () => {
 
     describe('output format', () => {
       it('should generate XLSX format output', async () => {
-        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', { type: 'text/csv' })
+        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', {
+          type: 'text/csv',
+        })
 
         const options: MergeOptions = {
           files: [file],
@@ -309,7 +352,9 @@ describe('spreadsheet-merge.ts', () => {
       })
 
       it('should generate filename with current date', async () => {
-        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', { type: 'text/csv' })
+        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', {
+          type: 'text/csv',
+        })
 
         const options: MergeOptions = {
           files: [file],
@@ -370,7 +415,11 @@ describe('spreadsheet-merge.ts', () => {
       const blob = new Blob(['test content'], { type: 'text/plain' })
       const filename = 'my-custom-file.xlsx'
 
-      let capturedAnchor: any = null
+      let capturedAnchor: {
+        href: string
+        download: string
+        click: jest.Mock
+      } | null = null
       jest.spyOn(document, 'createElement').mockImplementation(() => {
         capturedAnchor = {
           href: '',
@@ -390,7 +439,9 @@ describe('spreadsheet-merge.ts', () => {
     it('should handle file read errors gracefully', async () => {
       // Create a custom FileReader that fails
       class FailingFileReader {
-        onload: ((event: any) => void) | null = null
+        onload: ((event: { target: { result: ArrayBuffer } }) => void) | null =
+          null
+
         onerror: (() => void) | null = null
 
         readAsArrayBuffer() {
@@ -402,7 +453,7 @@ describe('spreadsheet-merge.ts', () => {
         }
       }
 
-      // @ts-ignore
+      // @ts-expect-error — FailingFileReader satisfies the subset of FileReader used in the module
       global.FileReader = FailingFileReader
 
       const file = new File(['content'], 'test.csv', { type: 'text/csv' })
@@ -412,16 +463,19 @@ describe('spreadsheet-merge.ts', () => {
         addWatermark: false,
       }
 
-      await expect(mergeSpreadsheets(options)).rejects.toThrow('Failed to read file')
+      await expect(mergeSpreadsheets(options)).rejects.toThrow(
+        'Failed to read file',
+      )
 
       // Restore original mock
-      // @ts-ignore
+      // @ts-expect-error — MockFileReader satisfies the subset of FileReader used in the module
       global.FileReader = MockFileReader
     })
   })
 
   describe('formula injection protection', () => {
     it('should prefix cell values starting with = with single quote', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const Papa = require('papaparse')
       ;(Papa.parse as jest.Mock).mockReturnValueOnce({
         data: [{ Name: '=SUM(A1:A10)', Email: 'normal@test.com' }],
@@ -441,13 +495,17 @@ describe('spreadsheet-merge.ts', () => {
       // Check that json_to_sheet was called with sanitized data
       expect(XLSX.utils.json_to_sheet).toHaveBeenCalledWith(
         expect.arrayContaining([
-          expect.objectContaining({ Name: "'=SUM(A1:A10)", Email: 'normal@test.com' }),
+          expect.objectContaining({
+            Name: "'=SUM(A1:A10)",
+            Email: 'normal@test.com',
+          }),
         ]),
         expect.anything(),
       )
     })
 
     it('should prefix cell values starting with +, -, @, tab, CR, LF', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const Papa = require('papaparse')
       ;(Papa.parse as jest.Mock).mockReturnValueOnce({
         data: [
@@ -485,6 +543,7 @@ describe('spreadsheet-merge.ts', () => {
     })
 
     it('should not sanitize non-string values (numbers, booleans, null)', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const Papa = require('papaparse')
       ;(Papa.parse as jest.Mock).mockReturnValueOnce({
         data: [{ Num: 42, Bool: true, Empty: null }],
@@ -502,12 +561,15 @@ describe('spreadsheet-merge.ts', () => {
       await mergeSpreadsheets(options)
 
       expect(XLSX.utils.json_to_sheet).toHaveBeenCalledWith(
-        expect.arrayContaining([expect.objectContaining({ Num: 42, Bool: true, Empty: null })]),
+        expect.arrayContaining([
+          expect.objectContaining({ Num: 42, Bool: true, Empty: null }),
+        ]),
         expect.anything(),
       )
     })
 
     it('should not sanitize strings without dangerous prefixes', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const Papa = require('papaparse')
       ;(Papa.parse as jest.Mock).mockReturnValueOnce({
         data: [{ Name: 'Normal text', Calc: 'A=B+C' }],
@@ -525,7 +587,9 @@ describe('spreadsheet-merge.ts', () => {
       await mergeSpreadsheets(options)
 
       expect(XLSX.utils.json_to_sheet).toHaveBeenCalledWith(
-        expect.arrayContaining([expect.objectContaining({ Name: 'Normal text', Calc: 'A=B+C' })]),
+        expect.arrayContaining([
+          expect.objectContaining({ Name: 'Normal text', Calc: 'A=B+C' }),
+        ]),
         expect.anything(),
       )
     })
@@ -533,6 +597,7 @@ describe('spreadsheet-merge.ts', () => {
 
   describe('row limit enforcement', () => {
     it('should reject merge exceeding free plan row limit (500)', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const Papa = require('papaparse')
       const rows = Array.from({ length: 501 }, (_, i) => ({ Name: `Row${i}` }))
       ;(Papa.parse as jest.Mock).mockReturnValueOnce({
@@ -555,6 +620,7 @@ describe('spreadsheet-merge.ts', () => {
     })
 
     it('should accept merge within free plan row limit', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const Papa = require('papaparse')
       const rows = Array.from({ length: 500 }, (_, i) => ({ Name: `Row${i}` }))
       ;(Papa.parse as jest.Mock).mockReturnValueOnce({
@@ -576,6 +642,7 @@ describe('spreadsheet-merge.ts', () => {
     })
 
     it('should allow more rows with pro plan', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const Papa = require('papaparse')
       const rows = Array.from({ length: 1000 }, (_, i) => ({ Name: `Row${i}` }))
       ;(Papa.parse as jest.Mock).mockReturnValueOnce({

@@ -14,6 +14,7 @@ import {
   validateColumnSelection,
   sanitizeString,
   validateContentType,
+  validateBodySize,
 } from '@/lib/security/validation-schemas'
 import {
   getUserFingerprint,
@@ -36,6 +37,14 @@ jest.mock('@/lib/security/rate-limit', () => ({
 jest.mock('@/lib/security/file-validator', () => ({
   sanitizeFileName: jest.fn((name) => name),
   validateFileContent: jest.fn().mockResolvedValue({ valid: true }),
+  FILE_VALIDATOR: {
+    ALLOWED_MIME_TYPES: [
+      'text/csv',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ],
+    ALLOWED_EXTENSIONS: ['.csv', '.xls', '.xlsx'],
+  },
 }))
 
 jest.mock('@/lib/security/validation-schemas', () => ({
@@ -43,6 +52,7 @@ jest.mock('@/lib/security/validation-schemas', () => ({
   validateColumnSelection: jest.fn(),
   sanitizeString: jest.fn((str) => str),
   validateContentType: jest.fn(() => ({ valid: true })),
+  validateBodySize: jest.fn(() => ({ valid: true })),
 }))
 
 jest.mock('@/lib/fingerprint', () => ({
@@ -114,6 +124,7 @@ describe('POST /api/process', () => {
       remaining: 29,
     })
     ;(validateContentType as jest.Mock).mockReturnValue({ valid: true })
+    ;(validateBodySize as jest.Mock).mockReturnValue({ valid: true })
     ;(validateFileLimits as jest.Mock).mockReturnValue({
       valid: true,
     })
@@ -162,6 +173,23 @@ describe('POST /api/process', () => {
       expect(data.error).toBe(
         'Invalid Content-Type. Expected multipart/form-data.',
       )
+    })
+  })
+
+  describe('body size validation', () => {
+    it('should return 413 when body is too large', async () => {
+      ;(validateBodySize as jest.Mock).mockReturnValue({
+        valid: false,
+        error: 'Request body too large (max 60MB)',
+      })
+
+      const file = createValidFile()
+      const request = createRequest([file])
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(413)
+      expect(data.error).toBe('Request body too large (max 60MB)')
     })
   })
 

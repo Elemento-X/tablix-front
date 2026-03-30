@@ -70,7 +70,9 @@ describe('use-usage.ts', () => {
       })
 
       it('should handle network error', async () => {
-        ;(global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'))
+        ;(global.fetch as jest.Mock).mockRejectedValueOnce(
+          new Error('Network error'),
+        )
 
         const { result } = renderHook(() => useUsage())
 
@@ -145,9 +147,9 @@ describe('use-usage.ts', () => {
                       ok: true,
                       json: () => Promise.resolve(mockUsageData),
                     }),
-                  100
-                )
-              )
+                  100,
+                ),
+              ),
           )
 
         const { result } = renderHook(() => useUsage())

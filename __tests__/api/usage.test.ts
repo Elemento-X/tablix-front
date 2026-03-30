@@ -4,6 +4,10 @@
 import { NextRequest } from 'next/server'
 import { GET } from '@/app/api/usage/route'
 
+import { getUserUsage } from '@/lib/usage-tracker'
+import { getUserFingerprint, setFingerprintCookie } from '@/lib/fingerprint'
+import { rateLimiters } from '@/lib/security/rate-limit'
+
 // Mock dependencies
 jest.mock('@/lib/usage-tracker', () => ({
   getUserUsage: jest.fn(),
@@ -21,10 +25,6 @@ jest.mock('@/lib/security/rate-limit', () => ({
     },
   },
 }))
-
-import { getUserUsage } from '@/lib/usage-tracker'
-import { getUserFingerprint, setFingerprintCookie } from '@/lib/fingerprint'
-import { rateLimiters } from '@/lib/security/rate-limit'
 
 describe('GET /api/usage', () => {
   const createRequest = () => {
@@ -107,7 +107,10 @@ describe('GET /api/usage', () => {
       const response = await GET(request)
 
       expect(response.status).toBe(200)
-      expect(setFingerprintCookie).toHaveBeenCalledWith(expect.any(Object), 'new-cookie-id')
+      expect(setFingerprintCookie).toHaveBeenCalledWith(
+        expect.any(Object),
+        'new-cookie-id',
+      )
     })
 
     it('should return Pro plan usage data', async () => {
@@ -187,7 +190,9 @@ describe('GET /api/usage', () => {
         isNew: false,
         cookieId: 'user',
       })
-      ;(getUserUsage as jest.Mock).mockRejectedValue(new Error('Database error'))
+      ;(getUserUsage as jest.Mock).mockRejectedValue(
+        new Error('Database error'),
+      )
 
       // Mock console.error to avoid polluting test output
       jest.spyOn(console, 'error').mockImplementation(() => {})

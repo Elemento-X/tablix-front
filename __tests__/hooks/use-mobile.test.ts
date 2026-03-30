@@ -157,7 +157,10 @@ describe('useIsMobile hook', () => {
 
       unmount()
 
-      expect(removeEventListenerMock).toHaveBeenCalledWith('change', expect.any(Function))
+      expect(removeEventListenerMock).toHaveBeenCalledWith(
+        'change',
+        expect.any(Function),
+      )
     })
   })
 

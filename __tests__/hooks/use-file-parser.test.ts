@@ -1,8 +1,11 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, waitFor, act } from '@testing-library/react'
-import { useFileParser } from '@/hooks/use-file-parser'
+import { renderHook, act } from '@testing-library/react'
+import { useFileParser, type ParseResult } from '@/hooks/use-file-parser'
+
+import * as XLSX from 'xlsx'
+import Papa from 'papaparse'
 
 // Mock XLSX library
 jest.mock('xlsx', () => ({
@@ -17,16 +20,13 @@ jest.mock('papaparse', () => ({
   parse: jest.fn(),
 }))
 
-import * as XLSX from 'xlsx'
-import Papa from 'papaparse'
-
 // Mock FileReader
 class MockFileReader {
-  onload: ((event: any) => void) | null = null
+  onload: ((event: unknown) => void) | null = null
   onerror: (() => void) | null = null
   result: ArrayBuffer | null = null
 
-  readAsArrayBuffer(file: File) {
+  readAsArrayBuffer() {
     setTimeout(() => {
       this.result = new ArrayBuffer(100)
       if (this.onload) {
@@ -36,7 +36,7 @@ class MockFileReader {
   }
 }
 
-// @ts-ignore
+// @ts-expect-error — overriding global FileReader with mock
 global.FileReader = MockFileReader
 
 // Mock fetch for server-side parsing
@@ -79,19 +79,21 @@ describe('useFileParser hook', () => {
 
         ;(Papa.parse as jest.Mock).mockReturnValue(mockParsedData)
 
-        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', { type: 'text/csv' })
+        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', {
+          type: 'text/csv',
+        })
         Object.defineProperty(file, 'size', { value: 1024 }) // 1KB
 
         const { result } = renderHook(() => useFileParser())
 
-        let parseResult: any
+        let parseResult: ParseResult | undefined
         await act(async () => {
           parseResult = await result.current.parseFile(file)
         })
 
-        expect(parseResult.columns).toEqual(['Name', 'Email'])
-        expect(parseResult.rowCount).toBe(2)
-        expect(parseResult.preview).toEqual(mockParsedData.data)
+        expect(parseResult!.columns).toEqual(['Name', 'Email'])
+        expect(parseResult!.rowCount).toBe(2)
+        expect(parseResult!.preview).toEqual(mockParsedData.data)
         expect(result.current.isLoading).toBe(false)
         expect(result.current.error).toBeNull()
       })
@@ -103,7 +105,9 @@ describe('useFileParser hook', () => {
           meta: { fields: [] },
         })
 
-        const file = new File(['invalid,csv,data'], 'test.csv', { type: 'text/csv' })
+        const file = new File(['invalid,csv,data'], 'test.csv', {
+          type: 'text/csv',
+        })
         Object.defineProperty(file, 'size', { value: 1024 })
 
         const { result } = renderHook(() => useFileParser())
@@ -148,13 +152,13 @@ describe('useFileParser hook', () => {
 
         const { result } = renderHook(() => useFileParser())
 
-        let parseResult: any
+        let parseResult: ParseResult | undefined
         await act(async () => {
           parseResult = await result.current.parseFile(file)
         })
 
-        expect(parseResult.columns).toEqual(['Name', 'Email'])
-        expect(parseResult.rowCount).toBe(2) // 3 rows - 1 header
+        expect(parseResult!.columns).toEqual(['Name', 'Email'])
+        expect(parseResult!.rowCount).toBe(2) // 3 rows - 1 header
       })
 
       it('should throw error when no sheets found', async () => {
@@ -243,7 +247,9 @@ describe('useFileParser hook', () => {
             ['Name', null, 'Email', '', '  ', 'Phone'],
             ['John', null, 'john@test.com', '', '', '123'],
           ])
-          .mockReturnValueOnce([{ Name: 'John', Email: 'john@test.com', Phone: '123' }])
+          .mockReturnValueOnce([
+            { Name: 'John', Email: 'john@test.com', Phone: '123' },
+          ])
 
         const file = new File([''], 'test.xlsx', {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -252,7 +258,7 @@ describe('useFileParser hook', () => {
 
         const { result } = renderHook(() => useFileParser())
 
-        let parseResult: any
+        let parseResult: ParseResult | undefined
         await act(async () => {
           parseResult = await result.current.parseFile(file)
         })
@@ -260,11 +266,11 @@ describe('useFileParser hook', () => {
         // The parser filters out null, undefined, and empty strings
         // But whitespace-only strings get trimmed to empty and filtered
         // The actual implementation filters based on truthiness after trim
-        expect(parseResult.columns).toContain('Name')
-        expect(parseResult.columns).toContain('Email')
-        expect(parseResult.columns).toContain('Phone')
-        expect(parseResult.columns).not.toContain(null)
-        expect(parseResult.columns).not.toContain(undefined)
+        expect(parseResult!.columns).toContain('Name')
+        expect(parseResult!.columns).toContain('Email')
+        expect(parseResult!.columns).toContain('Phone')
+        expect(parseResult!.columns).not.toContain(null)
+        expect(parseResult!.columns).not.toContain(undefined)
       })
 
       it('should parse XLS file in browser', async () => {
@@ -278,24 +284,26 @@ describe('useFileParser hook', () => {
           .mockReturnValueOnce([['Name'], ['John']])
           .mockReturnValueOnce([{ Name: 'John' }])
 
-        const file = new File([''], 'test.xls', { type: 'application/vnd.ms-excel' })
+        const file = new File([''], 'test.xls', {
+          type: 'application/vnd.ms-excel',
+        })
         Object.defineProperty(file, 'size', { value: 1024 })
 
         const { result } = renderHook(() => useFileParser())
 
-        let parseResult: any
+        let parseResult: ParseResult | undefined
         await act(async () => {
           parseResult = await result.current.parseFile(file)
         })
 
-        expect(parseResult.columns).toEqual(['Name'])
+        expect(parseResult!.columns).toEqual(['Name'])
       })
     })
 
     describe('file read errors', () => {
       it('should handle file read failure', async () => {
         class FailingFileReader {
-          onload: ((event: any) => void) | null = null
+          onload: ((event: unknown) => void) | null = null
           onerror: (() => void) | null = null
 
           readAsArrayBuffer() {
@@ -307,7 +315,7 @@ describe('useFileParser hook', () => {
           }
         }
 
-        // @ts-ignore
+        // @ts-expect-error — overriding global FileReader with mock
         global.FileReader = FailingFileReader
 
         const file = new File([''], 'test.csv', { type: 'text/csv' })
@@ -323,13 +331,13 @@ describe('useFileParser hook', () => {
         })
 
         // Restore mock
-        // @ts-ignore
+        // @ts-expect-error — overriding global FileReader with mock
         global.FileReader = MockFileReader
       })
 
       it('should handle null file data', async () => {
         class NullDataFileReader {
-          onload: ((event: any) => void) | null = null
+          onload: ((event: unknown) => void) | null = null
           onerror: (() => void) | null = null
 
           readAsArrayBuffer() {
@@ -341,7 +349,7 @@ describe('useFileParser hook', () => {
           }
         }
 
-        // @ts-ignore
+        // @ts-expect-error — overriding global FileReader with mock
         global.FileReader = NullDataFileReader
 
         const file = new File([''], 'test.csv', { type: 'text/csv' })
@@ -357,7 +365,7 @@ describe('useFileParser hook', () => {
         })
 
         // Restore mock
-        // @ts-ignore
+        // @ts-expect-error — overriding global FileReader with mock
         global.FileReader = MockFileReader
       })
     })
@@ -380,13 +388,13 @@ describe('useFileParser hook', () => {
 
       const { result } = renderHook(() => useFileParser())
 
-      let parseResult: any
+      let parseResult: ParseResult | undefined
       await act(async () => {
         parseResult = await result.current.parseFile(file)
       })
 
-      expect(parseResult.columns).toEqual(['Name', 'Email'])
-      expect(parseResult.rowCount).toBe(10000)
+      expect(parseResult!.columns).toEqual(['Name', 'Email'])
+      expect(parseResult!.rowCount).toBe(10000)
       expect(global.fetch).toHaveBeenCalledWith('/api/preview', {
         method: 'POST',
         body: expect.any(FormData),
@@ -434,7 +442,9 @@ describe('useFileParser hook', () => {
     })
 
     it('should handle network failure', async () => {
-      ;(global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'))
+      ;(global.fetch as jest.Mock).mockRejectedValueOnce(
+        new Error('Network error'),
+      )
 
       const file = new File([''], 'large.csv', { type: 'text/csv' })
       Object.defineProperty(file, 'size', { value: 15 * 1024 * 1024 })
@@ -460,13 +470,13 @@ describe('useFileParser hook', () => {
 
       const { result } = renderHook(() => useFileParser())
 
-      let parseResult: any
+      let parseResult: ParseResult | undefined
       await act(async () => {
         parseResult = await result.current.parseFile(file)
       })
 
-      expect(parseResult.columns).toEqual([])
-      expect(parseResult.rowCount).toBe(0)
+      expect(parseResult!.columns).toEqual([])
+      expect(parseResult!.rowCount).toBe(0)
     })
   })
 
@@ -600,6 +610,7 @@ describe('useFileParser hook', () => {
 
     it('should handle non-Error thrown objects', async () => {
       ;(Papa.parse as jest.Mock).mockImplementation(() => {
+        // eslint-disable-next-line no-throw-literal
         throw 'String error'
       })
 
@@ -655,7 +666,9 @@ describe('useFileParser hook', () => {
 
       const { result } = renderHook(() => useFileParser())
 
-      let parseResult: ReturnType<typeof result.current.parseFile> extends Promise<infer T>
+      let parseResult: ReturnType<
+        typeof result.current.parseFile
+      > extends Promise<infer T>
         ? T
         : never
       await act(async () => {
@@ -672,7 +685,10 @@ describe('useFileParser hook', () => {
       }
 
       // 502 rows: 1 header + 501 data rows
-      const jsonData = [['Name'], ...Array.from({ length: 501 }, (_, i) => [`Row${i}`])]
+      const jsonData = [
+        ['Name'],
+        ...Array.from({ length: 501 }, (_, i) => [`Row${i}`]),
+      ]
 
       ;(XLSX.read as jest.Mock).mockReturnValue(mockWorkbook)
       ;(XLSX.utils.sheet_to_json as jest.Mock).mockReturnValueOnce(jsonData)
@@ -705,7 +721,9 @@ describe('useFileParser hook', () => {
 
       const { result } = renderHook(() => useFileParser())
 
-      let parseResult: ReturnType<typeof result.current.parseFile> extends Promise<infer T>
+      let parseResult: ReturnType<
+        typeof result.current.parseFile
+      > extends Promise<infer T>
         ? T
         : never
       await act(async () => {
@@ -729,7 +747,9 @@ describe('useFileParser hook', () => {
 
       const { result } = renderHook(() => useFileParser())
 
-      let parseResult: ReturnType<typeof result.current.parseFile> extends Promise<infer T>
+      let parseResult: ReturnType<
+        typeof result.current.parseFile
+      > extends Promise<infer T>
         ? T
         : never
       await act(async () => {

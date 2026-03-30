@@ -1,4 +1,7 @@
-import { generateUnificationToken, consumeUnificationToken } from '@/lib/security/unification-token'
+import {
+  generateUnificationToken,
+  consumeUnificationToken,
+} from '@/lib/security/unification-token'
 import { storage } from '@/lib/redis'
 
 jest.mock('@/lib/redis', () => ({
@@ -67,8 +70,8 @@ describe('unification-token.ts', () => {
     })
 
     it('should generate different keys for different fingerprints', async () => {
-      const token1 = await generateUnificationToken('fingerprint-A')
-      const token2 = await generateUnificationToken('fingerprint-B')
+      await generateUnificationToken('fingerprint-A')
+      await generateUnificationToken('fingerprint-B')
 
       const key1 = mockStorage.set.mock.calls[0][0] as string
       const key2 = mockStorage.set.mock.calls[1][0] as string
@@ -88,7 +91,9 @@ describe('unification-token.ts', () => {
     it('should propagate storage errors', async () => {
       mockStorage.set.mockRejectedValue(new Error('Redis unavailable'))
 
-      await expect(generateUnificationToken('fp')).rejects.toThrow('Redis unavailable')
+      await expect(generateUnificationToken('fp')).rejects.toThrow(
+        'Redis unavailable',
+      )
     })
   })
 
@@ -98,7 +103,10 @@ describe('unification-token.ts', () => {
         mockStorage.getAndDel.mockResolvedValue('1')
 
         const validToken = 'a'.repeat(64)
-        const result = await consumeUnificationToken(validToken, 'my-fingerprint')
+        const result = await consumeUnificationToken(
+          validToken,
+          'my-fingerprint',
+        )
 
         expect(result).toBe(true)
       })
@@ -179,21 +187,30 @@ describe('unification-token.ts', () => {
 
       it('should return false for token that is not a string (number coerced)', async () => {
         // TypeScript won't allow this easily but we test runtime behavior for security
-        const result = await consumeUnificationToken(12345 as unknown as string, 'fp')
+        const result = await consumeUnificationToken(
+          12345 as unknown as string,
+          'fp',
+        )
 
         expect(result).toBe(false)
         expect(mockStorage.getAndDel).not.toHaveBeenCalled()
       })
 
       it('should return false for null token', async () => {
-        const result = await consumeUnificationToken(null as unknown as string, 'fp')
+        const result = await consumeUnificationToken(
+          null as unknown as string,
+          'fp',
+        )
 
         expect(result).toBe(false)
         expect(mockStorage.getAndDel).not.toHaveBeenCalled()
       })
 
       it('should return false for undefined token', async () => {
-        const result = await consumeUnificationToken(undefined as unknown as string, 'fp')
+        const result = await consumeUnificationToken(
+          undefined as unknown as string,
+          'fp',
+        )
 
         expect(result).toBe(false)
         expect(mockStorage.getAndDel).not.toHaveBeenCalled()

@@ -9,9 +9,9 @@ import {
   sanitizeStringArray,
   validateColumnSelection,
   validateContentType,
+  validateBodySize,
   validateFileLimits,
 } from '@/lib/security/validation-schemas'
-import { z } from 'zod'
 
 describe('validation-schemas.ts', () => {
   describe('columnNameSchema', () => {
@@ -20,16 +20,22 @@ describe('validation-schemas.ts', () => {
       expect(() => columnNameSchema.parse('Column_1')).not.toThrow()
       expect(() => columnNameSchema.parse('Data-2024')).not.toThrow()
       expect(() => columnNameSchema.parse('Número')).not.toThrow()
-      expect(() => columnNameSchema.parse('Column Name With Spaces')).not.toThrow()
+      expect(() =>
+        columnNameSchema.parse('Column Name With Spaces'),
+      ).not.toThrow()
     })
 
     it('should reject empty column names', () => {
-      expect(() => columnNameSchema.parse('')).toThrow('Column name cannot be empty')
+      expect(() => columnNameSchema.parse('')).toThrow(
+        'Column name cannot be empty',
+      )
     })
 
     it('should reject column names over 255 characters', () => {
       const longName = 'a'.repeat(256)
-      expect(() => columnNameSchema.parse(longName)).toThrow('Column name too long')
+      expect(() => columnNameSchema.parse(longName)).toThrow(
+        'Column name too long',
+      )
     })
 
     it('should accept column names exactly 255 characters', () => {
@@ -61,11 +67,15 @@ describe('validation-schemas.ts', () => {
 
   describe('columnsArraySchema', () => {
     it('should accept array with valid columns', () => {
-      expect(() => columnsArraySchema.parse(['Name', 'Age', 'Email'])).not.toThrow()
+      expect(() =>
+        columnsArraySchema.parse(['Name', 'Age', 'Email']),
+      ).not.toThrow()
     })
 
     it('should reject empty array', () => {
-      expect(() => columnsArraySchema.parse([])).toThrow('At least one column must be selected')
+      expect(() => columnsArraySchema.parse([])).toThrow(
+        'At least one column must be selected',
+      )
     })
 
     it('should accept exactly 1 column', () => {
@@ -90,9 +100,9 @@ describe('validation-schemas.ts', () => {
       expect(() => columnsArraySchema.parse(['Name', 'Age', ''])).toThrow(
         'Column name cannot be empty',
       )
-      expect(() => columnsArraySchema.parse(['Name', 'Column<script>'])).toThrow(
-        'Column name contains invalid characters',
-      )
+      expect(() =>
+        columnsArraySchema.parse(['Name', 'Column<script>']),
+      ).toThrow('Column name contains invalid characters')
     })
   })
 
@@ -107,7 +117,11 @@ describe('validation-schemas.ts', () => {
     })
 
     it('should accept all allowed MIME types', () => {
-      const csvMetadata = { name: 'data.csv', size: 1000, type: 'text/csv' as const }
+      const csvMetadata = {
+        name: 'data.csv',
+        size: 1000,
+        type: 'text/csv' as const,
+      }
       const xlsMetadata = {
         name: 'data.xls',
         size: 1000,
@@ -126,12 +140,20 @@ describe('validation-schemas.ts', () => {
 
     it('should reject empty file name', () => {
       const metadata = { name: '', size: 1000, type: 'text/csv' as const }
-      expect(() => fileMetadataSchema.parse(metadata)).toThrow('File name is required')
+      expect(() => fileMetadataSchema.parse(metadata)).toThrow(
+        'File name is required',
+      )
     })
 
     it('should reject file name over 255 characters', () => {
-      const metadata = { name: 'a'.repeat(256) + '.csv', size: 1000, type: 'text/csv' as const }
-      expect(() => fileMetadataSchema.parse(metadata)).toThrow('File name too long')
+      const metadata = {
+        name: 'a'.repeat(256) + '.csv',
+        size: 1000,
+        type: 'text/csv' as const,
+      }
+      expect(() => fileMetadataSchema.parse(metadata)).toThrow(
+        'File name too long',
+      )
     })
 
     it('should reject file names with invalid characters', () => {
@@ -153,15 +175,31 @@ describe('validation-schemas.ts', () => {
     })
 
     it('should reject zero or negative file size', () => {
-      const zeroMetadata = { name: 'data.csv', size: 0, type: 'text/csv' as const }
-      const negativeMetadata = { name: 'data.csv', size: -100, type: 'text/csv' as const }
+      const zeroMetadata = {
+        name: 'data.csv',
+        size: 0,
+        type: 'text/csv' as const,
+      }
+      const negativeMetadata = {
+        name: 'data.csv',
+        size: -100,
+        type: 'text/csv' as const,
+      }
 
-      expect(() => fileMetadataSchema.parse(zeroMetadata)).toThrow('File size must be positive')
-      expect(() => fileMetadataSchema.parse(negativeMetadata)).toThrow('File size must be positive')
+      expect(() => fileMetadataSchema.parse(zeroMetadata)).toThrow(
+        'File size must be positive',
+      )
+      expect(() => fileMetadataSchema.parse(negativeMetadata)).toThrow(
+        'File size must be positive',
+      )
     })
 
     it('should accept large files (plan limit enforced in route)', () => {
-      const metadata = { name: 'data.csv', size: 11 * 1024 * 1024, type: 'text/csv' as const }
+      const metadata = {
+        name: 'data.csv',
+        size: 11 * 1024 * 1024,
+        type: 'text/csv' as const,
+      }
       expect(() => fileMetadataSchema.parse(metadata)).not.toThrow()
     })
 
@@ -234,17 +272,29 @@ describe('validation-schemas.ts', () => {
     })
 
     it('should reject negative values', () => {
-      const limits = { maxSheetsPerMonth: -1, maxRowsPerSheet: 1000, maxColumns: 50 }
+      const limits = {
+        maxSheetsPerMonth: -1,
+        maxRowsPerSheet: 1000,
+        maxColumns: 50,
+      }
       expect(() => planLimitSchema.parse(limits)).toThrow()
     })
 
     it('should reject zero values', () => {
-      const limits = { maxSheetsPerMonth: 0, maxRowsPerSheet: 1000, maxColumns: 50 }
+      const limits = {
+        maxSheetsPerMonth: 0,
+        maxRowsPerSheet: 1000,
+        maxColumns: 50,
+      }
       expect(() => planLimitSchema.parse(limits)).toThrow()
     })
 
     it('should reject non-integer values', () => {
-      const limits = { maxSheetsPerMonth: 10.5, maxRowsPerSheet: 1000, maxColumns: 50 }
+      const limits = {
+        maxSheetsPerMonth: 10.5,
+        maxRowsPerSheet: 1000,
+        maxColumns: 50,
+      }
       expect(() => planLimitSchema.parse(limits)).toThrow()
     })
 
@@ -259,7 +309,9 @@ describe('validation-schemas.ts', () => {
       expect(sanitizeString('Hello<script>alert("xss")</script>World')).toBe(
         'Helloscriptalert("xss")/scriptWorld',
       )
-      expect(sanitizeString('Test<div>content</div>')).toBe('Testdivcontent/div')
+      expect(sanitizeString('Test<div>content</div>')).toBe(
+        'Testdivcontent/div',
+      )
       expect(sanitizeString('Name<>Email')).toBe('NameEmail')
     })
 
@@ -435,7 +487,10 @@ describe('validation-schemas.ts', () => {
     })
 
     it('should reject when exceeding max files', () => {
-      const files = [createMockFile('file1.csv', 1000), createMockFile('file2.csv', 1000)]
+      const files = [
+        createMockFile('file1.csv', 1000),
+        createMockFile('file2.csv', 1000),
+      ]
       const result = validateFileLimits(files, 1, 10 * 1024 * 1024)
 
       expect(result.valid).toBe(false)
@@ -498,7 +553,10 @@ describe('validation-schemas.ts', () => {
     })
 
     it('should require explicit maxFiles and maxSize params', () => {
-      const files = [createMockFile('file1.csv', 1000), createMockFile('file2.csv', 1000)]
+      const files = [
+        createMockFile('file1.csv', 1000),
+        createMockFile('file2.csv', 1000),
+      ]
       const result = validateFileLimits(files, 1, 10 * 1024 * 1024)
 
       expect(result.valid).toBe(false)
@@ -515,7 +573,9 @@ describe('validation-schemas.ts', () => {
 
     describe('multipart validation', () => {
       it('should return valid for multipart/form-data content type', () => {
-        const request = createMockRequest('multipart/form-data; boundary=----FormBoundary')
+        const request = createMockRequest(
+          'multipart/form-data; boundary=----FormBoundary',
+        )
         const result = validateContentType(request, 'multipart')
 
         expect(result.valid).toBe(true)
@@ -610,10 +670,10 @@ describe('validation-schemas.ts', () => {
       // We can't construct a real empty-errors ZodError easily, but the code path
       // exists for safety. Test via the proxy approach to trigger the catch block
       // with an actual ZodError that has undefined message
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { z: zod } = require('zod')
       const emptyZodError = new zod.ZodError([])
       // Simulate: parse throws a ZodError with no errors
-      const originalParse = Object.getPrototypeOf(zod.array(zod.string())).parse
       const schema = zod.array(zod.string()).min(1)
       const spy = jest.spyOn(schema, 'parse').mockImplementation(() => {
         throw emptyZodError
@@ -637,10 +697,109 @@ describe('validation-schemas.ts', () => {
     it('should return valid when expected type is neither multipart nor json', () => {
       // TypeScript prevents this at compile time, but testing runtime behavior
       const request = { headers: { get: () => 'application/json' } }
-      const result = validateContentType(request as any, 'unknown' as any)
+      const result = validateContentType(
+        request as Parameters<typeof validateContentType>[0],
+        'unknown' as unknown as Parameters<typeof validateContentType>[1],
+      )
 
       // Neither branch fires, falls through to return { valid: true }
       expect(result.valid).toBe(true)
+    })
+  })
+
+  describe('validateBodySize', () => {
+    it('should reject when Content-Length is absent', () => {
+      const request = { headers: { get: () => null } }
+      const result = validateBodySize(request, 'multipart')
+      expect(result.valid).toBe(false)
+      expect(result.error).toBe('Missing Content-Length header')
+    })
+
+    it('should pass when Content-Length is within multipart limit', () => {
+      const request = {
+        headers: {
+          get: (name: string) => (name === 'content-length' ? '1000' : null),
+        },
+      }
+      expect(validateBodySize(request, 'multipart').valid).toBe(true)
+    })
+
+    it('should pass when Content-Length is within JSON limit', () => {
+      const request = {
+        headers: {
+          get: (name: string) => (name === 'content-length' ? '500' : null),
+        },
+      }
+      expect(validateBodySize(request, 'json').valid).toBe(true)
+    })
+
+    it('should reject multipart body exceeding 60MB', () => {
+      const oversized = String(61 * 1024 * 1024)
+      const request = {
+        headers: {
+          get: (name: string) => (name === 'content-length' ? oversized : null),
+        },
+      }
+      const result = validateBodySize(request, 'multipart')
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain('too large')
+    })
+
+    it('should reject JSON body exceeding 1MB', () => {
+      const oversized = String(2 * 1024 * 1024)
+      const request = {
+        headers: {
+          get: (name: string) => (name === 'content-length' ? oversized : null),
+        },
+      }
+      const result = validateBodySize(request, 'json')
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain('too large')
+    })
+
+    it('should reject invalid Content-Length values', () => {
+      const request = {
+        headers: {
+          get: (name: string) =>
+            name === 'content-length' ? 'not-a-number' : null,
+        },
+      }
+      const result = validateBodySize(request, 'json')
+      expect(result.valid).toBe(false)
+      expect(result.error).toBe('Invalid Content-Length header')
+    })
+
+    it('should reject negative Content-Length', () => {
+      const request = {
+        headers: {
+          get: (name: string) => (name === 'content-length' ? '-1' : null),
+        },
+      }
+      const result = validateBodySize(request, 'json')
+      expect(result.valid).toBe(false)
+      expect(result.error).toBe('Invalid Content-Length header')
+    })
+
+    it('should accept exactly at the multipart limit', () => {
+      const exactLimit = String(60 * 1024 * 1024)
+      const request = {
+        headers: {
+          get: (name: string) =>
+            name === 'content-length' ? exactLimit : null,
+        },
+      }
+      expect(validateBodySize(request, 'multipart').valid).toBe(true)
+    })
+
+    it('should accept exactly at the JSON limit', () => {
+      const exactLimit = String(1 * 1024 * 1024)
+      const request = {
+        headers: {
+          get: (name: string) =>
+            name === 'content-length' ? exactLimit : null,
+        },
+      }
+      expect(validateBodySize(request, 'json').valid).toBe(true)
     })
   })
 })

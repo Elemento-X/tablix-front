@@ -1,4 +1,9 @@
-import { locales, defaultLocale, localeNames, type Locale } from '@/lib/i18n/config'
+import {
+  locales,
+  defaultLocale,
+  localeNames,
+  type Locale,
+} from '@/lib/i18n/config'
 
 describe('i18n config', () => {
   describe('locales', () => {
@@ -36,11 +41,11 @@ describe('i18n config', () => {
     })
 
     it('should have correct name for en', () => {
-      expect(localeNames['en']).toBe('English')
+      expect(localeNames.en).toBe('English')
     })
 
     it('should have correct name for es', () => {
-      expect(localeNames['es']).toBe('Español')
+      expect(localeNames.es).toBe('Español')
     })
 
     it('should have names for all locales', () => {

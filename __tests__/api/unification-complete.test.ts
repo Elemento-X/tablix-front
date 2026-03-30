@@ -4,6 +4,15 @@
 import { NextRequest } from 'next/server'
 import { POST } from '@/app/api/unification/complete/route'
 
+import { atomicIncrementUnification } from '@/lib/usage-tracker'
+import { getUserFingerprint, setFingerprintCookie } from '@/lib/fingerprint'
+import { consumeUnificationToken } from '@/lib/security/unification-token'
+import {
+  validateContentType,
+  validateBodySize,
+} from '@/lib/security/validation-schemas'
+import { rateLimiters } from '@/lib/security/rate-limit'
+
 // Mock dependencies
 jest.mock('@/lib/usage-tracker', () => ({
   atomicIncrementUnification: jest.fn(),
@@ -20,6 +29,7 @@ jest.mock('@/lib/security/unification-token', () => ({
 
 jest.mock('@/lib/security/validation-schemas', () => ({
   validateContentType: jest.fn(() => ({ valid: true })),
+  validateBodySize: jest.fn(() => ({ valid: true })),
 }))
 
 jest.mock('@/lib/security/rate-limit', () => ({
@@ -30,13 +40,10 @@ jest.mock('@/lib/security/rate-limit', () => ({
   },
 }))
 
-import { atomicIncrementUnification } from '@/lib/usage-tracker'
-import { getUserFingerprint, setFingerprintCookie } from '@/lib/fingerprint'
-import { consumeUnificationToken } from '@/lib/security/unification-token'
-import { rateLimiters } from '@/lib/security/rate-limit'
-
 describe('POST /api/unification/complete', () => {
-  const createRequest = (body: Record<string, unknown> = { token: 'valid-token-abc123' }) => {
+  const createRequest = (
+    body: Record<string, unknown> = { token: 'valid-token-abc123' },
+  ) => {
     return new NextRequest('http://localhost:3000/api/unification/complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -46,6 +53,10 @@ describe('POST /api/unification/complete', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+
+    // Default: validation passes
+    ;(validateContentType as jest.Mock).mockReturnValue({ valid: true })
+    ;(validateBodySize as jest.Mock).mockReturnValue({ valid: true })
 
     // Default: rate limit passes
     ;(rateLimiters.api.check as jest.Mock).mockResolvedValue({
@@ -78,12 +89,47 @@ describe('POST /api/unification/complete', () => {
     })
   })
 
+  describe('Content-Type validation', () => {
+    it('should return 415 when Content-Type is invalid', async () => {
+      ;(validateContentType as jest.Mock).mockReturnValue({
+        valid: false,
+        error: 'Content-Type must be application/json',
+      })
+
+      const request = createRequest()
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(415)
+      expect(data.error).toBe('Content-Type must be application/json')
+    })
+  })
+
+  describe('body size validation', () => {
+    it('should return 413 when body is too large', async () => {
+      ;(validateBodySize as jest.Mock).mockReturnValue({
+        valid: false,
+        error: 'Request body too large (max 1MB)',
+      })
+
+      const request = createRequest()
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(413)
+      expect(data.error).toBe('Request body too large (max 1MB)')
+    })
+  })
+
   describe('token validation', () => {
     it('should return 400 when no body provided', async () => {
-      const request = new NextRequest('http://localhost:3000/api/unification/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      })
+      const request = new NextRequest(
+        'http://localhost:3000/api/unification/complete',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
       const response = await POST(request)
       const data = await response.json()
 
@@ -122,7 +168,10 @@ describe('POST /api/unification/complete', () => {
       const request = createRequest({ token: 'my-token' })
       await POST(request)
 
-      expect(consumeUnificationToken).toHaveBeenCalledWith('my-token', 'test-fingerprint-hash')
+      expect(consumeUnificationToken).toHaveBeenCalledWith(
+        'my-token',
+        'test-fingerprint-hash',
+      )
     })
   })
 
@@ -168,7 +217,10 @@ describe('POST /api/unification/complete', () => {
       const response = await POST(request)
 
       expect(response.status).toBe(200)
-      expect(setFingerprintCookie).toHaveBeenCalledWith(expect.any(Object), 'new-user-id')
+      expect(setFingerprintCookie).toHaveBeenCalledWith(
+        expect.any(Object),
+        'new-user-id',
+      )
     })
 
     it('should handle Pro plan with higher limits', async () => {
@@ -213,7 +265,9 @@ describe('POST /api/unification/complete', () => {
 
   describe('error handling', () => {
     it('should return 500 on atomicIncrementUnification error', async () => {
-      ;(atomicIncrementUnification as jest.Mock).mockRejectedValue(new Error('Redis error'))
+      ;(atomicIncrementUnification as jest.Mock).mockRejectedValue(
+        new Error('Redis error'),
+      )
 
       jest.spyOn(console, 'error').mockImplementation(() => {})
 

@@ -44,7 +44,9 @@ describe('middleware', () => {
       const request = createRequest()
       const response = middleware(request)
 
-      expect(response.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin')
+      expect(response.headers.get('Referrer-Policy')).toBe(
+        'strict-origin-when-cross-origin',
+      )
     })
 
     it('should set X-XSS-Protection header', () => {
@@ -56,43 +58,31 @@ describe('middleware', () => {
   })
 
   describe('Permissions-Policy header', () => {
-    it('should set Permissions-Policy header', () => {
+    it('should set comprehensive Permissions-Policy header', () => {
       const request = createRequest()
       const response = middleware(request)
 
       const permissionsPolicy = response.headers.get('Permissions-Policy')
-      expect(permissionsPolicy).toContain('camera=()')
-      expect(permissionsPolicy).toContain('microphone=()')
-      expect(permissionsPolicy).toContain('geolocation=()')
-      expect(permissionsPolicy).toContain('interest-cohort=()')
-    })
+      const requiredPolicies = [
+        'camera=()',
+        'microphone=()',
+        'geolocation=()',
+        'accelerometer=()',
+        'gyroscope=()',
+        'magnetometer=()',
+        'payment=()',
+        'usb=()',
+        'bluetooth=()',
+        'serial=()',
+        'midi=()',
+        'display-capture=()',
+        'xr-spatial-tracking=()',
+        'interest-cohort=()',
+      ]
 
-    it('should deny camera access', () => {
-      const request = createRequest()
-      const response = middleware(request)
-
-      expect(response.headers.get('Permissions-Policy')).toContain('camera=()')
-    })
-
-    it('should deny microphone access', () => {
-      const request = createRequest()
-      const response = middleware(request)
-
-      expect(response.headers.get('Permissions-Policy')).toContain('microphone=()')
-    })
-
-    it('should deny geolocation access', () => {
-      const request = createRequest()
-      const response = middleware(request)
-
-      expect(response.headers.get('Permissions-Policy')).toContain('geolocation=()')
-    })
-
-    it('should disable FLoC (interest-cohort)', () => {
-      const request = createRequest()
-      const response = middleware(request)
-
-      expect(response.headers.get('Permissions-Policy')).toContain('interest-cohort=()')
+      for (const policy of requiredPolicies) {
+        expect(permissionsPolicy).toContain(policy)
+      }
     })
   })
 
@@ -123,7 +113,9 @@ describe('middleware', () => {
       expect(csp).toContain('https://vercel.live')
 
       // Extract script-src directive and verify no unsafe-inline
-      const scriptSrc = csp!.split(';').find((d) => d.trim().startsWith('script-src'))
+      const scriptSrc = csp!
+        .split(';')
+        .find((d) => d.trim().startsWith('script-src'))
       expect(scriptSrc).not.toContain('unsafe-inline')
       expect(scriptSrc).not.toContain('unsafe-eval')
     })
@@ -240,6 +232,114 @@ describe('middleware', () => {
       expect(matcherPattern).toContain('jpeg')
       expect(matcherPattern).toContain('gif')
       expect(matcherPattern).toContain('webp')
+    })
+  })
+
+  describe('CSRF protection', () => {
+    const createPostRequest = (
+      url: string,
+      origin?: string | null,
+      host?: string,
+    ) => {
+      const headers: Record<string, string> = {}
+      if (origin !== null && origin !== undefined) {
+        headers.origin = origin
+      }
+      if (host) {
+        headers.host = host
+      }
+      return new NextRequest(url, { method: 'POST', headers })
+    }
+
+    it('should block POST to /api/ without Origin header', () => {
+      const request = new NextRequest('http://localhost:3000/api/preview', {
+        method: 'POST',
+      })
+      const response = middleware(request)
+
+      expect(response.status).toBe(403)
+    })
+
+    it('should block POST to /api/ with cross-origin Origin header', () => {
+      const request = createPostRequest(
+        'http://localhost:3000/api/preview',
+        'http://evil.com',
+        'localhost:3000',
+      )
+      const response = middleware(request)
+
+      expect(response.status).toBe(403)
+    })
+
+    it('should allow POST to /api/ with same-origin Origin header', () => {
+      const request = createPostRequest(
+        'http://localhost:3000/api/preview',
+        'http://localhost:3000',
+        'localhost:3000',
+      )
+      const response = middleware(request)
+
+      expect(response.status).not.toBe(403)
+    })
+
+    it('should block POST with malformed Origin', () => {
+      const headers = new Headers()
+      headers.set('origin', 'not-a-valid-url')
+      headers.set('host', 'localhost:3000')
+      const request = new NextRequest('http://localhost:3000/api/process', {
+        method: 'POST',
+        headers,
+      })
+      const response = middleware(request)
+
+      expect(response.status).toBe(403)
+    })
+
+    it('should not apply CSRF check to GET requests on /api/', () => {
+      const request = new NextRequest('http://localhost:3000/api/usage')
+      const response = middleware(request)
+
+      expect(response.status).not.toBe(403)
+    })
+
+    it('should not apply CSRF check to non-API paths', () => {
+      const request = new NextRequest('http://localhost:3000/upload', {
+        method: 'POST',
+      })
+      const response = middleware(request)
+
+      expect(response.status).not.toBe(403)
+    })
+
+    it('should not apply CSRF check to HEAD requests', () => {
+      const request = new NextRequest('http://localhost:3000/api/usage', {
+        method: 'HEAD',
+      })
+      const response = middleware(request)
+
+      expect(response.status).not.toBe(403)
+    })
+
+    it('should not apply CSRF check to OPTIONS requests', () => {
+      const request = new NextRequest('http://localhost:3000/api/preview', {
+        method: 'OPTIONS',
+      })
+      const response = middleware(request)
+
+      expect(response.status).not.toBe(403)
+    })
+
+    it('should return generic error message on CSRF failure', async () => {
+      const request = createPostRequest(
+        'http://localhost:3000/api/preview',
+        'http://evil.com',
+        'localhost:3000',
+      )
+      const response = middleware(request)
+      const body = await response.json()
+
+      expect(body.error).toBe('Forbidden')
+      expect(body).not.toHaveProperty('details')
     })
   })
 

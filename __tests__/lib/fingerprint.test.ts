@@ -326,7 +326,9 @@ describe('fingerprint.ts', () => {
   })
 
   describe('getUserPlan', () => {
-    const createRequest = (headers: Record<string, string> = {}): NextRequest => {
+    const createRequest = (
+      headers: Record<string, string> = {},
+    ): NextRequest => {
       return new NextRequest('http://localhost:3000/test', {
         headers: new Headers(headers),
       })
@@ -340,10 +342,18 @@ describe('fingerprint.ts', () => {
     })
 
     it('should always return "free" regardless of x-tablix-plan header', () => {
-      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'pro' }))).toBe('free')
-      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'enterprise' }))).toBe('free')
-      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'Pro' }))).toBe('free')
-      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'invalid' }))).toBe('free')
+      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'pro' }))).toBe(
+        'free',
+      )
+      expect(
+        getUserPlan(createRequest({ 'x-tablix-plan': 'enterprise' })),
+      ).toBe('free')
+      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'Pro' }))).toBe(
+        'free',
+      )
+      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'invalid' }))).toBe(
+        'free',
+      )
       expect(getUserPlan(createRequest({ 'x-tablix-plan': '' }))).toBe('free')
     })
   })

@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import { render, screen, act, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LocaleProvider, useLocale } from '@/lib/i18n/LocaleProvider'
 
@@ -48,13 +48,15 @@ jest.mock('@/lib/i18n/messages/es.json', () => ({
 
 // Test component that uses useLocale
 function TestComponent() {
-  const { locale, setLocale, t, messages } = useLocale()
+  const { locale, setLocale, t } = useLocale()
 
   return (
     <div>
       <span data-testid="current-locale">{locale}</span>
       <span data-testid="title">{t('common.title')}</span>
-      <span data-testid="greeting">{t('common.greeting', { name: 'Test' })}</span>
+      <span data-testid="greeting">
+        {t('common.greeting', { name: 'Test' })}
+      </span>
       <span data-testid="count">{t('common.count', { count: 5 })}</span>
       <span data-testid="deep-value">{t('nested.deep.value')}</span>
       <span data-testid="missing-key">{t('nonexistent.key')}</span>
@@ -94,7 +96,7 @@ describe('LocaleProvider', () => {
       render(
         <LocaleProvider>
           <TestComponent />
-        </LocaleProvider>
+        </LocaleProvider>,
       )
 
       expect(screen.getByTestId('current-locale')).toHaveTextContent('pt-BR')
@@ -106,7 +108,7 @@ describe('LocaleProvider', () => {
       render(
         <LocaleProvider>
           <TestComponent />
-        </LocaleProvider>
+        </LocaleProvider>,
       )
 
       await waitFor(() => {
@@ -120,7 +122,7 @@ describe('LocaleProvider', () => {
       render(
         <LocaleProvider>
           <TestComponent />
-        </LocaleProvider>
+        </LocaleProvider>,
       )
 
       // Should stay at default
@@ -136,7 +138,7 @@ describe('LocaleProvider', () => {
       render(
         <LocaleProvider>
           <TestComponent />
-        </LocaleProvider>
+        </LocaleProvider>,
       )
 
       expect(screen.getByTestId('current-locale')).toHaveTextContent('pt-BR')
@@ -153,12 +155,15 @@ describe('LocaleProvider', () => {
       render(
         <LocaleProvider>
           <TestComponent />
-        </LocaleProvider>
+        </LocaleProvider>,
       )
 
       await user.click(screen.getByTestId('switch-to-en'))
 
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('tablix-locale', 'en')
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        'tablix-locale',
+        'en',
+      )
     })
 
     it('should switch between all locales', async () => {
@@ -168,7 +173,7 @@ describe('LocaleProvider', () => {
       render(
         <LocaleProvider>
           <TestComponent />
-        </LocaleProvider>
+        </LocaleProvider>,
       )
 
       // Switch to English
@@ -192,10 +197,12 @@ describe('LocaleProvider', () => {
       render(
         <LocaleProvider>
           <TestComponent />
-        </LocaleProvider>
+        </LocaleProvider>,
       )
 
-      expect(screen.getByTestId('title')).toHaveTextContent('Título em Português')
+      expect(screen.getByTestId('title')).toHaveTextContent(
+        'Título em Português',
+      )
     })
 
     it('should interpolate string values', () => {
@@ -204,7 +211,7 @@ describe('LocaleProvider', () => {
       render(
         <LocaleProvider>
           <TestComponent />
-        </LocaleProvider>
+        </LocaleProvider>,
       )
 
       expect(screen.getByTestId('greeting')).toHaveTextContent('Olá, Test!')
@@ -216,7 +223,7 @@ describe('LocaleProvider', () => {
       render(
         <LocaleProvider>
           <TestComponent />
-        </LocaleProvider>
+        </LocaleProvider>,
       )
 
       expect(screen.getByTestId('count')).toHaveTextContent('Você tem 5 itens')
@@ -228,10 +235,12 @@ describe('LocaleProvider', () => {
       render(
         <LocaleProvider>
           <TestComponent />
-        </LocaleProvider>
+        </LocaleProvider>,
       )
 
-      expect(screen.getByTestId('deep-value')).toHaveTextContent('Valor profundo')
+      expect(screen.getByTestId('deep-value')).toHaveTextContent(
+        'Valor profundo',
+      )
     })
 
     it('should return key when translation not found', () => {
@@ -240,10 +249,12 @@ describe('LocaleProvider', () => {
       render(
         <LocaleProvider>
           <TestComponent />
-        </LocaleProvider>
+        </LocaleProvider>,
       )
 
-      expect(screen.getByTestId('missing-key')).toHaveTextContent('nonexistent.key')
+      expect(screen.getByTestId('missing-key')).toHaveTextContent(
+        'nonexistent.key',
+      )
     })
 
     it('should update translations when locale changes', async () => {
@@ -253,10 +264,12 @@ describe('LocaleProvider', () => {
       render(
         <LocaleProvider>
           <TestComponent />
-        </LocaleProvider>
+        </LocaleProvider>,
       )
 
-      expect(screen.getByTestId('title')).toHaveTextContent('Título em Português')
+      expect(screen.getByTestId('title')).toHaveTextContent(
+        'Título em Português',
+      )
 
       await user.click(screen.getByTestId('switch-to-en'))
 
@@ -270,7 +283,7 @@ describe('LocaleProvider', () => {
       render(
         <LocaleProvider>
           <TestComponent />
-        </LocaleProvider>
+        </LocaleProvider>,
       )
 
       expect(screen.getByTestId('greeting')).toHaveTextContent('Olá, Test!')
@@ -307,7 +320,7 @@ describe('LocaleProvider', () => {
       render(
         <LocaleProvider>
           <MessageTest />
-        </LocaleProvider>
+        </LocaleProvider>,
       )
 
       const messagesContent = screen.getByTestId('messages').textContent
@@ -345,10 +358,12 @@ describe('getNestedValue helper', () => {
     render(
       <LocaleProvider>
         <SingleLevelTest />
-      </LocaleProvider>
+      </LocaleProvider>,
     )
 
-    expect(screen.getByTestId('result')).toHaveTextContent('Título em Português')
+    expect(screen.getByTestId('result')).toHaveTextContent(
+      'Título em Português',
+    )
   })
 
   it('should handle deeply nested keys', () => {
@@ -362,7 +377,7 @@ describe('getNestedValue helper', () => {
     render(
       <LocaleProvider>
         <DeepTest />
-      </LocaleProvider>
+      </LocaleProvider>,
     )
 
     expect(screen.getByTestId('result')).toHaveTextContent('Valor profundo')
@@ -379,9 +394,11 @@ describe('getNestedValue helper', () => {
     render(
       <LocaleProvider>
         <MissingTest />
-      </LocaleProvider>
+      </LocaleProvider>,
     )
 
-    expect(screen.getByTestId('result')).toHaveTextContent('this.does.not.exist')
+    expect(screen.getByTestId('result')).toHaveTextContent(
+      'this.does.not.exist',
+    )
   })
 })

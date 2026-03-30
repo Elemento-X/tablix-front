@@ -2,13 +2,11 @@ import { NextRequest } from 'next/server'
 import {
   checkUnificationLimit,
   atomicIncrementUnification,
-  incrementUnificationCount,
   checkFileSizeLimit,
   getUserUsage,
 } from '@/lib/usage-tracker'
 import { storage } from '@/lib/redis'
 import * as fingerprint from '@/lib/fingerprint'
-import * as limits from '@/lib/limits'
 
 // Mock dependencies
 jest.mock('@/lib/redis', () => ({
@@ -29,10 +27,21 @@ jest.mock('@/lib/fingerprint', () => ({
 
 describe('usage-tracker.ts', () => {
   const mockStorage = storage as jest.Mocked<typeof storage>
-  const mockGetUserFingerprint = fingerprint.getUserFingerprint as jest.MockedFunction<typeof fingerprint.getUserFingerprint>
-  const mockGetUserPlan = fingerprint.getUserPlan as jest.MockedFunction<typeof fingerprint.getUserPlan>
-  const mockGetCurrentMonthKey = fingerprint.getCurrentMonthKey as jest.MockedFunction<typeof fingerprint.getCurrentMonthKey>
-  const mockCreateUploadCountKey = fingerprint.createUploadCountKey as jest.MockedFunction<typeof fingerprint.createUploadCountKey>
+  const mockGetUserFingerprint =
+    fingerprint.getUserFingerprint as jest.MockedFunction<
+      typeof fingerprint.getUserFingerprint
+    >
+  const mockGetUserPlan = fingerprint.getUserPlan as jest.MockedFunction<
+    typeof fingerprint.getUserPlan
+  >
+  const mockGetCurrentMonthKey =
+    fingerprint.getCurrentMonthKey as jest.MockedFunction<
+      typeof fingerprint.getCurrentMonthKey
+    >
+  const mockCreateUploadCountKey =
+    fingerprint.createUploadCountKey as jest.MockedFunction<
+      typeof fingerprint.createUploadCountKey
+    >
 
   const createMockRequest = (): NextRequest => {
     return new NextRequest('http://localhost:3000/test')
@@ -50,7 +59,9 @@ describe('usage-tracker.ts', () => {
     })
 
     mockGetCurrentMonthKey.mockReturnValue('2024-01')
-    mockCreateUploadCountKey.mockReturnValue('upload:test-fingerprint-123:2024-01')
+    mockCreateUploadCountKey.mockReturnValue(
+      'upload:test-fingerprint-123:2024-01',
+    )
   })
 
   describe('checkUnificationLimit', () => {
@@ -181,100 +192,13 @@ describe('usage-tracker.ts', () => {
 
       expect(mockGetUserFingerprint).toHaveBeenCalledWith(request)
       expect(mockGetCurrentMonthKey).toHaveBeenCalled()
-      expect(mockCreateUploadCountKey).toHaveBeenCalledWith('test-fingerprint-123', '2024-01')
-      expect(mockStorage.get).toHaveBeenCalledWith('upload:test-fingerprint-123:2024-01')
-    })
-  })
-
-  describe('incrementUnificationCount', () => {
-    beforeEach(() => {
-      mockStorage.incr.mockResolvedValue(1)
-      mockStorage.expire.mockResolvedValue(undefined)
-
-      // Mock Date to have consistent tests
-      jest.useFakeTimers()
-      jest.setSystemTime(new Date('2024-01-15T10:00:00Z'))
-    })
-
-    afterEach(() => {
-      jest.useRealTimers()
-    })
-
-    it('should increment unification counter', async () => {
-      const request = createMockRequest()
-      const newCount = await incrementUnificationCount(request)
-
-      expect(newCount).toBe(1)
-      expect(mockStorage.incr).toHaveBeenCalledWith('upload:test-fingerprint-123:2024-01')
-    })
-
-    it('should set expiration to end of next month', async () => {
-      const request = createMockRequest()
-      await incrementUnificationCount(request)
-
-      expect(mockStorage.expire).toHaveBeenCalled()
-
-      const expirySeconds = mockStorage.expire.mock.calls[0][1]
-
-      // Should be positive and reasonable (between 1-2 months in seconds)
-      expect(expirySeconds).toBeGreaterThan(0)
-      expect(expirySeconds).toBeLessThan(60 * 24 * 60 * 60) // Less than 60 days
-    })
-
-    it('should calculate expiration correctly for end of January', async () => {
-      jest.setSystemTime(new Date('2024-01-31T23:59:59Z'))
-
-      const request = createMockRequest()
-      await incrementUnificationCount(request)
-
-      const expirySeconds = mockStorage.expire.mock.calls[0][1]
-
-      // End of February 2024 from Jan 31
-      // Feb 2024 has 29 days (leap year)
-      // From Jan 31 to end of Feb is about 29 days
-      expect(expirySeconds).toBeGreaterThan(28 * 24 * 60 * 60) // More than 28 days
-      expect(expirySeconds).toBeLessThan(30 * 24 * 60 * 60) // Less than 30 days
-    })
-
-    it('should calculate expiration correctly for end of December', async () => {
-      jest.setSystemTime(new Date('2024-12-31T23:59:59Z'))
-
-      const request = createMockRequest()
-      await incrementUnificationCount(request)
-
-      const expirySeconds = mockStorage.expire.mock.calls[0][1]
-
-      // End of January 2025 from Dec 31 2024
-      // Should be about 31 days
-      expect(expirySeconds).toBeGreaterThan(30 * 24 * 60 * 60)
-      expect(expirySeconds).toBeLessThan(32 * 24 * 60 * 60)
-    })
-
-    it('should use correct fingerprint and month key', async () => {
-      const request = createMockRequest()
-      await incrementUnificationCount(request)
-
-      expect(mockGetUserFingerprint).toHaveBeenCalledWith(request)
-      expect(mockGetCurrentMonthKey).toHaveBeenCalled()
-      expect(mockCreateUploadCountKey).toHaveBeenCalledWith('test-fingerprint-123', '2024-01')
-    })
-
-    it('should return the new count after increment', async () => {
-      mockStorage.incr.mockResolvedValue(5)
-
-      const request = createMockRequest()
-      const result = await incrementUnificationCount(request)
-
-      expect(result).toBe(5)
-    })
-
-    it('should work for first unification (count 1)', async () => {
-      mockStorage.incr.mockResolvedValue(1)
-
-      const request = createMockRequest()
-      const result = await incrementUnificationCount(request)
-
-      expect(result).toBe(1)
+      expect(mockCreateUploadCountKey).toHaveBeenCalledWith(
+        'test-fingerprint-123',
+        '2024-01',
+      )
+      expect(mockStorage.get).toHaveBeenCalledWith(
+        'upload:test-fingerprint-123:2024-01',
+      )
     })
   })
 
@@ -371,7 +295,10 @@ describe('usage-tracker.ts', () => {
       expect(proResult.error).toContain('2 MB')
 
       // Enterprise - 50MB
-      const enterpriseResult = checkFileSizeLimit(51 * 1024 * 1024, 'enterprise')
+      const enterpriseResult = checkFileSizeLimit(
+        51 * 1024 * 1024,
+        'enterprise',
+      )
       expect(enterpriseResult.error).toContain('50 MB')
     })
   })
@@ -455,8 +382,13 @@ describe('usage-tracker.ts', () => {
 
       expect(mockGetUserFingerprint).toHaveBeenCalledWith(request)
       expect(mockGetCurrentMonthKey).toHaveBeenCalled()
-      expect(mockCreateUploadCountKey).toHaveBeenCalledWith('test-fingerprint-123', '2024-01')
-      expect(mockStorage.get).toHaveBeenCalledWith('upload:test-fingerprint-123:2024-01')
+      expect(mockCreateUploadCountKey).toHaveBeenCalledWith(
+        'test-fingerprint-123',
+        '2024-01',
+      )
+      expect(mockStorage.get).toHaveBeenCalledWith(
+        'upload:test-fingerprint-123:2024-01',
+      )
     })
 
     it('should include all required fields', async () => {
@@ -529,7 +461,8 @@ describe('usage-tracker.ts', () => {
       const request = createMockRequest()
       await atomicIncrementUnification(request)
 
-      const [, , ttl] = (mockStorage.atomicCheckAndIncr as jest.Mock).mock.calls[0]
+      const [, , ttl] = (mockStorage.atomicCheckAndIncr as jest.Mock).mock
+        .calls[0]
       expect(ttl).toBeGreaterThan(0)
       expect(ttl).toBeLessThan(62 * 24 * 60 * 60) // Less than 62 days
     })
@@ -572,14 +505,21 @@ describe('usage-tracker.ts', () => {
 
       expect(mockGetUserFingerprint).toHaveBeenCalledWith(request)
       expect(mockGetCurrentMonthKey).toHaveBeenCalled()
-      expect(mockCreateUploadCountKey).toHaveBeenCalledWith('test-fingerprint-123', '2024-01')
+      expect(mockCreateUploadCountKey).toHaveBeenCalledWith(
+        'test-fingerprint-123',
+        '2024-01',
+      )
     })
 
     it('should propagate storage errors', async () => {
-      ;(mockStorage.atomicCheckAndIncr as jest.Mock).mockRejectedValue(new Error('Redis down'))
+      ;(mockStorage.atomicCheckAndIncr as jest.Mock).mockRejectedValue(
+        new Error('Redis down'),
+      )
 
       const request = createMockRequest()
-      await expect(atomicIncrementUnification(request)).rejects.toThrow('Redis down')
+      await expect(atomicIncrementUnification(request)).rejects.toThrow(
+        'Redis down',
+      )
     })
 
     it('should calculate correct TTL for end of December scenario', async () => {
@@ -588,7 +528,8 @@ describe('usage-tracker.ts', () => {
       const request = createMockRequest()
       await atomicIncrementUnification(request)
 
-      const [, , ttl] = (mockStorage.atomicCheckAndIncr as jest.Mock).mock.calls[0]
+      const [, , ttl] = (mockStorage.atomicCheckAndIncr as jest.Mock).mock
+        .calls[0]
       // End of January 2025 from Dec 15 = ~47 days
       expect(ttl).toBeGreaterThan(44 * 24 * 60 * 60)
       expect(ttl).toBeLessThan(50 * 24 * 60 * 60)

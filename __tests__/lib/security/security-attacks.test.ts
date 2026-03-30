@@ -65,6 +65,64 @@ function createFileWithMagicBytes(
   return file
 }
 
+/**
+ * Build a minimal but structurally valid XLSX (ZIP) file so that
+ * checkZipCompressionRatio succeeds. The 8-byte magic prefix is replaced by
+ * the provided bytes so the magic-number check exercises the desired path,
+ * while the rest of the buffer contains a proper EOCD record.
+ *
+ * Used for "accept" assertions on XLSX files after Fase 4 added zip-bomb
+ * protection that requires a parseable EOCD.
+ */
+function createXlsxWithMagicAndEocd(
+  magicBytes: number[],
+  name = 'valid.xlsx',
+): File {
+  // Build a minimal ZIP: local-file-header stub + empty central directory + EOCD
+  // EOCD (22 bytes, no entries) placed right after the magic bytes stub.
+  // Central directory offset points past the magic bytes, size = 0.
+  const eocd = new Uint8Array(22)
+  const eocdView = new DataView(eocd.buffer)
+  eocdView.setUint32(0, 0x06054b50, true) // EOCD signature
+  eocdView.setUint16(4, 0, true) // disk number
+  eocdView.setUint16(6, 0, true) // disk with CD
+  eocdView.setUint16(8, 0, true) // entries on disk
+  eocdView.setUint16(10, 0, true) // total entries
+  eocdView.setUint32(12, 0, true) // CD size = 0
+  eocdView.setUint32(16, magicBytes.length, true) // CD offset = after magic bytes
+  eocdView.setUint16(20, 0, true) // comment length
+
+  const full = new Uint8Array(magicBytes.length + eocd.length)
+  full.set(new Uint8Array(magicBytes), 0)
+  full.set(eocd, magicBytes.length)
+
+  const blob = new Blob([full])
+  const file = new File([blob], name, {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  })
+
+  // slice — returns only the magic bytes region (for the 8-byte header check)
+  Object.defineProperty(file, 'slice', {
+    value: (start?: number, end?: number) => {
+      const sliced = Array.from(full).slice(start, end)
+      const slicedBuf = new Uint8Array(sliced)
+      const slicedBlob = new Blob([slicedBuf])
+      Object.defineProperty(slicedBlob, 'arrayBuffer', {
+        value: async () => slicedBuf.buffer as ArrayBuffer,
+      })
+      return slicedBlob as Blob
+    },
+    writable: false,
+  })
+
+  // arrayBuffer — returns the full buffer so checkZipCompressionRatio can find the EOCD
+  Object.defineProperty(file, 'arrayBuffer', {
+    value: async () => full.buffer as ArrayBuffer,
+  })
+
+  return file
+}
+
 // ---------------------------------------------------------------------------
 // 1. XSS / Formula Injection via spreadsheet cell values
 // ---------------------------------------------------------------------------
@@ -423,22 +481,18 @@ describe('validateFileContent — magic number mismatch detection', () => {
       expect(result.error).toContain('invalid format')
     })
 
-    it('should accept CSV with PDF magic bytes — known gap: %PDF is printable ASCII', async () => {
-      // PDF header bytes 0x25 0x50 0x44 0x46 (%PDF) are all < 128 (printable ASCII).
-      // The current isText check passes them as valid text, so validateFileContent
-      // returns valid:true for a PDF renamed to .csv.
-      // This is a documented gap: the MIME + extension checks in validateFile are the
-      // primary guards; magic-number check for CSV cannot distinguish printable-binary
-      // formats like PDF from real text without a deeper content scan.
+    it('should reject CSV with PDF magic bytes (%PDF prefix detection — Fase 4)', async () => {
+      // PDF header bytes 0x25 0x50 0x44 0x46 (%PDF) are printable ASCII.
+      // Previously a known gap: isText passed them and validateFileContent returned valid:true.
+      // Fase 4 added explicit %PDF prefix detection — now correctly rejected.
       const file = createFileWithMagicBytes(
         [0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34],
         'data.csv',
         'text/csv',
       )
       const result = await validateFileContent(file)
-      // Documents current behavior — not the desired behavior.
-      // A future improvement should detect %PDF prefix and reject.
-      expect(result.valid).toBe(true)
+      expect(result.valid).toBe(false)
+      expect(result.error).toBe('File appears to be a PDF, not a CSV')
     })
 
     it('should reject CSV with mostly high bytes (binary content disguised as CSV)', async () => {
@@ -488,20 +542,20 @@ describe('validateFileContent — magic number mismatch detection', () => {
     })
 
     it('should accept XLSX with valid ZIP magic bytes (0x50 0x4B 0x03)', async () => {
-      const file = createFileWithMagicBytes(
+      // Must include a valid EOCD so checkZipCompressionRatio (added in Fase 4) passes
+      const file = createXlsxWithMagicAndEocd(
         [0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x00, 0x00],
         'valid.xlsx',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       )
       const result = await validateFileContent(file)
       expect(result.valid).toBe(true)
     })
 
     it('should accept XLSX with alternate ZIP magic bytes (0x50 0x4B 0x05)', async () => {
-      const file = createFileWithMagicBytes(
+      // Must include a valid EOCD so checkZipCompressionRatio (added in Fase 4) passes
+      const file = createXlsxWithMagicAndEocd(
         [0x50, 0x4b, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00],
         'valid.xlsx',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       )
       const result = await validateFileContent(file)
       expect(result.valid).toBe(true)

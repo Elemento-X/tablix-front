@@ -7,7 +7,6 @@ import {
   getRemainingUnifications,
   isInputFilesAllowed,
   isTotalSizeAllowed,
-  type PlanType,
 } from '@/lib/limits'
 
 describe('limits.ts', () => {
@@ -142,7 +141,9 @@ describe('limits.ts', () => {
       })
 
       it('should reject files over 50MB', () => {
-        expect(isFileSizeAllowed(50 * 1024 * 1024 + 1, 'enterprise')).toBe(false)
+        expect(isFileSizeAllowed(50 * 1024 * 1024 + 1, 'enterprise')).toBe(
+          false,
+        )
         expect(isFileSizeAllowed(100 * 1024 * 1024, 'enterprise')).toBe(false)
       })
     })
