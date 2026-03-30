@@ -1,15 +1,15 @@
 /**
  * @jest-environment jsdom
  */
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { ThemeToggle } from '@/components/theme-toggle'
 
 const mockSetTheme = jest.fn()
-let mockTheme = 'light'
+let mockResolvedTheme = 'light'
 
 jest.mock('next-themes', () => ({
   useTheme: () => ({
-    theme: mockTheme,
+    resolvedTheme: mockResolvedTheme,
     setTheme: mockSetTheme,
   }),
 }))
@@ -26,20 +26,28 @@ jest.mock('@/lib/i18n', () => ({
   }),
 }))
 
+function renderMounted() {
+  let result: ReturnType<typeof render>
+  act(() => {
+    result = render(<ThemeToggle />)
+  })
+  return result!
+}
+
 describe('ThemeToggle', () => {
   beforeEach(() => {
-    mockTheme = 'light'
+    mockResolvedTheme = 'light'
     mockSetTheme.mockClear()
   })
 
   it('renders a button', () => {
-    render(<ThemeToggle />)
+    renderMounted()
     expect(screen.getByRole('button')).toBeInTheDocument()
   })
 
   it('has aria-label for switching to dark when in light mode', () => {
-    mockTheme = 'light'
-    render(<ThemeToggle />)
+    mockResolvedTheme = 'light'
+    renderMounted()
     expect(screen.getByRole('button')).toHaveAttribute(
       'aria-label',
       'Switch to dark theme',
@@ -47,8 +55,8 @@ describe('ThemeToggle', () => {
   })
 
   it('has aria-label for switching to light when in dark mode', () => {
-    mockTheme = 'dark'
-    render(<ThemeToggle />)
+    mockResolvedTheme = 'dark'
+    renderMounted()
     expect(screen.getByRole('button')).toHaveAttribute(
       'aria-label',
       'Switch to light theme',
@@ -56,15 +64,15 @@ describe('ThemeToggle', () => {
   })
 
   it('calls setTheme("dark") when clicked in light mode', () => {
-    mockTheme = 'light'
-    render(<ThemeToggle />)
+    mockResolvedTheme = 'light'
+    renderMounted()
     fireEvent.click(screen.getByRole('button'))
     expect(mockSetTheme).toHaveBeenCalledWith('dark')
   })
 
   it('calls setTheme("light") when clicked in dark mode', () => {
-    mockTheme = 'dark'
-    render(<ThemeToggle />)
+    mockResolvedTheme = 'dark'
+    renderMounted()
     fireEvent.click(screen.getByRole('button'))
     expect(mockSetTheme).toHaveBeenCalledWith('light')
   })

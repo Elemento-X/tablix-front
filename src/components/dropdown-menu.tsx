@@ -45,56 +45,34 @@ function DropdownMenu({ children }: { children: React.ReactNode }) {
   )
 }
 
-const DropdownMenuTrigger = React.forwardRef<
-  HTMLButtonElement,
-  React.ComponentProps<'button'> & { asChild?: boolean }
->(({ children, asChild, ...props }, ref) => {
+function DropdownMenuTrigger({
+  children,
+  asChild,
+  ...props
+}: React.ComponentProps<'button'> & { asChild?: boolean }) {
   const { open, setOpen } = useDropdownMenu()
 
   if (asChild && React.isValidElement(children)) {
-    // React 19 compatible ref handling
-    const childElement = children as React.ReactElement<{
-      onClick?: (e: React.MouseEvent) => void
-      ref?: React.Ref<HTMLButtonElement>
-    }>
-    const childProps = {
-      onClick: (e: React.MouseEvent) => {
-        setOpen(!open)
-        const childOnClick = childElement.props.onClick
-        if (childOnClick) childOnClick(e)
+    return React.cloneElement(
+      children as React.ReactElement<Record<string, unknown>>,
+      {
+        onClick: (e: React.MouseEvent) => {
+          setOpen(!open)
+          const childOnClick = (
+            children as React.ReactElement<{
+              onClick?: (e: React.MouseEvent) => void
+            }>
+          ).props.onClick
+          if (childOnClick) childOnClick(e)
+        },
+        'aria-expanded': open,
+        'data-state': open ? 'open' : 'closed',
       },
-      'aria-expanded': open,
-      'data-state': open ? 'open' : 'closed',
-    }
-
-    // Merge refs if child has ref
-    if (ref) {
-      const childRef = (
-        childElement as unknown as { ref?: React.Ref<HTMLButtonElement> }
-      ).ref
-      const mergedRef = (node: HTMLButtonElement | null) => {
-        if (typeof ref === 'function') ref(node)
-        else if (ref)
-          (ref as React.MutableRefObject<HTMLButtonElement | null>).current =
-            node
-
-        if (childRef) {
-          if (typeof childRef === 'function') childRef(node)
-          else if (childRef)
-            (
-              childRef as React.MutableRefObject<HTMLButtonElement | null>
-            ).current = node
-        }
-      }
-      return React.cloneElement(childElement, { ...childProps, ref: mergedRef })
-    }
-
-    return React.cloneElement(childElement, childProps)
+    )
   }
 
   return (
     <button
-      ref={ref}
       data-slot="dropdown-menu-trigger"
       onClick={() => setOpen(!open)}
       aria-expanded={open}
@@ -104,8 +82,7 @@ const DropdownMenuTrigger = React.forwardRef<
       {children}
     </button>
   )
-})
-DropdownMenuTrigger.displayName = 'DropdownMenuTrigger'
+}
 
 function DropdownMenuContent({
   children,

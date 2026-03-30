@@ -4,18 +4,30 @@ import { Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/button'
 import { useLocale } from '@/lib/i18n'
+import { useEffect, useState } from 'react'
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
   const { t } = useLocale()
+  const [mounted, setMounted] = useState(false)
 
-  const isDark = theme === 'dark'
+  useEffect(() => setMounted(true), [])
+
+  const isDark = resolvedTheme === 'dark'
+
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="icon" className="h-9 w-9" disabled>
+        <Sun className="h-4 w-4" />
+      </Button>
+    )
+  }
 
   return (
     <Button
       variant="ghost"
       size="icon"
-      className="h-9 w-9"
+      className="relative h-9 w-9"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       aria-label={isDark ? t('theme.switchToLight') : t('theme.switchToDark')}
     >
