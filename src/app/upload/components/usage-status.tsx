@@ -53,7 +53,7 @@ export function UsageStatus({ usage, isLoading }: UsageStatusProps) {
         : 'bg-success'
 
   return (
-    <Card className="border-border bg-info/10 mb-6">
+    <Card data-testid="usage-status" className="border-border bg-info/10 mb-6">
       <CardContent className="p-4">
         <section className="flex items-start gap-3">
           <Info className="text-info mt-0.5 h-5 w-5 flex-shrink-0" />
@@ -84,12 +84,10 @@ export function UsageStatus({ usage, isLoading }: UsageStatusProps) {
             </div>
 
             <p className="text-muted-foreground mt-2 text-xs">
-              {t('status.maxFiles')} {usage.limits.maxInputFiles}{' '}
-              {t('status.files')} • {t('status.maxTotalSize')}:{' '}
-              {formatFileSize(usage.limits.maxTotalSize)} •{' '}
-              {t('status.maxRowsLabel')} {usage.limits.maxRows}{' '}
-              {t('status.maxRows')} • {t('status.maxColumnsLabel')}{' '}
-              {usage.limits.maxColumns} {t('status.maxColumns')}
+              {t('status.maxFiles')} {usage.limits.maxInputFiles} {t('status.files')} •{' '}
+              {t('status.maxTotalSize')}: {formatFileSize(usage.limits.maxTotalSize)} •{' '}
+              {t('status.maxRowsLabel')} {usage.limits.maxRows} {t('status.maxRows')} •{' '}
+              {t('status.maxColumnsLabel')} {usage.limits.maxColumns} {t('status.maxColumns')}
             </p>
           </div>
         </section>

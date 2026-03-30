@@ -42,8 +42,8 @@ export function ColumnsStep({
                 {t('columns.detected')} ({detectedColumns.length})
               </h3>
               <p className="text-muted-foreground mt-1 text-sm">
-                {selectedColumns.length} {t('columns.of')}{' '}
-                {detectedColumns.length} {t('columns.selected')}
+                {selectedColumns.length} {t('columns.of')} {detectedColumns.length}{' '}
+                {t('columns.selected')}
                 {usage && ` (${t('columns.max')} ${usage.limits.maxColumns})`}
               </p>
             </div>
@@ -53,7 +53,10 @@ export function ColumnsStep({
             </Button>
           </div>
 
-          <AnimatedList className="grid max-h-96 grid-cols-1 gap-2 overflow-y-auto p-1 sm:grid-cols-2 sm:gap-3 sm:p-2 md:grid-cols-3">
+          <AnimatedList
+            data-testid="column-grid"
+            className="grid max-h-96 grid-cols-1 gap-2 overflow-y-auto p-1 sm:grid-cols-2 sm:gap-3 sm:p-2 md:grid-cols-3"
+          >
             {detectedColumns.map((column) => (
               <AnimatedListItem key={column}>
                 <button
@@ -102,6 +105,7 @@ export function ColumnsStep({
           </div>
 
           <Button
+            data-testid="btn-process"
             variant="brand"
             onClick={onProcess}
             disabled={selectedColumns.length === 0 || isProcessing}

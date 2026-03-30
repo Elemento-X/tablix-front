@@ -21,9 +21,7 @@ export function FileDropzone({
   disabled = false,
   accept = {
     'text/csv': ['.csv'],
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': [
-      '.xlsx',
-    ],
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
   },
   currentFileCount = 0,
   className,
@@ -55,6 +53,7 @@ export function FileDropzone({
   return (
     <div
       {...getRootProps()}
+      data-testid="dropzone"
       className={cn(
         'flex cursor-pointer flex-col items-center gap-3 rounded-lg border-2 border-dashed p-12 transition-all',
         isDragActive
@@ -74,18 +73,14 @@ export function FileDropzone({
       <Upload
         className={cn(
           'h-8 w-8 transition-colors',
-          isDragActive
-            ? 'text-teal-700 dark:text-teal-400'
-            : 'text-muted-foreground',
+          isDragActive ? 'text-teal-700 dark:text-teal-400' : 'text-muted-foreground',
         )}
       />
       <div className="text-center">
         <span
           className={cn(
             'block text-base font-medium',
-            isDragActive
-              ? 'text-teal-700 dark:text-teal-400'
-              : 'text-foreground',
+            isDragActive ? 'text-teal-700 dark:text-teal-400' : 'text-foreground',
           )}
         >
           {isDragActive

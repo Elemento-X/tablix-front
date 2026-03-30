@@ -50,11 +50,10 @@ export function UploadStep({
           </div>
 
           {files.length > 0 && (
-            <div className="bg-muted w-full space-y-2 rounded-lg p-4">
+            <div data-testid="file-list" className="bg-muted w-full space-y-2 rounded-lg p-4">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium text-stone-700 dark:text-stone-300">
-                  {files.length} {t('columns.of')} {maxInputFiles}{' '}
-                  {t('status.files')}
+                  {files.length} {t('columns.of')} {maxInputFiles} {t('status.files')}
                 </span>
                 <span className="text-muted-foreground text-xs">
                   {formatFileSize(currentTotalSize)} {t('columns.of')}{' '}
@@ -65,6 +64,7 @@ export function UploadStep({
                 {files.map((file, index) => (
                   <AnimatedListItem
                     key={`${file.name}-${file.size}`}
+                    data-testid="file-item"
                     className="border-border bg-card flex items-center gap-3 rounded-md border p-2 text-sm"
                   >
                     <FileSpreadsheet className="text-muted-foreground h-4 w-4 flex-shrink-0" />
@@ -94,12 +94,11 @@ export function UploadStep({
           )}
 
           <div className="w-full py-4 text-center">
-            <p className="text-muted-foreground text-sm">
-              {t('upload.securityNote')}
-            </p>
+            <p className="text-muted-foreground text-sm">{t('upload.securityNote')}</p>
           </div>
 
           <Button
+            data-testid="btn-continue"
             variant="brand"
             onClick={onUpload}
             disabled={files.length === 0 || isUploading}

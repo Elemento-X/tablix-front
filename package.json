@@ -10,7 +10,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:ci": "jest --ci --coverage --maxWorkers=2"
+    "test:ci": "jest --ci --coverage --maxWorkers=2",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -45,6 +47,7 @@
   },
   "devDependencies": {
     "@edge-runtime/jest-environment": "^4.0.0",
+    "@playwright/test": "^1.58.2",
     "@rocketseat/eslint-config": "^2.2.2",
     "@tailwindcss/postcss": "^4.1.9",
     "@testing-library/jest-dom": "^6.9.1",
