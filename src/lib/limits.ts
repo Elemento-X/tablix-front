@@ -101,7 +101,10 @@ export function isFileSizeAllowed(fileSize: number, plan: PlanType): boolean {
 /**
  * Check if unification count is within plan limits
  */
-export function isUnificationAllowed(currentUnifications: number, plan: PlanType): boolean {
+export function isUnificationAllowed(
+  currentUnifications: number,
+  plan: PlanType,
+): boolean {
   const limits = getPlanLimits(plan)
   return currentUnifications < limits.unificationsPerMonth
 }
@@ -109,7 +112,10 @@ export function isUnificationAllowed(currentUnifications: number, plan: PlanType
 /**
  * Get remaining unifications for a plan
  */
-export function getRemainingUnifications(currentUnifications: number, plan: PlanType): number {
+export function getRemainingUnifications(
+  currentUnifications: number,
+  plan: PlanType,
+): number {
   const limits = getPlanLimits(plan)
   const remaining = limits.unificationsPerMonth - currentUnifications
   return Math.max(0, remaining)
@@ -118,7 +124,10 @@ export function getRemainingUnifications(currentUnifications: number, plan: Plan
 /**
  * Check if input file count is within plan limits
  */
-export function isInputFilesAllowed(fileCount: number, plan: PlanType): boolean {
+export function isInputFilesAllowed(
+  fileCount: number,
+  plan: PlanType,
+): boolean {
   const limits = getPlanLimits(plan)
   return fileCount <= limits.maxInputFiles
 }

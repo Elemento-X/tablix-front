@@ -12,6 +12,14 @@ const REDIS_TIMEOUT_MS = 5000 // 5 second timeout for all Redis operations
 let redis: Redis | null = null
 
 /**
+ * Reset Redis singleton for testing
+ * Forces re-creation on next getRedisClient() call
+ */
+export function __resetRedisClient() {
+  redis = null
+}
+
+/**
  * Get Redis client instance
  * Returns null if Redis is not configured (development mode)
  */

@@ -133,7 +133,8 @@
     "maxTotalSize": "Tamaño máx",
     "maxRows": "filas",
     "maxColumns": "columnas",
-    "clickToAddMore": "Haz clic arriba para agregar más archivos"
+    "clickToAddMore": "Haz clic arriba para agregar más archivos",
+    "loading": "Cargando información del plan..."
   },
   "messages": {
     "tooManyFiles": "Demasiados archivos. Máximo {max} archivos para el plan {plan}.",
@@ -156,6 +157,14 @@
     "foundCommonColumns": "Se encontraron {count} columnas en común. Puedes seleccionar hasta {max} para tu plan {plan}.",
     "parsedSuccessSingle": "¡Analizado exitosamente! Se encontraron {columns} columnas y {rows} filas.",
     "parsedSuccessMultiple": "¡Se analizaron {files} archivos! Se encontraron {columns} columnas en común y {rows} filas en total."
+  },
+  "errorBoundary": {
+    "title": "Algo salió mal",
+    "description": "Ocurrió un error inesperado. Intenta de nuevo o vuelve a la página principal.",
+    "tryAgain": "Intentar de nuevo",
+    "goHome": "Volver al inicio",
+    "uploadTitle": "Error en el procesamiento",
+    "uploadDescription": "Ocurrió un error durante la carga o procesamiento del archivo. Intenta de nuevo."
   },
   "billingPeriods": {
     "month": "mes",

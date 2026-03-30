@@ -133,7 +133,8 @@
     "maxTotalSize": "Max total size",
     "maxRows": "rows",
     "maxColumns": "columns",
-    "clickToAddMore": "Click above to add more files"
+    "clickToAddMore": "Click above to add more files",
+    "loading": "Loading plan information..."
   },
   "messages": {
     "tooManyFiles": "Too many files. Maximum {max} files for {plan} plan.",
@@ -156,6 +157,14 @@
     "foundCommonColumns": "Found {count} common columns. You can select up to {max} for your {plan} plan.",
     "parsedSuccessSingle": "Parsed successfully! Found {columns} columns and {rows} rows.",
     "parsedSuccessMultiple": "Parsed {files} files! Found {columns} common columns and {rows} total rows."
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Try again or go back to the home page.",
+    "tryAgain": "Try again",
+    "goHome": "Go to home",
+    "uploadTitle": "Processing error",
+    "uploadDescription": "An error occurred during file upload or processing. Please try again."
   },
   "billingPeriods": {
     "month": "month",

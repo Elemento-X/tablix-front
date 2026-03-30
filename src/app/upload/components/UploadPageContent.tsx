@@ -10,7 +10,11 @@ import { Input } from './input'
 import { formatFileSize, useUsage } from '@/hooks/use-usage'
 import { useFileParser } from '@/hooks/use-file-parser'
 import { useLocale } from '@/lib/i18n'
-import { validateFile, validateFileContent } from '@/lib/security'
+import {
+  validateFile,
+  validateFileContent,
+  sanitizeFileName,
+} from '@/lib/security'
 import {
   mergeSpreadsheets,
   canProcessClientSide,
@@ -69,9 +73,12 @@ export function UploadPageContent() {
 
     // Validate each file
     for (const file of selectedFiles) {
+      // Sanitize file name before any use (display, comparison, validation)
+      const safeName = sanitizeFileName(file.name)
+
       // Check if file already exists
       if (files.some((f) => f.name === file.name && f.size === file.size)) {
-        toast.error(t('messages.fileAlreadyAdded', { name: file.name }))
+        toast.error(t('messages.fileAlreadyAdded', { name: safeName }))
         continue
       }
 
@@ -79,7 +86,7 @@ export function UploadPageContent() {
       if (usage && file.size > usage.limits.maxFileSize) {
         toast.error(
           t('messages.fileTooLarge', {
-            name: file.name,
+            name: safeName,
             plan: usage.plan.toUpperCase(),
             size: formatFileSize(usage.limits.maxFileSize),
           }),
@@ -104,7 +111,7 @@ export function UploadPageContent() {
       const basicValidation = validateFile(file)
       if (!basicValidation.valid) {
         toast.error(
-          `"${file.name}": ${basicValidation.error || t('upload.error') || 'Invalid file'}`,
+          `"${safeName}": ${basicValidation.error || t('upload.error') || 'Invalid file'}`,
         )
         continue
       }
@@ -113,7 +120,7 @@ export function UploadPageContent() {
       const contentValidation = await validateFileContent(file)
       if (!contentValidation.valid) {
         toast.error(
-          `"${file.name}": ${contentValidation.error || t('upload.error') || 'Invalid file content'}`,
+          `"${safeName}": ${contentValidation.error || t('upload.error') || 'Invalid file content'}`,
         )
         continue
       }
@@ -171,7 +178,7 @@ export function UploadPageContent() {
 
     try {
       // Determine if we can process client-side
-      const useClientSide = canProcessClientSide(files)
+      const useClientSide = canProcessClientSide(files, usage?.plan ?? 'free')
       const addWatermark = usage?.plan === 'free'
 
       // Helper: consume quota via one-time token (must succeed before download)
@@ -290,7 +297,7 @@ export function UploadPageContent() {
           t('messages.parsingFile', {
             current: i + 1,
             total: files.length,
-            name: file.name,
+            name: sanitizeFileName(file.name),
           }),
         )
 
@@ -430,50 +437,71 @@ export function UploadPageContent() {
           </p>
         </div>
 
-        {usage && !isLoadingUsage && (
-          <Card className="mb-6 border-blue-200 border-neutral-200 bg-blue-50">
+        {isLoadingUsage ? (
+          <Card
+            className="mb-6 border-neutral-200"
+            aria-label={t('status.loading')}
+          >
             <CardContent className="p-4">
-              <section className="flex items-start gap-3">
-                <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
-                <div className="flex-1">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-medium text-neutral-900">
-                      {t('status.plan')}: {usage.plan.toUpperCase()}
-                    </span>
-
-                    <span className="text-sm font-medium text-neutral-900">
-                      {usage.unifications.remaining}/{usage.unifications.max}{' '}
-                      {t('status.unificationsRemaining')}
-                    </span>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 h-5 w-5 flex-shrink-0 animate-pulse rounded bg-neutral-200" />
+                <div className="flex-1 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="h-4 w-24 animate-pulse rounded bg-neutral-200" />
+                    <div className="h-4 w-32 animate-pulse rounded bg-neutral-200" />
                   </div>
-
-                  <div className="h-2 w-full rounded-full bg-neutral-200">
-                    <div
-                      className={`h-2 rounded-full transition-all ${
-                        usage.unifications.remaining === 0
-                          ? 'bg-red-500'
-                          : usage.unifications.remaining === 1
-                            ? 'bg-yellow-500'
-                            : 'bg-green-500'
-                      }`}
-                      style={{
-                        width: `${(usage.unifications.remaining / usage.unifications.max) * 100}%`,
-                      }}
-                    />
-                  </div>
-
-                  <p className="mt-2 text-xs text-neutral-600">
-                    {t('status.maxFiles')} {usage.limits.maxInputFiles}{' '}
-                    {t('status.files')} • {t('status.maxTotalSize')}:{' '}
-                    {formatFileSize(usage.limits.maxTotalSize)} •{' '}
-                    {t('status.maxFiles')} {usage.limits.maxRows}{' '}
-                    {t('status.maxRows')} • {t('status.maxFiles')}{' '}
-                    {usage.limits.maxColumns} {t('status.maxColumns')}
-                  </p>
+                  <div className="h-2 w-full animate-pulse rounded-full bg-neutral-200" />
+                  <div className="h-3 w-3/4 animate-pulse rounded bg-neutral-200" />
                 </div>
-              </section>
+              </div>
             </CardContent>
           </Card>
+        ) : (
+          usage && (
+            <Card className="mb-6 border-blue-200 border-neutral-200 bg-blue-50">
+              <CardContent className="p-4">
+                <section className="flex items-start gap-3">
+                  <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
+                  <div className="flex-1">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-sm font-medium text-neutral-900">
+                        {t('status.plan')}: {usage.plan.toUpperCase()}
+                      </span>
+
+                      <span className="text-sm font-medium text-neutral-900">
+                        {usage.unifications.remaining}/{usage.unifications.max}{' '}
+                        {t('status.unificationsRemaining')}
+                      </span>
+                    </div>
+
+                    <div className="h-2 w-full rounded-full bg-neutral-200">
+                      <div
+                        className={`h-2 rounded-full transition-all ${
+                          usage.unifications.remaining === 0
+                            ? 'bg-red-500'
+                            : usage.unifications.remaining === 1
+                              ? 'bg-yellow-500'
+                              : 'bg-green-500'
+                        }`}
+                        style={{
+                          width: `${(usage.unifications.remaining / usage.unifications.max) * 100}%`,
+                        }}
+                      />
+                    </div>
+
+                    <p className="mt-2 text-xs text-neutral-600">
+                      {t('status.maxFiles')} {usage.limits.maxInputFiles}{' '}
+                      {t('status.files')} • {t('status.maxTotalSize')}:{' '}
+                      {formatFileSize(usage.limits.maxTotalSize)} •{' '}
+                      {t('status.maxFiles')} {usage.limits.maxRows}{' '}
+                      {t('status.maxRows')} • {t('status.maxFiles')}{' '}
+                      {usage.limits.maxColumns} {t('status.maxColumns')}
+                    </p>
+                  </div>
+                </section>
+              </CardContent>
+            </Card>
+          )
         )}
 
         {step === 'upload' && (
@@ -530,7 +558,7 @@ export function UploadPageContent() {
                       >
                         <FileSpreadsheet className="h-4 w-4 flex-shrink-0 text-neutral-600" />
                         <span className="flex-1 truncate text-neutral-900">
-                          {file.name}
+                          {sanitizeFileName(file.name)}
                         </span>
                         <span className="flex-shrink-0 text-xs text-neutral-500">
                           {formatFileSize(file.size)}
@@ -539,7 +567,7 @@ export function UploadPageContent() {
                           type="button"
                           onClick={() => handleRemoveFile(index)}
                           className="flex-shrink-0 rounded-md p-1 transition-colors hover:bg-neutral-100"
-                          aria-label={`Remove ${file.name}`}
+                          aria-label={`Remove ${sanitizeFileName(file.name)}`}
                         >
                           <X className="h-4 w-4 text-neutral-500 hover:text-red-500" />
                         </button>

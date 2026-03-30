@@ -5,7 +5,14 @@ import { Badge } from '@/components/badge'
 import { Button } from '@/components/button'
 import { Card, CardContent } from '@/components/card'
 import { useLocale } from '@/lib/i18n'
-import { ArrowRight, Check, CheckCircle, Download, Eye, FileSpreadsheet } from 'lucide-react'
+import {
+  ArrowRight,
+  Check,
+  CheckCircle,
+  Download,
+  Eye,
+  FileSpreadsheet,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 
@@ -19,11 +26,23 @@ export function LandingPageContent() {
     const period = t('billingPeriods.month')
     switch (billingPeriod) {
       case 'monthly':
-        return { price: t('proPricing.monthly.price'), period, total: t('proPricing.monthly.total') }
+        return {
+          price: t('proPricing.monthly.price'),
+          period,
+          total: t('proPricing.monthly.total'),
+        }
       case 'semester':
-        return { price: t('proPricing.semester.price'), period, total: t('proPricing.semester.total') }
+        return {
+          price: t('proPricing.semester.price'),
+          period,
+          total: t('proPricing.semester.total'),
+        }
       case 'annual':
-        return { price: t('proPricing.annual.price'), period, total: t('proPricing.annual.total') }
+        return {
+          price: t('proPricing.annual.price'),
+          period,
+          total: t('proPricing.annual.total'),
+        }
     }
   }
 
@@ -45,17 +64,17 @@ export function LandingPageContent() {
 
       <section className="mx-auto max-w-5xl px-6 pt-20 pb-16">
         <div className="text-center">
-          <h1 className="text-5xl font-bold tracking-tight text-neutral-900 text-balance leading-tight">
+          <h1 className="text-5xl leading-tight font-bold tracking-tight text-balance text-neutral-900">
             {t('hero.title')}
           </h1>
-          <p className="mt-6 text-xl text-neutral-600 max-w-3xl mx-auto text-balance">
+          <p className="mx-auto mt-6 max-w-3xl text-xl text-balance text-neutral-600">
             {t('hero.subtitle')}
           </p>
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link href="/upload">
               <Button
                 size="lg"
-                className="bg-neutral-900 hover:bg-neutral-800 text-white px-8 h-12 text-base"
+                className="h-12 bg-neutral-900 px-8 text-base text-white hover:bg-neutral-800"
               >
                 {t('hero.cta')}
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -66,54 +85,54 @@ export function LandingPageContent() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="text-center text-3xl font-bold text-neutral-900 mb-16">
+        <h2 className="mb-16 text-center text-3xl font-bold text-neutral-900">
           {t('howItWorks.title')}
         </h2>
-        <div className="grid md:grid-cols-4 gap-8">
-          <Card className="p-6 border-neutral-200 bg-neutral-50">
-            <div className="rounded-lg bg-white p-3 w-fit">
+        <div className="grid gap-8 md:grid-cols-4">
+          <Card className="border-neutral-200 bg-neutral-50 p-6">
+            <div className="w-fit rounded-lg bg-white p-3">
               <FileSpreadsheet className="h-6 w-6 text-neutral-700" />
             </div>
             <h3 className="mt-4 font-semibold text-neutral-900">
               {t('howItWorks.steps.upload.title')}
             </h3>
-            <p className="mt-2 text-sm text-neutral-600 leading-relaxed">
+            <p className="mt-2 text-sm leading-relaxed text-neutral-600">
               {t('howItWorks.steps.upload.description')}
             </p>
           </Card>
 
-          <Card className="p-6 border-neutral-200 bg-neutral-50">
-            <div className="rounded-lg bg-white p-3 w-fit">
+          <Card className="border-neutral-200 bg-neutral-50 p-6">
+            <div className="w-fit rounded-lg bg-white p-3">
               <Eye className="h-6 w-6 text-neutral-700" />
             </div>
             <h3 className="mt-4 font-semibold text-neutral-900">
               {t('howItWorks.steps.visualize.title')}
             </h3>
-            <p className="mt-2 text-sm text-neutral-600 leading-relaxed">
+            <p className="mt-2 text-sm leading-relaxed text-neutral-600">
               {t('howItWorks.steps.visualize.description')}
             </p>
           </Card>
 
-          <Card className="p-6 border-neutral-200 bg-neutral-50">
-            <div className="rounded-lg bg-white p-3 w-fit">
+          <Card className="border-neutral-200 bg-neutral-50 p-6">
+            <div className="w-fit rounded-lg bg-white p-3">
               <CheckCircle className="h-6 w-6 text-neutral-700" />
             </div>
             <h3 className="mt-4 font-semibold text-neutral-900">
               {t('howItWorks.steps.choose.title')}
             </h3>
-            <p className="mt-2 text-sm text-neutral-600 leading-relaxed">
+            <p className="mt-2 text-sm leading-relaxed text-neutral-600">
               {t('howItWorks.steps.choose.description')}
             </p>
           </Card>
 
-          <Card className="p-6 border-neutral-200 bg-neutral-50">
-            <div className="rounded-lg bg-white p-3 w-fit">
+          <Card className="border-neutral-200 bg-neutral-50 p-6">
+            <div className="w-fit rounded-lg bg-white p-3">
               <Download className="h-6 w-6 text-neutral-700" />
             </div>
             <h3 className="mt-4 font-semibold text-neutral-900">
               {t('howItWorks.steps.generate.title')}
             </h3>
-            <p className="mt-2 text-sm text-neutral-600 leading-relaxed">
+            <p className="mt-2 text-sm leading-relaxed text-neutral-600">
               {t('howItWorks.steps.generate.description')}
             </p>
           </Card>
@@ -122,37 +141,47 @@ export function LandingPageContent() {
 
       <section className="bg-neutral-50 py-20">
         <div className="mx-auto max-w-4xl px-6">
-          <h2 className="text-center text-3xl font-bold text-neutral-900 mb-6">
+          <h2 className="mb-6 text-center text-3xl font-bold text-neutral-900">
             {t('audience.title')}
           </h2>
-          <div className="grid md:grid-cols-3 gap-8 mt-12">
+          <div className="mt-12 grid gap-8 md:grid-cols-3">
             <div className="text-center">
-              <h3 className="font-semibold text-neutral-900">{t('audience.roles.analysts')}</h3>
+              <h3 className="font-semibold text-neutral-900">
+                {t('audience.roles.analysts')}
+              </h3>
             </div>
             <div className="text-center">
-              <h3 className="font-semibold text-neutral-900">{t('audience.roles.admins')}</h3>
+              <h3 className="font-semibold text-neutral-900">
+                {t('audience.roles.admins')}
+              </h3>
             </div>
             <div className="text-center">
-              <h3 className="font-semibold text-neutral-900">{t('audience.roles.recurring')}</h3>
+              <h3 className="font-semibold text-neutral-900">
+                {t('audience.roles.recurring')}
+              </h3>
             </div>
           </div>
-          <p className="mt-12 text-center text-neutral-600 text-lg leading-relaxed max-w-2xl mx-auto text-balance">
+          <p className="mx-auto mt-12 max-w-2xl text-center text-lg leading-relaxed text-balance text-neutral-600">
             {t('audience.description')}
           </p>
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-20">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-neutral-900">{t('pricing.title')}</h2>
-          <p className="mt-4 text-lg text-neutral-600">{t('pricing.subtitle')}</p>
+        <div className="mb-12 text-center">
+          <h2 className="text-4xl font-bold text-neutral-900">
+            {t('pricing.title')}
+          </h2>
+          <p className="mt-4 text-lg text-neutral-600">
+            {t('pricing.subtitle')}
+          </p>
         </div>
 
-        <div className="flex justify-center mb-12">
-          <div className="inline-flex rounded-lg border border-neutral-200 p-1 bg-neutral-50">
+        <div className="mb-12 flex justify-center">
+          <div className="inline-flex rounded-lg border border-neutral-200 bg-neutral-50 p-1">
             <button
               onClick={() => setBillingPeriod('monthly')}
-              className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`rounded-md px-6 py-2 text-sm font-medium transition-colors ${
                 billingPeriod === 'monthly'
                   ? 'bg-white text-neutral-900 shadow-sm'
                   : 'text-neutral-600 hover:text-neutral-900'
@@ -162,7 +191,7 @@ export function LandingPageContent() {
             </button>
             <button
               onClick={() => setBillingPeriod('semester')}
-              className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`rounded-md px-6 py-2 text-sm font-medium transition-colors ${
                 billingPeriod === 'semester'
                   ? 'bg-white text-neutral-900 shadow-sm'
                   : 'text-neutral-600 hover:text-neutral-900'
@@ -172,21 +201,21 @@ export function LandingPageContent() {
             </button>
             <button
               onClick={() => setBillingPeriod('annual')}
-              className={`px-6 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+              className={`flex items-center gap-2 rounded-md px-6 py-2 text-sm font-medium transition-colors ${
                 billingPeriod === 'annual'
                   ? 'bg-white text-neutral-900 shadow-sm'
                   : 'text-neutral-600 hover:text-neutral-900'
               }`}
             >
               {t('pricing.billingPeriod.annual')}
-              <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs">
+              <Badge className="bg-green-100 text-xs text-green-700 hover:bg-green-100">
                 {t('pricing.billingPeriod.annualBadge')}
               </Badge>
             </button>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-3">
           <Card className="border-neutral-200">
             <CardContent className="p-8">
               <h3 className="text-2xl font-bold text-neutral-900">
@@ -197,37 +226,39 @@ export function LandingPageContent() {
                   {t('pricing.plans.free.price')}
                 </span>
               </div>
-              <p className="mt-2 text-sm text-neutral-600">{t('pricing.plans.free.period')}</p>
+              <p className="mt-2 text-sm text-neutral-600">
+                {t('pricing.plans.free.period')}
+              </p>
 
               <div className="mt-8 space-y-3">
                 <div className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-neutral-600 flex-shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-600" />
                   <span className="text-sm text-neutral-700">
                     {t('pricing.plans.free.features.sheetsPerMonth')}
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-neutral-600 flex-shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-600" />
                   <span className="text-sm text-neutral-700">
                     {t('pricing.plans.free.features.maxRows')}
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-neutral-600 flex-shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-600" />
                   <span className="text-sm text-neutral-700">
                     {t('pricing.plans.free.features.maxColumns')}
                   </span>
                 </div>
               </div>
 
-              <p className="mt-6 text-xs text-neutral-500 leading-relaxed">
+              <p className="mt-6 text-xs leading-relaxed text-neutral-500">
                 {t('pricing.plans.free.description')}
               </p>
 
               <Link href="/upload">
                 <Button
                   variant="outline"
-                  className="w-full mt-8 border-neutral-300 bg-transparent"
+                  className="mt-8 w-full border-neutral-300 bg-transparent"
                   size="lg"
                 >
                   {t('pricing.plans.free.cta')}
@@ -236,14 +267,16 @@ export function LandingPageContent() {
             </CardContent>
           </Card>
 
-          <Card className="border-neutral-900 shadow-xl relative">
+          <Card className="relative border-neutral-900 shadow-xl">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2">
               <Badge className="bg-neutral-900 text-white hover:bg-neutral-900">
                 {t('pricing.plans.pro.badge')}
               </Badge>
             </div>
             <CardContent className="p-8">
-              <h3 className="text-2xl font-bold text-neutral-900">{t('pricing.plans.pro.name')}</h3>
+              <h3 className="text-2xl font-bold text-neutral-900">
+                {t('pricing.plans.pro.name')}
+              </h3>
               <div className="mt-4">
                 <div className="flex items-baseline gap-1">
                   <span className="text-sm text-neutral-500 line-through">
@@ -251,50 +284,56 @@ export function LandingPageContent() {
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-neutral-900">{t('proPricing.currencySymbol')} {proPrice.price}</span>
-                  <span className="text-neutral-600">/{t('pricing.plans.pro.period')}</span>
+                  <span className="text-4xl font-bold text-neutral-900">
+                    {t('proPricing.currencySymbol')} {proPrice.price}
+                  </span>
+                  <span className="text-neutral-600">
+                    /{t('pricing.plans.pro.period')}
+                  </span>
                 </div>
               </div>
-              <p className="mt-2 text-sm text-green-700 font-medium">
+              <p className="mt-2 text-sm font-medium text-green-700">
                 {t('pricing.plans.pro.launchPrice')}
               </p>
               {billingPeriod !== 'monthly' && (
-                <p className="mt-1 text-xs text-neutral-500">{proPrice.total}</p>
+                <p className="mt-1 text-xs text-neutral-500">
+                  {proPrice.total}
+                </p>
               )}
 
               <div className="mt-8 space-y-3">
                 <div className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-neutral-900 flex-shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-900" />
                   <span className="text-sm text-neutral-700">
                     {t('pricing.plans.pro.features.sheetsPerMonth')}
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-neutral-900 flex-shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-900" />
                   <span className="text-sm text-neutral-700">
                     {t('pricing.plans.pro.features.maxRows')}
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-neutral-900 flex-shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-900" />
                   <span className="text-sm text-neutral-700">
                     {t('pricing.plans.pro.features.maxColumns')}
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-neutral-900 flex-shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-900" />
                   <span className="text-sm text-neutral-700">
                     {t('pricing.plans.pro.features.priorityProcessing')}
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-neutral-900 flex-shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-900" />
                   <span className="text-sm text-neutral-700">
                     {t('pricing.plans.pro.features.noWatermark')}
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-neutral-900 flex-shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-900" />
                   <span className="text-sm text-neutral-700">
                     {t('pricing.plans.pro.features.fileHistory')}
                   </span>
@@ -302,7 +341,7 @@ export function LandingPageContent() {
               </div>
 
               <Button
-                className="w-full mt-8 bg-neutral-900 hover:bg-neutral-800 text-white h-12"
+                className="mt-8 h-12 w-full bg-neutral-900 text-white hover:bg-neutral-800"
                 size="lg"
               >
                 {t('pricing.plans.pro.cta')}
@@ -326,38 +365,38 @@ export function LandingPageContent() {
 
               <div className="mt-8 space-y-3">
                 <div className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-neutral-600 flex-shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-600" />
                   <span className="text-sm text-neutral-700">
                     {t('pricing.plans.enterprise.features.customLimits')}
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-neutral-600 flex-shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-600" />
                   <span className="text-sm text-neutral-700">
                     {t('pricing.plans.enterprise.features.sla')}
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-neutral-600 flex-shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-600" />
                   <span className="text-sm text-neutral-700">
                     {t('pricing.plans.enterprise.features.prioritySupport')}
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-neutral-600 flex-shrink-0 mt-0.5" />
+                  <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-600" />
                   <span className="text-sm text-neutral-700">
                     {t('pricing.plans.enterprise.features.dedicatedInfra')}
                   </span>
                 </div>
               </div>
 
-              <p className="mt-6 text-xs text-neutral-500 leading-relaxed">
+              <p className="mt-6 text-xs leading-relaxed text-neutral-500">
                 {t('pricing.plans.enterprise.description')}
               </p>
 
               <Button
                 variant="outline"
-                className="w-full mt-8 border-neutral-300 bg-transparent"
+                className="mt-8 w-full border-neutral-300 bg-transparent"
                 size="lg"
               >
                 {t('pricing.plans.enterprise.cta')}
@@ -369,8 +408,12 @@ export function LandingPageContent() {
 
       <footer className="border-t border-neutral-200 py-12">
         <div className="mx-auto max-w-6xl px-6">
-          <p className="text-center text-sm text-neutral-600">{t('footer.security')}</p>
-          <p className="mt-2 text-center text-sm text-neutral-500">{t('footer.privacy')}</p>
+          <p className="text-center text-sm text-neutral-600">
+            {t('footer.security')}
+          </p>
+          <p className="mt-2 text-center text-sm text-neutral-500">
+            {t('footer.privacy')}
+          </p>
         </div>
       </footer>
     </div>

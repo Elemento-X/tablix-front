@@ -9,7 +9,9 @@ const TOKEN_TTL_SECONDS = 5 * 60 // 5 minutes
  * Stored in Redis with short TTL, consumed on use
  * Prevents replay attacks on /api/unification/complete
  */
-export async function generateUnificationToken(fingerprint: string): Promise<string> {
+export async function generateUnificationToken(
+  fingerprint: string,
+): Promise<string> {
   const token = randomBytes(32).toString('hex')
   const key = `${TOKEN_PREFIX}${fingerprint}:${token}`
 

@@ -158,10 +158,25 @@ export async function validateFileContent(
       }
     }
 
-    if (fileName.endsWith('.csv') && !isText) {
-      return {
-        valid: false,
-        error: 'File claims to be CSV but has invalid format',
+    if (fileName.endsWith('.csv')) {
+      // Reject PDF files disguised as CSV (%PDF magic bytes are printable ASCII)
+      if (
+        bytes[0] === 0x25 &&
+        bytes[1] === 0x50 &&
+        bytes[2] === 0x44 &&
+        bytes[3] === 0x46
+      ) {
+        return {
+          valid: false,
+          error: 'File appears to be a PDF, not a CSV',
+        }
+      }
+
+      if (!isText) {
+        return {
+          valid: false,
+          error: 'File claims to be CSV but has invalid format',
+        }
       }
     }
 
@@ -201,8 +216,11 @@ async function checkZipCompressionRatio(file: File): Promise<ValidationResult> {
     }
 
     if (eocdOffset === -1) {
-      // Cannot find EOCD — accept (file too small or non-standard ZIP; size limits still protect)
-      return { valid: true }
+      // Cannot find EOCD in a file with ZIP magic bytes — reject (fail-closed)
+      return {
+        valid: false,
+        error: 'Invalid ZIP structure: missing end-of-central-directory',
+      }
     }
 
     // Read central directory offset and size from EOCD
@@ -210,8 +228,11 @@ async function checkZipCompressionRatio(file: File): Promise<ValidationResult> {
     const cdSize = view.getUint32(eocdOffset + 12, true)
 
     if (cdOffset + cdSize > buffer.byteLength) {
-      // Corrupted directory — accept (conservative; size limits still protect)
-      return { valid: true }
+      // Corrupted central directory — reject (fail-closed)
+      return {
+        valid: false,
+        error: 'Invalid ZIP structure: corrupted central directory',
+      }
     }
 
     // Walk the central directory entries

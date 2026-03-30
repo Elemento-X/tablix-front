@@ -2,8 +2,12 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { atomicIncrementUnification } from '@/lib/usage-tracker'
 import { setFingerprintCookie, getUserFingerprint } from '@/lib/fingerprint'
 import { consumeUnificationToken } from '@/lib/security/unification-token'
-import { validateContentType } from '@/lib/security/validation-schemas'
+import {
+  validateContentType,
+  validateBodySize,
+} from '@/lib/security/validation-schemas'
 import { rateLimiters } from '@/lib/security/rate-limit'
+import { audit } from '@/lib/audit-logger'
 
 /**
  * POST /api/unification/complete
@@ -17,6 +21,7 @@ export async function POST(request: NextRequest) {
     const rateLimitResult = await rateLimiters.api.check(request)
 
     if (!rateLimitResult.success) {
+      audit(request, { action: 'rate_limit.hit', detail: 'unification' })
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
         {
@@ -38,13 +43,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Reject oversized bodies (expected: ~90 bytes for {"token":"<64 hex>"})
-    const contentLength = request.headers.get('content-length')
-    if (contentLength && parseInt(contentLength, 10) > 1024) {
-      return NextResponse.json(
-        { error: 'Request body too large' },
-        { status: 413 },
-      )
+    // Reject oversized bodies before parsing
+    const bodySizeCheck = validateBodySize(request, 'json')
+    if (!bodySizeCheck.valid) {
+      return NextResponse.json({ error: bodySizeCheck.error }, { status: 413 })
     }
 
     // Get user fingerprint
@@ -71,6 +73,11 @@ export async function POST(request: NextRequest) {
 
     const tokenValid = await consumeUnificationToken(body.token, fingerprint)
     if (!tokenValid) {
+      audit(request, {
+        action: 'auth.token_invalid',
+        fingerprint,
+        detail: 'unification token',
+      })
       return NextResponse.json(
         { error: 'Invalid or expired unification token' },
         { status: 403 },
@@ -81,6 +88,11 @@ export async function POST(request: NextRequest) {
     const result = await atomicIncrementUnification(request)
 
     if (!result.success) {
+      audit(request, {
+        action: 'quota.exceeded',
+        fingerprint,
+        detail: 'unification limit',
+      })
       return NextResponse.json(
         {
           error: `Unification limit reached for your plan.`,
@@ -104,6 +116,12 @@ export async function POST(request: NextRequest) {
     if (isNew) {
       setFingerprintCookie(response, cookieId)
     }
+
+    audit(request, {
+      action: 'unification.complete',
+      fingerprint,
+      detail: `${result.newCount}/${result.maxUnifications}`,
+    })
 
     return response
   } catch (error) {

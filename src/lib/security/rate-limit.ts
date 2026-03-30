@@ -41,12 +41,15 @@ interface RateLimitOptions {
 }
 
 // Lazy load Redis and Ratelimit to avoid ESM issues in tests
-let redisClient: ReturnType<typeof import('@/lib/redis').getRedisClient> | null = null
+let redisClient: ReturnType<
+  typeof import('@/lib/redis').getRedisClient
+> | null = null
 let redisChecked = false
 
 function getRedis() {
   if (!redisChecked) {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { getRedisClient } = require('@/lib/redis')
       redisClient = getRedisClient()
     } catch {
@@ -73,10 +76,14 @@ export function rateLimit(options: RateLimitOptions) {
       const redis = getRedis()
       if (redis) {
         try {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
           const { Ratelimit } = require('@upstash/ratelimit')
           upstashLimiter = new Ratelimit({
             redis,
-            limiter: Ratelimit.slidingWindow(options.maxRequests, `${options.interval}ms`),
+            limiter: Ratelimit.slidingWindow(
+              options.maxRequests,
+              `${options.interval}ms`,
+            ),
             analytics: true,
             prefix: `ratelimit:${namespace}`,
           })
@@ -91,7 +98,9 @@ export function rateLimit(options: RateLimitOptions) {
   }
 
   return {
-    check: async (request: NextRequest): Promise<{ success: boolean; remaining: number }> => {
+    check: async (
+      request: NextRequest,
+    ): Promise<{ success: boolean; remaining: number }> => {
       const baseIdentifier = getIdentifier(request)
       const identifier = `${namespace}:${baseIdentifier}`
 
@@ -106,14 +115,21 @@ export function rateLimit(options: RateLimitOptions) {
           }
         } catch (error) {
           console.warn(
-            '[Rate Limit] Redis failed, falling back to in-memory:',
+            '[Rate Limit] Redis failed:',
             error instanceof Error ? error.message : 'Unknown error',
           )
-          // Fall through to in-memory implementation
+
+          // In production, fail-closed: reject request when Redis is unavailable
+          // In-memory fallback is ineffective in serverless (each instance has its own memory)
+          if (process.env.NODE_ENV === 'production') {
+            return { success: false, remaining: 0 }
+          }
+
+          // Fall through to in-memory implementation (development only)
         }
       }
 
-      // In-memory fallback implementation
+      // In-memory fallback implementation (development/test only)
       const now = Date.now()
       const record = inMemoryStore.get(identifier)
 

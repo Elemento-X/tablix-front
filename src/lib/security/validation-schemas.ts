@@ -45,6 +45,38 @@ export const planLimitSchema = z.object({
   maxColumns: z.number().int().positive(),
 })
 
+// Body size limits (bytes) — defense against oversized payloads before parsing
+const MAX_MULTIPART_BODY = 60 * 1024 * 1024 // 60MB (enterprise max file + multipart overhead)
+const MAX_JSON_BODY = 1 * 1024 * 1024 // 1MB (JSON payloads are small)
+
+// Validate Content-Length against body size limit
+export function validateBodySize(
+  request: { headers: { get(name: string): string | null } },
+  type: 'multipart' | 'json',
+): { valid: boolean; error?: string } {
+  const contentLength = request.headers.get('content-length')
+
+  if (!contentLength) {
+    return { valid: false, error: 'Missing Content-Length header' }
+  }
+
+  const length = parseInt(contentLength, 10)
+  if (isNaN(length) || length < 0) {
+    return { valid: false, error: 'Invalid Content-Length header' }
+  }
+
+  const maxSize = type === 'multipart' ? MAX_MULTIPART_BODY : MAX_JSON_BODY
+
+  if (length > maxSize) {
+    return {
+      valid: false,
+      error: `Request body too large (max ${maxSize / (1024 * 1024)}MB)`,
+    }
+  }
+
+  return { valid: true }
+}
+
 // Sanitize string inputs
 export function sanitizeString(input: string): string {
   return input

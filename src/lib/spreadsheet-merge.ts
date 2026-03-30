@@ -208,11 +208,23 @@ export async function mergeSpreadsheets(
 }
 
 /**
- * Check if all files can be processed client-side (< 10MB each)
+ * Determine if files can be processed client-side based on plan limits.
+ * Free plan: always client-side (plan limits guarantee small files).
+ * Pro/Enterprise: client-side if total size < 10MB, server-side otherwise.
  */
-export function canProcessClientSide(files: File[]): boolean {
-  const MAX_CLIENT_SIZE = 10 * 1024 * 1024 // 10MB
-  return files.every((file) => file.size < MAX_CLIENT_SIZE)
+export function canProcessClientSide(
+  files: File[],
+  plan: PlanType = 'free',
+): boolean {
+  const limits = PLAN_LIMITS[plan]
+
+  // Free plan: total size is capped at maxTotalSize (1MB), always client-side
+  if (plan === 'free') return true
+
+  // Pro/Enterprise: use 10MB threshold for browser performance
+  const MAX_CLIENT_TOTAL = Math.min(limits.maxTotalSize, 10 * 1024 * 1024)
+  const totalSize = files.reduce((sum, f) => sum + f.size, 0)
+  return totalSize <= MAX_CLIENT_TOTAL
 }
 
 /**

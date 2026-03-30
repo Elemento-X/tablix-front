@@ -121,39 +121,6 @@ export async function atomicIncrementUnification(
 }
 
 /**
- * Increment unification counter for user (non-atomic, kept for backwards compatibility)
- * Prefer atomicIncrementUnification for race-condition-safe operations
- */
-export async function incrementUnificationCount(
-  request: NextRequest,
-): Promise<number> {
-  const { fingerprint } = getUserFingerprint(request)
-  const monthKey = getCurrentMonthKey()
-  const unificationKey = createUploadCountKey(fingerprint, monthKey)
-
-  // Increment counter
-  const newCount = await storage.incr(unificationKey)
-
-  // Set expiration to end of next month (to ensure data cleanup)
-  const now = new Date()
-  const endOfNextMonth = new Date(
-    now.getFullYear(),
-    now.getMonth() + 2,
-    0,
-    23,
-    59,
-    59,
-  )
-  const secondsUntilExpiry = Math.floor(
-    (endOfNextMonth.getTime() - now.getTime()) / 1000,
-  )
-
-  await storage.expire(unificationKey, secondsUntilExpiry)
-
-  return newCount
-}
-
-/**
  * Check if file size is within plan limits
  */
 export function checkFileSizeLimit(

@@ -5,6 +5,6 @@ export const defaultLocale: Locale = 'pt-BR'
 
 export const localeNames: Record<Locale, string> = {
   'pt-BR': 'Português',
-  'en': 'English',
-  'es': 'Español',
+  en: 'English',
+  es: 'Español',
 }

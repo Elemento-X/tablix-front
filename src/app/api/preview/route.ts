@@ -3,9 +3,11 @@ import { rateLimiters } from '@/lib/security/rate-limit'
 import {
   sanitizeFileName,
   validateFileContent,
+  FILE_VALIDATOR,
 } from '@/lib/security/file-validator'
 import {
   validateContentType,
+  validateBodySize,
   sanitizeString,
 } from '@/lib/security/validation-schemas'
 import { checkUnificationLimit, checkFileSizeLimit } from '@/lib/usage-tracker'
@@ -15,6 +17,7 @@ import {
   getUserPlan,
 } from '@/lib/fingerprint'
 import { generateUnificationToken } from '@/lib/security/unification-token'
+import { audit } from '@/lib/audit-logger'
 
 const MAX_FILES = 1 // Only 1 file per upload
 
@@ -29,10 +32,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Reject oversized bodies before parsing
+    const bodySizeCheck = validateBodySize(request, 'multipart')
+    if (!bodySizeCheck.valid) {
+      return NextResponse.json({ error: bodySizeCheck.error }, { status: 413 })
+    }
+
     // Apply rate limiting (anti-DDoS protection)
     const rateLimitResult = await rateLimiters.upload.check(request)
 
     if (!rateLimitResult.success) {
+      audit(request, { action: 'rate_limit.hit', detail: 'upload' })
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
         {
@@ -53,6 +63,12 @@ export async function POST(request: NextRequest) {
     const unificationCheck = await checkUnificationLimit(request)
 
     if (!unificationCheck.allowed) {
+      audit(request, {
+        action: 'quota.exceeded',
+        fingerprint,
+        plan,
+        detail: `${unificationCheck.currentUnifications}/${unificationCheck.maxUnifications}`,
+      })
       const response = NextResponse.json(
         {
           error: unificationCheck.error,
@@ -75,7 +91,9 @@ export async function POST(request: NextRequest) {
     }
 
     const formData = await request.formData()
-    const files = formData.getAll('files') as File[]
+    const files = formData
+      .getAll('files')
+      .filter((f): f is File => f instanceof File)
 
     // Validate file count (only 1 file allowed)
     if (files.length === 0) {
@@ -106,13 +124,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file types
-    const allowedTypes = [
-      'text/csv',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    ]
-
-    if (!allowedTypes.includes(file.type)) {
+    if (
+      !(FILE_VALIDATOR.ALLOWED_MIME_TYPES as readonly string[]).includes(
+        file.type,
+      )
+    ) {
       return NextResponse.json(
         { error: `Invalid file type. Only CSV and XLSX files are allowed.` },
         { status: 400 },
@@ -192,6 +208,12 @@ export async function POST(request: NextRequest) {
     if (isNew) {
       setFingerprintCookie(response, cookieId)
     }
+
+    audit(request, {
+      action: 'upload.preview',
+      fingerprint,
+      plan,
+    })
 
     return response
   } catch (error) {

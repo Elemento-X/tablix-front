@@ -133,7 +133,8 @@
     "maxTotalSize": "Tamanho máx",
     "maxRows": "linhas",
     "maxColumns": "colunas",
-    "clickToAddMore": "Clique acima para adicionar mais arquivos"
+    "clickToAddMore": "Clique acima para adicionar mais arquivos",
+    "loading": "Carregando informações do plano..."
   },
   "messages": {
     "tooManyFiles": "Muitos arquivos. Máximo de {max} arquivos para o plano {plan}.",
@@ -156,6 +157,14 @@
     "foundCommonColumns": "Encontradas {count} colunas em comum. Você pode selecionar até {max} para o plano {plan}.",
     "parsedSuccessSingle": "Analisado com sucesso! Encontradas {columns} colunas e {rows} linhas.",
     "parsedSuccessMultiple": "Analisados {files} arquivos! Encontradas {columns} colunas em comum e {rows} linhas no total."
+  },
+  "errorBoundary": {
+    "title": "Algo deu errado",
+    "description": "Ocorreu um erro inesperado. Tente novamente ou volte para a página inicial.",
+    "tryAgain": "Tentar novamente",
+    "goHome": "Voltar ao início",
+    "uploadTitle": "Erro no processamento",
+    "uploadDescription": "Ocorreu um erro durante o upload ou processamento do arquivo. Tente novamente."
   },
   "billingPeriods": {
     "month": "mês",

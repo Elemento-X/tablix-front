@@ -1,14 +1,14 @@
-"use client"
+'use client'
 
-import { Languages } from "lucide-react"
-import { Button } from "@/components/button"
+import { Languages } from 'lucide-react'
+import { Button } from '@/components/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/dropdown-menu"
-import { useLocale, locales, localeNames } from "@/lib/i18n"
+} from '@/components/dropdown-menu'
+import { useLocale, locales, localeNames } from '@/lib/i18n'
 
 export function LanguageSelector() {
   const { locale, setLocale } = useLocale()
@@ -26,7 +26,7 @@ export function LanguageSelector() {
           <DropdownMenuItem
             key={loc}
             onClick={() => setLocale(loc)}
-            className={locale === loc ? "bg-neutral-100" : ""}
+            className={locale === loc ? 'bg-neutral-100' : ''}
           >
             {localeNames[loc]}
           </DropdownMenuItem>
