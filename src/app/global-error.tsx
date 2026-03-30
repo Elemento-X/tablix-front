@@ -6,6 +6,9 @@
  * the root layout, which this component replaces. Strings are hardcoded in pt-BR
  * as a deliberate fallback. This is a known Next.js App Router limitation.
  * Approved by project owner (Maclean) — 2026-03-29.
+ *
+ * CSS tokens are NOT available either (globals.css loads via the root layout).
+ * Uses stone palette directly for Grid Vivo consistency.
  */
 
 import { useEffect } from 'react'
@@ -29,21 +32,23 @@ export default function RootError({
     <html lang="pt-BR">
       <body className="font-sans antialiased">
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
-          <h2 className="text-xl font-semibold">Algo deu errado</h2>
-          <p className="max-w-md text-sm text-zinc-500">
+          <h2 className="text-xl font-semibold text-stone-900">
+            Algo deu errado
+          </h2>
+          <p className="max-w-md text-sm text-stone-500">
             Ocorreu um erro inesperado. Tente novamente ou volte para a página
             inicial.
           </p>
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <button
               onClick={reset}
-              className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+              className="min-h-[44px] rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-stone-700"
             >
               Tentar novamente
             </button>
             <a
               href="/"
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+              className="flex min-h-[44px] items-center justify-center rounded-md border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50"
             >
               Voltar ao início
             </a>
