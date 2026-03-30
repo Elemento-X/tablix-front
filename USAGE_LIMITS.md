@@ -1,129 +1,101 @@
-# Tablix - Sistema de Limites de Upload
+# Tablix - Sistema de Limites e Uso
 
-## 📋 Visão Geral
+## Visao Geral
 
-O Tablix implementa um sistema de limites de upload por plano que rastreia o uso mensal de cada usuário **sem requerer autenticação**.
+O Tablix controla o uso por plano usando **unificacoes** como unidade de medida. Uma unificacao e o processo completo de enviar planilhas, selecionar colunas e gerar o arquivo unificado.
 
-## 🎯 Limites por Plano
+A identificacao do usuario e feita por **fingerprint** (cookie + IP hash) sem necessidade de login. O plano e determinado via token JWT do backend Fastify (ainda nao integrado — atualmente todos os usuarios sao `free`).
 
-### Plano Free
-- **Uploads por mês:** 3
-- **Tamanho máximo do arquivo:** 2MB
-- **Máximo de linhas:** 500
-- **Máximo de colunas:** 3
+**Fonte de verdade:** `src/lib/limits.ts`
 
-### Plano Pro
-- **Uploads por mês:** 20
-- **Tamanho máximo do arquivo:** 10MB
-- **Máximo de linhas:** 5,000
-- **Máximo de colunas:** 10
-- **Recursos extras:** Processamento prioritário, sem marca d'água, histórico de 30 dias
+## Limites por Plano
 
-### Plano Enterprise
-- **Uploads por mês:** Ilimitado
-- **Tamanho máximo do arquivo:** 50MB
-- **Máximo de linhas:** Ilimitado
-- **Máximo de colunas:** Ilimitado
-- **Recursos extras:** Todos os recursos Pro + SLA garantido + infraestrutura dedicada
+### Free
 
-## 🔍 Como Funciona
+| Recurso | Limite |
+|---------|--------|
+| Unificacoes por mes | 1 |
+| Arquivos por unificacao | 3 |
+| Tamanho maximo (total) | 1MB |
+| Linhas (total entre arquivos) | 500 |
+| Colunas selecionaveis | 3 |
+| Processamento prioritario | Nao |
+| Marca d'agua | Sim |
+| Historico | Nao |
 
-### 1. Identificação de Usuário (Fingerprint)
+### Pro
 
-O sistema usa uma combinação de **cookie + IP** para identificar usuários:
+| Recurso | Limite |
+|---------|--------|
+| Unificacoes por mes | 40 |
+| Arquivos por unificacao | 15 |
+| Tamanho maximo (por arquivo) | 2MB |
+| Tamanho maximo (total) | 30MB |
+| Linhas (por arquivo) | 5.000 |
+| Colunas selecionaveis | 10 |
+| Processamento prioritario | Sim |
+| Marca d'agua | Nao |
+| Historico | 30 dias |
 
-```typescript
-// Cookie persistente (1 ano)
-tablix_fp = "timestamp-randomid"
+### Enterprise
 
-// Fingerprint final (hash)
-fingerprint = SHA256(cookie_id + ip_address)
-```
+| Recurso | Limite |
+|---------|--------|
+| Unificacoes por mes | Ilimitado |
+| Arquivos por unificacao | Ilimitado |
+| Tamanho maximo (por arquivo) | 50MB |
+| Tamanho maximo (total) | Ilimitado |
+| Linhas | Ilimitado |
+| Colunas selecionaveis | Ilimitado |
+| Processamento prioritario | Sim |
+| Marca d'agua | Nao |
+| Historico | 90 dias |
 
-**Vantagens:**
-- Não requer login
-- Rastreamento confiável mesmo sem autenticação
-- Hash para privacidade
+## Identificacao de Usuario (Fingerprint)
 
-### 2. Contador de Uploads Mensal
+**Arquivo:** `src/lib/fingerprint.ts`
 
-Os uploads são contados **mensalmente** e resetam automaticamente:
+O sistema usa cookie persistente + IP para identificar usuarios sem login:
 
-```typescript
-// Chave no Redis
-upload:{fingerprint}:2024-12
+1. Cookie httpOnly, Secure em producao, SameSite=Strict, 1 ano de vida
+2. IP extraido de headers de proxy reverso com fallback local
+3. Fingerprint derivado do cookie + IP, hasheado para privacidade
 
-// Exemplo
-upload:a1b2c3d4...:2024-12 = 2  // 2 uploads em dezembro de 2024
-```
+O fingerprint e temporario. Quando a integracao com o backend Fastify (auth JWT) estiver pronta, a identificacao sera por User ID.
 
-**Regras:**
-- Contador incrementa apenas **após validação bem-sucedida**
-- Reset automático no início de cada mês
-- Expiração automática dos dados antigos
+## Contagem de Unificacoes
 
-### 3. Fluxo de Validação
+**Arquivo:** `src/lib/usage-tracker.ts`
 
-```
-1. Request chega em /api/preview
-2. ✅ Verifica rate limiting (anti-DDoS)
-3. ✅ Obtém fingerprint do usuário
-4. ✅ Verifica quota mensal (upload count)
-5. ✅ Valida tamanho do arquivo (plan limit)
-6. ✅ Valida tipo e extensão do arquivo
-7. ✅ Processa arquivo
-8. ✅ Incrementa contador (somente se tudo passou)
-9. ✅ Retorna resposta com usage info
-```
+- Contadores mensais armazenados no Redis com TTL automatico
+- Incremento atomico via Lua script para prevenir race conditions
+- Fallback in-memory para desenvolvimento (sem persistencia entre restarts)
 
-## 🛠️ Configuração
+Fluxo:
+1. `/api/preview` — verifica quota mas **nao incrementa**
+2. `/api/process` ou `/api/unification/complete` — consome token + incrementa atomicamente
 
-### 1. Criar Banco Redis (Upstash)
+Isso garante que a quota so e consumida apos processamento real, nao no preview.
 
-1. Acesse [Upstash Console](https://console.upstash.com/)
-2. Crie uma conta (gratuita)
-3. Crie um novo Redis database
-4. Copie as credenciais:
-   - **REST URL**
-   - **REST TOKEN**
-
-### 2. Configurar Variáveis de Ambiente
-
-Crie um arquivo `.env.local`:
-
-```bash
-UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
-UPSTASH_REDIS_REST_TOKEN=your_token_here
-```
-
-**Importante:** Se não configurar o Redis, o sistema usa **in-memory fallback** (não recomendado para produção).
-
-### 3. Deploy na Vercel
-
-As variáveis de ambiente são automaticamente detectadas:
-
-```bash
-vercel env add UPSTASH_REDIS_REST_URL
-vercel env add UPSTASH_REDIS_REST_TOKEN
-```
-
-## 📡 Endpoints da API
+## Endpoints da API
 
 ### GET /api/usage
 
-Retorna estatísticas de uso do usuário atual:
+Retorna estatisticas de uso do usuario.
 
-**Response:**
+**Response (200):**
 ```json
 {
   "plan": "free",
-  "uploads": {
-    "current": 2,
-    "max": 3,
+  "unifications": {
+    "current": 0,
+    "max": 1,
     "remaining": 1
   },
   "limits": {
-    "maxFileSize": 2097152,
+    "maxInputFiles": 3,
+    "maxFileSize": 1048576,
+    "maxTotalSize": 1048576,
     "maxRows": 500,
     "maxColumns": 3
   }
@@ -132,142 +104,70 @@ Retorna estatísticas de uso do usuário atual:
 
 ### POST /api/preview
 
-Faz upload e análise do arquivo.
+Envia 1 arquivo para validacao e extracao de colunas. Nao incrementa a quota.
 
-**Success Response (200):**
+**Response (200):**
 ```json
 {
   "columns": ["ID", "Nome", "Email"],
+  "unificationToken": "hex-token-64-chars",
   "usage": {
-    "current": 1,
-    "max": 3,
-    "remaining": 2
+    "current": 0,
+    "max": 1,
+    "remaining": 1
   }
 }
 ```
 
-**Error Response (403 - Limite Excedido):**
+**Erros possiveis:** 400 (validacao), 403 (quota/CSRF), 413 (body grande), 415 (Content-Type), 429 (rate limit), 500 (interno)
+
+### POST /api/process
+
+Processa unificacao. Consome token + incrementa quota.
+
+**Erros possiveis:** mesmos do preview + 403 (token invalido/expirado)
+
+### POST /api/unification/complete
+
+Registra a conclusao de uma unificacao. Consome token + incrementa quota atomicamente. Usado no fluxo client-side (processamento Free).
+
+**Response (200):**
 ```json
 {
-  "error": "Upload limit exceeded. Upgrade to Pro for more uploads.",
-  "errorCode": "LIMIT_EXCEEDED",
-  "usage": {
-    "current": 3,
-    "max": 3,
+  "success": true,
+  "unifications": {
+    "current": 1,
+    "max": 1,
     "remaining": 0
   }
 }
 ```
 
-**Error Response (403 - Arquivo Muito Grande):**
-```json
-{
-  "error": "File too large. Maximum file size for Free plan is 2 MB.",
-  "errorCode": "FILE_TOO_LARGE",
-  "maxSize": 2097152
-}
-```
+**Erros possiveis:** 400 (body invalido), 403 (token/quota), 413 (body grande), 415 (Content-Type), 429 (rate limit), 500 (interno)
 
-## 🧪 Testes
+## Rate Limiting
 
-### Testar Plano Diferente (Development)
+**Arquivo:** `src/lib/security/rate-limit.ts`
 
-Use o header `x-tablix-plan`:
+| Endpoint | Limite | Intervalo |
+|----------|--------|-----------|
+| Upload (`/api/preview`) | 10 req | 1 min |
+| Process (`/api/process`) | 5 req | 1 min |
+| Geral (`/api/usage`) | 100 req | 1 min |
 
-```bash
-curl -X POST http://localhost:3000/api/preview \
-  -H "x-tablix-plan: pro" \
-  -F "files=@test.csv"
-```
+- **Producao:** Upstash Redis (sliding window) — efetivo em ambiente serverless
+- **Desenvolvimento:** in-memory fallback (nao persiste entre invocacoes)
+- **Producao sem Redis:** fail-closed (rejeita requests)
 
-### Resetar Contador (Development)
+Headers na resposta: `X-RateLimit-Remaining`, `Retry-After: 60` (em 429)
 
-O contador reseta automaticamente todo mês, mas você pode limpar manualmente no Redis:
+## Proximos Passos
 
-```bash
-# Upstash Console -> Data Browser
-DEL upload:{fingerprint}:2024-12
-```
-
-## 🔒 Segurança
-
-### Proteções Implementadas
-
-1. **Rate Limiting (IP-based)**
-   - Previne ataques DDoS
-   - 20 uploads/min por IP
-
-2. **Validação de Arquivo**
-   - Tipo e extensão verificados
-   - Magic number validation
-   - Sanitização de nome de arquivo
-
-3. **Quota por Plano**
-   - Limite mensal de uploads
-   - Limite de tamanho de arquivo
-   - Validação antes de processar
-
-4. **Fingerprint Hash**
-   - SHA-256 para privacidade
-   - Cookie httpOnly + secure
-
-### Limitações Conhecidas
-
-1. **IPs Compartilhados**
-   - Usuários em NAT corporativo compartilham contador
-   - Mitigado com cookie persistente
-
-2. **Cookie Clearing**
-   - Usuário pode limpar cookies para novo fingerprint
-   - IP permanece no hash (dificulta bypass)
-
-3. **VPN Rotation**
-   - Usuário técnico pode trocar IP + cookie
-   - Rate limiting de curto prazo mitiga abuso
-
-## 📊 Monitoramento
-
-### Logs Úteis
-
-```typescript
-// Console logs automáticos
-[Upload] User uploaded file. New count: 2/3
-[Redis] Upstash Redis not configured. Using in-memory fallback.
-File name sanitized: ../../../etc/passwd.csv -> etc_passwd.csv
-```
-
-### Métricas Importantes
-
-- Uploads por plano (quantos Free vs Pro)
-- Taxa de limite excedido (403 errors)
-- Tamanho médio de arquivo
-- Distribuição de uso mensal
-
-## 🚀 Próximos Passos
-
-Quando implementar autenticação:
-
-1. Substituir fingerprint por **User ID**
-2. Associar plano ao usuário no banco
-3. Manter rate limiting por IP (anti-DDoS)
-4. Adicionar billing integration
-
-```typescript
-// Futuro: com autenticação
-export function getUserPlan(request: NextRequest): PlanType {
-  const token = request.headers.get('authorization')
-  const user = await verifyToken(token)
-  return user.plan // 'free' | 'pro' | 'enterprise'
-}
-```
-
-## 📞 Suporte
-
-Para questões sobre limites:
-- **Free:** Ver documentação
-- **Pro:** Email support
-- **Enterprise:** Dedicated support channel
+1. Integrar auth JWT do backend Fastify — substituir fingerprint por User ID
+2. Associar plano ao usuario autenticado
+3. Manter rate limiting por IP (anti-DDoS) independente da auth
+4. Implementar parsing real de arquivos (atualmente stubs)
 
 ---
 
-**Documentação atualizada em:** 2025-12-22
+**Atualizado em:** 2026-03-30

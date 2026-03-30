@@ -1,233 +1,273 @@
-# Tablix - Security Documentation
+# Tablix - Security
 
-This document outlines the security measures implemented in the Tablix application.
+## Sumario
 
-## Table of Contents
-1. [Security Headers](#security-headers)
-2. [Rate Limiting](#rate-limiting)
-3. [File Upload Validation](#file-upload-validation)
-4. [Input Sanitization](#input-sanitization)
-5. [API Security](#api-security)
-6. [Temporary File Management](#temporary-file-management)
+1. [Security Headers e CSP](#security-headers-e-csp)
+2. [CSRF Protection](#csrf-protection)
+3. [Rate Limiting](#rate-limiting)
+4. [Validacao de Arquivos](#validacao-de-arquivos)
+5. [Sanitizacao de Input](#sanitizacao-de-input)
+6. [Unification Token](#unification-token)
+7. [Audit Logging](#audit-logging)
+8. [API Routes](#api-routes)
 
 ---
 
-## Security Headers
+## Security Headers e CSP
 
-**File:** `middleware.ts`
+**Arquivo:** `src/middleware.ts`
 
-The application implements comprehensive security headers via Next.js middleware:
+Todos os headers sao aplicados via middleware do Next.js em todas as rotas (exceto assets estaticos).
 
-### Headers Implemented:
-- **Strict-Transport-Security (HSTS):** Forces HTTPS connections for 2 years
-- **X-Frame-Options:** Prevents clickjacking attacks (SAMEORIGIN)
-- **X-Content-Type-Options:** Prevents MIME sniffing (nosniff)
-- **Referrer-Policy:** Controls referrer information (strict-origin-when-cross-origin)
-- **X-XSS-Protection:** Browser-level XSS protection
-- **Content-Security-Policy (CSP):** Restricts resource loading to trusted sources
-- **Permissions-Policy:** Disables unnecessary browser features (camera, microphone, geolocation)
+### Headers fixos
+
+| Header | Valor |
+|--------|-------|
+| Strict-Transport-Security | `max-age=63072000; includeSubDomains; preload` |
+| X-Frame-Options | `SAMEORIGIN` |
+| X-Content-Type-Options | `nosniff` |
+| Referrer-Policy | `strict-origin-when-cross-origin` |
+| X-XSS-Protection | `1; mode=block` |
+| X-DNS-Prefetch-Control | `on` |
+
+### Permissions-Policy
+
+Desabilita APIs desnecessarias: camera, microphone, geolocation, accelerometer, gyroscope, magnetometer, payment, usb, bluetooth, serial, midi, display-capture, xr-spatial-tracking, interest-cohort (FLoC).
+
+### Content-Security-Policy
+
+**Producao:**
+- `script-src 'self' 'nonce-{random}' 'strict-dynamic' https://vercel.live` — nonce gerado por request, propagado via request headers (invisivel ao browser)
+- `style-src 'self' 'unsafe-inline'` — necessario para Tailwind/CSS-in-JS
+- `connect-src 'self' https://vercel.live https://*.vercel-insights.com https://*.vercel-scripts.com`
+- `default-src 'self'`, `img-src 'self' data: blob: https:`, `font-src 'self' data:`
+- `frame-ancestors 'self'`, `base-uri 'self'`, `form-action 'self'`
+
+**Desenvolvimento:**
+- `script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live` — HMR requer eval
+- `connect-src` inclui `ws://localhost:*` para WebSocket do HMR
+- Sem nonce ou strict-dynamic
+
+**Fluxo do nonce:**
+1. Middleware gera nonce unico por request
+2. Nonce injetado como request header pelo middleware, consumido exclusivamente em server components — nunca chega ao browser
+3. Layout server-side le o nonce e injeta nos scripts permitidos
+
+---
+
+## CSRF Protection
+
+**Arquivo:** `src/middleware.ts`
+
+Validacao de Origin em requests state-changing para `/api/*`:
+
+- Metodos protegidos: POST, PUT, PATCH, DELETE
+- Metodos isentos: GET, HEAD, OPTIONS
+- Rotas protegidas: apenas `/api/*`
+- Verificacao: `Origin` header deve ter mesmo host que `Host` header
+- Sem Origin ou com Origin malformada: 403 `{ error: "Forbidden" }`
+- Mensagem generica — nao revela detalhes da validacao
 
 ---
 
 ## Rate Limiting
 
-**File:** `lib/security/rate-limit.ts`
+**Arquivo:** `src/lib/security/rate-limit.ts`
 
-In-memory rate limiting to prevent abuse:
+### Configuracoes
 
-### Configurations:
-- **Upload API:** 10 requests per minute per IP
-- **Process API:** 30 requests per minute per IP
-- **General API:** 100 requests per minute per IP
+| Endpoint | Limite | Intervalo |
+|----------|--------|-----------|
+| `/api/preview` | 10 req/min | 60s |
+| `/api/process` | 5 req/min | 60s |
+| `/api/usage`, `/api/unification/complete` | 100 req/min | 60s |
 
-### Features:
-- IP-based identification (supports X-Forwarded-For, X-Real-IP, CF-Connecting-IP)
-- Automatic cleanup of expired entries
-- Rate limit headers in responses (X-RateLimit-Remaining)
-- HTTP 429 status code with Retry-After header
+### Implementacao
 
----
+- **Producao:** Upstash Redis (sliding window)
+- **Desenvolvimento:** in-memory fallback com cleanup periodico
+- **Producao sem Redis:** fail-closed — rejeita request (in-memory nao funciona em serverless)
 
-## File Upload Validation
+### Identificacao
 
-**File:** `lib/security/file-validator.ts`
+Prioridade de IP: `cf-connecting-ip` > `x-real-ip` > `x-forwarded-for` > `127.0.0.1`
 
-Multi-layer file validation system:
+### Resposta 429
 
-### Client-Side Validation:
-1. **File Type Check:**
-   - Allowed extensions: `.csv`, `.xls`, `.xlsx`
-   - Allowed MIME types: `text/csv`, `application/vnd.ms-excel`, `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
-
-2. **File Size Check:**
-   - Maximum: 10MB per file
-   - Minimum: Must not be empty
-
-3. **File Name Validation:**
-   - No path traversal attempts (`..`)
-   - No suspicious patterns (executable extensions, special characters)
-   - No Windows reserved names (CON, PRN, AUX, etc.)
-
-4. **File Content Validation:**
-   - Magic number verification (file signature)
-   - Checks XLSX files for valid ZIP structure
-   - Checks CSV files for text content
-   - Prevents zip bomb attacks (compression ratio check)
-
-### Sanitization:
-- Removes path traversal attempts
-- Replaces special characters with underscores
-- Prevents hidden files (starting with `.`)
-- Limits filename length to 255 characters
-
----
-
-## Input Sanitization
-
-**File:** `lib/security/validation-schemas.ts`
-
-Zod-based validation schemas with sanitization:
-
-### Column Name Validation:
-- Length: 1-255 characters
-- Pattern: Alphanumeric, spaces, underscores, hyphens, and accented characters only
-- Maximum columns: 50
-
-### String Sanitization:
-- Removes HTML tags (`<>`)
-- Filters non-printable characters
-- Preserves accented characters (À-ÿ)
-- Trims whitespace
-
-### File Metadata Validation:
-- Validates file name format
-- Checks file size constraints
-- Verifies MIME type
-
----
-
-## API Security
-
-### `/api/preview` Route
-**Features:**
-- Rate limiting (10 req/min)
-- File count validation (max 5 files)
-- File size validation (max 10MB each)
-- File type validation
-- File name sanitization
-- Error logging
-
-### `/api/process` Route
-**Features:**
-- Rate limiting (30 req/min)
-- File count and size validation
-- Column selection validation (Zod schema)
-- Maximum column limit (50 columns)
-- Input sanitization for selected columns
-- File type validation
-- Safe filename generation for downloads
-- Error logging
-
-### Common Security Practices:
-- Try-catch error handling
-- No sensitive data in error messages
-- Rate limit headers in responses
-- Detailed server-side logging
-- Input validation before processing
-
----
-
-## Temporary File Management
-
-**File:** `lib/security/temp-file-manager.ts`
-
-System for tracking and cleaning temporary files:
-
-### Features:
-- File registration with TTL (default: 5 minutes)
-- Automatic cleanup every minute
-- Manual cleanup triggers
-- File ID generation (timestamp + random)
-- Path traversal prevention
-- Statistics tracking
-
-### Usage:
-```typescript
-import { tempFileManager, generateFileId } from "@/lib/security"
-
-// Register a file
-const fileId = generateFileId()
-tempFileManager.register(fileId, filePath, 300000) // 5 min TTL
-
-// Mark for immediate cleanup
-tempFileManager.markForCleanup(fileId)
+```json
+{ "error": "Too many requests. Please try again later." }
 ```
+Headers: `X-RateLimit-Remaining: 0`, `Retry-After: 60`
 
 ---
 
-## Additional Security Measures
+## Validacao de Arquivos
 
-### 1. **No Database = No Data Breach**
-- All processing is done in-memory or with temporary files
-- No user data persistence
-- Files are discarded after processing
+**Arquivo:** `src/lib/security/file-validator.ts`
 
-### 2. **Client-Side Validation**
-- Real-time file validation before upload
-- User-friendly error messages
-- Prevents unnecessary API calls
+### Camadas de validacao
 
-### 3. **CORS Protection**
-- Next.js default CORS settings
-- Same-origin policy enforced
+1. **Tamanho:** minimo > 0, maximo 10MB (validacao generica do validator; limites por plano aplicados separadamente em `usage-tracker.ts`)
+2. **Extensao:** `.csv`, `.xls`, `.xlsx` (case-insensitive)
+3. **MIME type:** `text/csv`, `application/vnd.ms-excel`, `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+4. **Filename patterns:** rejeita path traversal (`..`), caracteres invalidos, null bytes, nomes reservados do Windows, extensoes executaveis (`.exe`, `.bat`, `.cmd`, `.sh`, `.php`, `.js`)
+5. **Magic numbers:** ZIP signature para XLSX, CDF signature para XLS, texto valido para CSV
+6. **PDF disfarce:** rejeita arquivos com magic bytes `%PDF` nomeados como `.csv`
+7. **Zip bomb:** analise de compression ratio via central directory do ZIP (limite: 100:1)
 
-### 4. **TypeScript Type Safety**
-- Compile-time type checking
-- Prevents type-related vulnerabilities
+### Sanitizacao de nomes
 
-### 5. **Dependency Management**
-- Regular updates via npm/pnpm
-- Audit for vulnerabilities
+- Remove `..` (path traversal)
+- Substitui caracteres especiais por `_`
+- Previne arquivos ocultos (prefixo `.`)
+- Limita a 255 caracteres (preserva extensao)
 
 ---
 
-## Security Checklist for Production
+## Sanitizacao de Input
 
-Before deploying to production, ensure:
+**Arquivo:** `src/lib/security/validation-schemas.ts`
 
-- [ ] Environment variables are properly secured
-- [ ] HTTPS is enforced (provided by hosting platform)
-- [ ] Rate limiting thresholds are appropriate for expected traffic
-- [ ] File upload limits match server capabilities
-- [ ] Error messages don't leak sensitive information
-- [ ] Logging is configured (but doesn't log sensitive data)
-- [ ] Content Security Policy is properly configured for third-party services
-- [ ] Dependencies are up to date
-- [ ] Security headers are verified (use securityheaders.com)
-- [ ] File cleanup runs regularly to prevent disk space issues
+### Schemas Zod
 
----
+- **Column name:** 1-255 chars, alphanumerico + espacos + underscores + hifens + acentos
+- **File metadata:** nome, tamanho (positivo), MIME type (enum)
+- **Process request:** colunas selecionadas + nome do arquivo
+- **Body size:** multipart max 60MB, JSON max 1MB — validado antes de parsear
 
-## Reporting Security Issues
+### Sanitizacao de strings
 
-If you discover a security vulnerability, please contact the development team immediately. Do not open a public issue.
+- Remove tags HTML (`<>`)
+- Remove caracteres nao-imprimiveis (preserva acentos `\u00C0-\u024F`)
+- Trim de whitespace
 
----
+### Content-Type validation
 
-## Future Security Enhancements
-
-Potential improvements for future versions:
-
-1. **Advanced Rate Limiting:** Redis-based rate limiting for distributed systems
-2. **Virus Scanning:** Integration with ClamAV or similar for file scanning
-3. **File Encryption:** Encrypt files in transit and at rest
-4. **Audit Logging:** Detailed logging of all file operations
-5. **WAF Integration:** Web Application Firewall for additional protection
-6. **DDoS Protection:** Cloudflare or similar service
-7. **Security Monitoring:** Integration with security monitoring services
-8. **Automated Security Scanning:** Regular vulnerability scans
+Valida header `Content-Type` antes de processar body: `multipart/form-data` ou `application/json`.
 
 ---
 
-**Last Updated:** 2025-12-22
-**Version:** 1.0.0
+## Unification Token
+
+**Arquivo:** `src/lib/security/unification-token.ts`
+
+Token one-time para prevenir replay attacks:
+
+1. Gerado em `/api/preview` apos todas as validacoes passarem
+2. Armazenado no Redis com TTL curto, vinculado ao fingerprint do usuario
+3. Consumido atomicamente em `/api/process` ou `/api/unification/complete` (GET + DEL atomico)
+4. Validacao: formato hex, existencia no storage, e binding correto ao fingerprint
+
+Garante que cada preview gera no maximo 1 processamento.
+
+---
+
+## Audit Logging
+
+**Arquivo:** `src/lib/audit-logger.ts`
+
+Logging estruturado em JSON para acoes de seguranca:
+
+### Acoes rastreadas
+
+| Acao | Quando |
+|------|--------|
+| `upload.preview` | Preview de arquivo bem-sucedido |
+| `upload.process` | Processamento de unificacao |
+| `unification.complete` | Unificacao concluida |
+| `rate_limit.hit` | Rate limit excedido |
+| `quota.exceeded` | Quota mensal excedida |
+| `validation.failed` | Validacao de input falhou |
+| `csrf.blocked` | Request bloqueado por CSRF |
+| `auth.token_invalid` | Token de unificacao invalido |
+
+### Privacidade
+
+- IP mascarado: ultimo octeto substituido por `***`
+- Fingerprint truncado: apenas 8 primeiros caracteres + `...`
+- Sem dados sensiveis (tokens, cookies, conteudo de arquivos)
+
+---
+
+## API Routes
+
+### POST /api/preview
+
+**Fluxo de seguranca:**
+1. Valida Content-Type (multipart/form-data)
+2. Valida tamanho do body (max 60MB)
+3. Rate limiting (10 req/min)
+4. Fingerprint + plano do usuario
+5. Verifica quota mensal de unificacoes
+6. Extrai formData e arquivos
+7. Valida contagem de arquivos (max 1 por upload)
+8. Valida tamanho do arquivo (limite do plano)
+9. Valida MIME type
+10. Sanitiza nome do arquivo
+11. Valida extensao (pos-sanitizacao)
+12. Valida conteudo (magic numbers + zip bomb)
+13. Sanitiza nomes de colunas extraidos do arquivo (prevencao de XSS)
+14. Gera unification token
+15. Retorna colunas + token + usage
+
+### POST /api/process
+
+**Fluxo de seguranca:**
+1. Valida Content-Type (multipart/form-data)
+2. Valida tamanho do body (max 60MB)
+3. Rate limiting (5 req/min)
+4. Fingerprint + plano do usuario
+5. Valida presenca do token
+6. Valida contagem e tamanho de arquivos (limites do plano)
+7. Valida tamanho total (soma de todos os arquivos)
+8. Valida e sanitiza colunas selecionadas
+9. Valida limite de colunas do plano
+10. Valida MIME type de cada arquivo
+11. Sanitiza nome de cada arquivo
+12. Valida extensao de cada arquivo (pos-sanitizacao)
+13. Valida conteudo de cada arquivo (magic numbers + zip bomb)
+14. Consome unification token (atomico)
+15. Incrementa quota atomicamente (Lua script)
+16. Processa e retorna arquivo
+
+### POST /api/unification/complete
+
+**Fluxo de seguranca:**
+1. Rate limiting (100 req/min — namespace api)
+2. Valida Content-Type (application/json)
+3. Valida tamanho do body (max 1MB)
+4. Fingerprint do usuario
+5. Parseia body JSON
+6. Valida presenca do token
+7. Consome unification token (atomico, vinculado ao fingerprint)
+8. Incrementa quota atomicamente (Lua script, previne race condition)
+9. Retorna contagem atualizada + usage
+
+### GET /api/usage
+
+**Fluxo de seguranca:**
+1. Rate limiting (100 req/min)
+2. Fingerprint do usuario
+3. Busca uso atual no Redis
+4. Retorna estatisticas
+
+### Praticas comuns
+
+- Erros genericos ao cliente: `{ error: string }` — sem stack traces
+- Logging detalhado server-side via audit logger
+- Fingerprint cookie setado em toda resposta (usuarios novos)
+- Nenhum dado sensivel em logs (tokens, IPs completos, cookies)
+
+---
+
+## Protecoes adicionais
+
+1. **Sem persistencia de dados:** arquivos processados em memoria e descartados
+2. **TypeScript strict:** sem `any`, validacao em tempo de compilacao
+3. **Cookies de fingerprint:** httpOnly, Secure (prod), SameSite=Strict
+4. **Redis com timeout:** 5s por operacao, 2 retries com backoff
+5. **Nonce por request:** previne execucao de scripts injetados
+
+---
+
+**Atualizado em:** 2026-03-30

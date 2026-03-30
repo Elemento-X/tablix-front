@@ -1,336 +1,184 @@
-# Tablix - Testing Documentation
+# Tablix - Testing
 
-## 📋 Overview
+## Stack
 
-This document outlines the testing strategy for Tablix with 100% code coverage.
+- **Jest** — test runner e assertions
+- **@testing-library/react** — testes de componentes React
+- **@testing-library/jest-dom** — matchers customizados
+- **ts-jest** — suporte TypeScript
 
-## 🛠️ Testing Stack
+## Comandos
 
-- **Jest** - Test runner and assertions
-- **@testing-library/react** - React component testing
-- **@testing-library/jest-dom** - Custom matchers
-- **ts-jest** - TypeScript support
+```bash
+# Rodar testes de um modulo especifico (padrao do projeto)
+npm test -- --testPathPattern=<pattern>
 
-## 📂 Test Structure
+# Exemplos
+npm test -- --testPathPattern=limits
+npm test -- --testPathPattern=middleware
+npm test -- --testPathPattern=file-validator
+npm test -- --testPathPattern=components/button
+
+# Coverage completo
+npm run test:coverage
+```
+
+**Regra:** nunca rodar a suite inteira durante desenvolvimento. Sempre segmentar por modulo alterado.
+
+## Estrutura de Testes
 
 ```
 __tests__/
-├── lib/
-│   ├── limits.test.ts                    ✅ Created (100% coverage)
-│   ├── fingerprint.test.ts               ⏳ To create
-│   ├── redis.test.ts                     ⏳ To create
-│   ├── usage-tracker.test.ts             ⏳ To create
-│   └── security/
-│       ├── file-validator.test.ts        ✅ Created (100% coverage)
-│       ├── validation-schemas.test.ts    ⏳ To create
-│       ├── rate-limit.test.ts            ⏳ To create
-│       └── temp-file-manager.test.ts     ⏳ To create
-├── hooks/
-│   └── use-usage.test.tsx                ⏳ To create
+├── api/
+│   ├── preview.test.ts
+│   ├── process.test.ts
+│   ├── usage.test.ts
+│   └── unification-complete.test.ts
 ├── components/
-│   └── language-selector.test.tsx        ⏳ To create
-└── app/
-    └── api/
-        ├── preview/route.test.ts         ⏳ To create
-        ├── process/route.test.ts         ⏳ To create
-        └── usage/route.test.ts           ⏳ To create
+│   ├── animated-list.test.tsx
+│   ├── badge.test.tsx
+│   ├── button.test.tsx
+│   ├── dropdown-menu.test.tsx
+│   ├── file-dropzone.test.tsx
+│   ├── grid-background.test.tsx
+│   ├── language-selector.test.tsx
+│   ├── step-transition.test.tsx
+│   ├── theme-toggle.test.tsx
+│   └── upload/
+│       ├── columns-step.test.tsx
+│       ├── upload-step.test.tsx
+│       ├── UploadPageContent.test.tsx
+│       └── usage-status.test.tsx
+├── hooks/
+│   ├── use-file-parser.test.ts
+│   ├── use-mobile.test.ts
+│   ├── use-reduced-motion.test.ts
+│   ├── use-upload-flow.test.ts
+│   └── use-usage.test.ts
+├── lib/
+│   ├── audit-logger.test.ts
+│   ├── fingerprint.test.ts
+│   ├── limits.test.ts
+│   ├── redis.test.ts
+│   ├── spreadsheet-merge.test.ts
+│   ├── usage-tracker.test.ts
+│   ├── i18n/
+│   │   ├── config.test.ts
+│   │   └── LocaleProvider.test.tsx
+│   └── security/
+│       ├── file-validator.test.ts
+│       ├── rate-limit.test.ts
+│       ├── security-attacks.test.ts
+│       ├── unification-token.test.ts
+│       └── validation-schemas.test.ts
+└── middleware.test.ts
 ```
 
-## ✅ Completed Tests
+**Total:** 36 test suites, 940 testes
 
-### 1. `limits.test.ts` (100% Coverage)
+## Coverage
 
-**Tests:**
-- ✅ PLAN_LIMITS constant validation
-- ✅ getPlanLimits for all plans
-- ✅ formatFileSize (bytes, KB, MB, GB)
-- ✅ isFileSizeAllowed (all plans, edge cases)
-- ✅ isUploadAllowed (all plans, limits)
-- ✅ getRemainingUploads (all scenarios)
+### Meta
 
-**Scenarios Covered:**
-- Free plan: 3 uploads, 2MB limit
-- Pro plan: 20 uploads, 10MB limit
-- Enterprise plan: Unlimited uploads, 50MB limit
-- Edge cases: 0 bytes, exactly at limit, over limit, Infinity
+- `src/lib/` e `src/hooks/` — minimo 90% (branches, functions, lines, statements)
+- Componentes — testes comportamentais (render, interacao, acessibilidade)
+- API routes — testes de integracao cobrindo fluxo completo de validacao
 
-### 2. `file-validator.test.ts` (100% Coverage)
-
-**Tests:**
-- ✅ FILE_VALIDATOR constants
-- ✅ validateFile:
-  - File size validation (empty, under, over 10MB)
-  - Extension validation (.csv, .xlsx, .xls, invalid)
-  - MIME type validation
-  - Suspicious filename patterns (path traversal, executables, reserved names)
-- ✅ sanitizeFileName:
-  - Path traversal removal
-  - Special character replacement
-  - Hidden file prevention
-  - Length limiting
-- ✅ validateFileContent:
-  - ZIP signature validation for XLSX
-  - Text content validation for CSV
-  - Invalid signature rejection
-  - Error handling
-
-**Scenarios Covered:**
-- Valid files: CSV, XLSX, XLS
-- Invalid files: wrong extension, MIME type, size
-- Malicious files: path traversal, executables, reserved names
-- Edge cases: empty files, exactly 10MB, case-insensitive extensions
-
-## 🚀 Running Tests
+### Como verificar
 
 ```bash
-# Run all tests
-npm test
-
-# Watch mode (development)
-npm run test:watch
-
-# Coverage report
 npm run test:coverage
-
-# CI mode
-npm run test:ci
+# Relatorio HTML em coverage/lcov-report/index.html
 ```
 
-## 📊 Coverage Goals
+## Categorias de Teste
 
-```javascript
-coverageThreshold: {
-  global: {
-    branches: 100,
-    functions: 100,
-    lines: 100,
-    statements: 100,
-  },
-}
-```
+### Libs (`__tests__/lib/`)
 
-## 📝 Test Templates
+Testes unitarios das funcoes core do sistema:
 
-### Unit Test Template
+- **limits.ts** — constantes de plano, formatacao de tamanho, verificacoes de limite
+- **fingerprint.ts** — extracao de IP, geracao de ID, hashing, cookie management, getUserPlan
+- **redis.ts** — client singleton, InMemoryStore (get/set/incr/expire/cleanup), storage abstraction, Lua scripts
+- **usage-tracker.ts** — checkUnificationLimit, atomicIncrementUnification, checkFileSizeLimit, getUserUsage
+- **audit-logger.ts** — logging estruturado, mascaramento de IP, truncamento de fingerprint
+- **spreadsheet-merge.ts** — logica de merge de planilhas
 
-```typescript
-import { functionToTest } from '@/lib/module'
+### Security (`__tests__/lib/security/`)
 
-describe('module.ts', () => {
-  describe('functionToTest', () => {
-    it('should handle normal case', () => {
-      const result = functionToTest('input')
-      expect(result).toBe('expected')
-    })
+Testes de seguranca com cobertura extensiva:
 
-    it('should handle edge case', () => {
-      const result = functionToTest('')
-      expect(result).toBe('default')
-    })
+- **file-validator.ts** — tamanho, extensao, MIME, filename patterns, magic numbers, zip bomb, PDF disfarce
+- **validation-schemas.ts** — schemas Zod, sanitizacao de strings, Content-Type, body size, file limits
+- **rate-limit.ts** — limites por namespace, identificacao por IP, cleanup, fallback in-memory
+- **unification-token.ts** — geracao, consumo atomico, validacao de formato, binding por fingerprint
+- **security-attacks.ts** — cenarios de ataque (path traversal, injection, replay)
 
-    it('should handle error case', () => {
-      expect(() => functionToTest(null)).toThrow('Error message')
-    })
-  })
-})
-```
+### API Routes (`__tests__/api/`)
 
-### API Route Test Template
+Testes de integracao das rotas:
 
-```typescript
-import { POST } from '@/app/api/endpoint/route'
-import { NextRequest } from 'next/server'
+- **preview.test.ts** — rate limiting, quota, validacao de arquivo, geracao de token
+- **process.test.ts** — fluxo completo (token + quota + validacao + processamento)
+- **usage.test.ts** — estatisticas de uso, cookie de fingerprint
+- **unification-complete.test.ts** — consumo de token, incremento de quota
 
-describe('API: /api/endpoint', () => {
-  it('should handle successful request', async () => {
-    const request = new NextRequest('http://localhost:3000/api/endpoint', {
-      method: 'POST',
-      body: JSON.stringify({ data: 'test' }),
-    })
+### Hooks (`__tests__/hooks/`)
 
-    const response = await POST(request)
-    const data = await response.json()
+Testes de React hooks:
 
-    expect(response.status).toBe(200)
-    expect(data).toEqual({ success: true })
-  })
+- **use-usage.ts** — fetch inicial, loading states, erro, refetch
+- **use-file-parser.ts** — parsing de CSV/XLSX, validacao
+- **use-upload-flow.ts** — fluxo de upload completo
+- **use-mobile.ts** — deteccao de viewport mobile
+- **use-reduced-motion.ts** — preferencia de reducao de movimento
 
-  it('should handle validation error', async () => {
-    const request = new NextRequest('http://localhost:3000/api/endpoint', {
-      method: 'POST',
-      body: JSON.stringify({}),
-    })
+### Componentes (`__tests__/components/`)
 
-    const response = await POST(request)
-    expect(response.status).toBe(400)
-  })
-})
-```
+Testes comportamentais de UI:
 
-### React Component Test Template
+- **button.tsx** — variantes, tamanhos, className, onClick, disabled, type
+- **badge.tsx** — variantes, data-slot, tagName, className
+- **dropdown-menu.tsx** — toggle, aria-expanded, Escape, click outside, asChild, alignment
+- **file-dropzone.tsx** — render, drag/drop, disabled, accept, onFilesAccepted
+- **language-selector.tsx** — idiomas, setLocale, highlight, dropdown
+- **theme-toggle.tsx** — toggle de tema
+- **grid-background.tsx** — render, animacao
+- **animated-list.tsx** — render, transicoes
+- **step-transition.tsx** — transicao entre steps
+- **upload/** — UploadPageContent (quota ordering, double-spend prevention), upload-step, columns-step, usage-status
 
-```typescript
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import Component from '@/components/Component'
+### Middleware (`__tests__/middleware.test.ts`)
 
-describe('Component', () => {
-  it('should render correctly', () => {
-    render(<Component />)
-    expect(screen.getByText('Expected Text')).toBeInTheDocument()
-  })
+- Security headers (HSTS, X-Frame-Options, CSP, Permissions-Policy)
+- CSP em producao (nonce + strict-dynamic) vs desenvolvimento (unsafe-eval)
+- CSRF protection (Origin validation, metodos isentos)
+- Config matcher (exclusao de assets estaticos)
 
-  it('should handle user interaction', async () => {
-    const user = userEvent.setup()
-    render(<Component />)
+## Padroes de Teste
 
-    await user.click(screen.getByRole('button'))
-    expect(screen.getByText('Updated Text')).toBeInTheDocument()
-  })
-})
-```
+### Environment
 
-## 🎯 Test Scenarios by Module
+- Testes de componente/hook: `@jest-environment jsdom` (declarado no topo do arquivo)
+- Testes de lib/API: `@jest-environment node` (padrao)
 
-### `fingerprint.ts`
-- ✅ getClientIP: various headers, fallback
-- ✅ generateFingerprintId: uniqueness
-- ✅ hashFingerprint: consistency, privacy
-- ✅ getUserFingerprint: new/existing cookies
-- ✅ setFingerprintCookie: settings, security
-- ✅ getUserPlan: header override, default
-- ✅ getCurrentMonthKey: format
-- ✅ createUploadCountKey: format
+### Mocks
 
-### `redis.ts`
-- ✅ getRedisClient: with/without env vars
-- ✅ InMemoryStore: get, set, incr, expire, cleanup
-- ✅ storage.get: Redis success, fallback, error
-- ✅ storage.incr: Redis success, fallback, error
-- ✅ storage.expire: Redis success, fallback
-- ✅ storage.set: with/without TTL
+- i18n: mock de `useLocale` com mapa de traducoes
+- next-themes: mock de `useTheme`
+- Redis: mock de `storage` para evitar dependencia de infra
+- fetch: `jest.fn()` para chamadas de API
 
-### `validation-schemas.ts`
-- ✅ columnNameSchema: valid/invalid names
-- ✅ columnsArraySchema: min/max, validation
-- ✅ fileMetadataSchema: all fields
-- ✅ sanitizeString: HTML removal, special chars
-- ✅ validateColumnSelection: valid/invalid arrays
-- ✅ validateFileLimits: count, size limits
+### Assertivas de seguranca
 
-### `usage-tracker.ts`
-- ✅ checkUploadLimit: all plans, exceeded
-- ✅ incrementUploadCount: increment, expiry
-- ✅ checkFileSizeLimit: all plans
-- ✅ getUserUsage: current statistics
-
-### `rate-limit.ts`
-- ✅ rateLimit: under/at/over limit
-- ✅ getIdentifier: various headers, fallback
-- ✅ Cleanup: old entries removal
-- ✅ Multiple IPs: independent counters
-
-### API Routes
-- ✅ /api/preview:
-  - Rate limiting
-  - Upload quota check
-  - File size validation
-  - File type validation
-  - Success response
-  - All error codes (403, 400, 429, 500)
-- ✅ /api/process:
-  - All validations
-  - Column selection
-  - Success with file generation
-- ✅ /api/usage:
-  - GET statistics
-  - Fingerprint cookie setting
-
-### Hooks
-- ✅ useUsage:
-  - Initial fetch
-  - Loading states
-  - Error handling
-  - Refetch functionality
-- ✅ formatFileSize: all units
-
-### Components
-- ✅ LanguageSelector:
-  - Render languages
-  - Change language
-  - LocalStorage persistence
-- ✅ UploadPage:
-  - File selection
-  - Validation display
-  - Upload success/error
-  - Usage display
-
-## 📈 Coverage Report Example
-
-```
------------------------|---------|----------|---------|---------|
-File                   | % Stmts | % Branch | % Funcs | % Lines |
------------------------|---------|----------|---------|---------|
-All files              |     100 |      100 |     100 |     100 |
- lib                   |     100 |      100 |     100 |     100 |
-  limits.ts            |     100 |      100 |     100 |     100 |
-  fingerprint.ts       |     100 |      100 |     100 |     100 |
-  redis.ts             |     100 |      100 |     100 |     100 |
-  usage-tracker.ts     |     100 |      100 |     100 |     100 |
- lib/security          |     100 |      100 |     100 |     100 |
-  file-validator.ts    |     100 |      100 |     100 |     100 |
-  validation-schemas.ts|     100 |      100 |     100 |     100 |
-  rate-limit.ts        |     100 |      100 |     100 |     100 |
------------------------|---------|----------|---------|---------|
-```
-
-## 🐛 Common Testing Issues
-
-### Issue: "Cannot find module '@/lib/...'"
-**Solution:** Check `jest.config.js` moduleNameMapper
-
-### Issue: "localStorage is not defined"
-**Solution:** Mock in jest.setup.js:
-```javascript
-global.localStorage = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  clear: jest.fn(),
-}
-```
-
-### Issue: "NextRequest is not a constructor"
-**Solution:** Use proper mocking for Next.js types
-
-## 🎯 Next Steps for 100% Coverage
-
-1. Create remaining test files (marked ⏳)
-2. Run `npm run test:coverage`
-3. Check coverage report in `coverage/lcov-report/index.html`
-4. Fix any uncovered branches/lines
-5. Ensure all edge cases are tested
-
-## 📞 CI/CD Integration
-
-```yaml
-# .github/workflows/test.yml
-name: Tests
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-      - run: npm ci
-      - run: npm run test:ci
-      - uses: codecov/codecov-action@v3
-```
+Testes de seguranca validam que:
+- Inputs maliciosos sao rejeitados (path traversal, injection, XSS)
+- Rate limiting bloqueia apos exceder threshold
+- Tokens expiram e nao podem ser reusados
+- Quota e incrementada atomicamente (sem race conditions)
+- Erros nao expoe informacoes internas
 
 ---
 
-**Last Updated:** 2025-12-22
-**Coverage Target:** 100%
-**Status:** ✅ Foundation Complete (2/12 test files created)
+**Atualizado em:** 2026-03-30
+**Status na data:** 36 suites, 940 testes passando (sujeito a variacao conforme evolucao do codigo)

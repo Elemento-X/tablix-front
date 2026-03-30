@@ -3,8 +3,7 @@
 ## 1. Escopo do plano
 
 - O usuário pode realizar **até 40 unificações de tabelas por mês**.
-- Cada unificação é **pontual** e **não persistente**.
-- O Plano Pro **não possui histórico** de unificações.
+- O Plano Pro possui **histórico de 30 dias** para download posterior.
 
 ---
 
@@ -58,12 +57,9 @@
 
 ## 7. Histórico e persistência
 
-- O sistema **não deve salvar**:
-  - arquivos de input
-  - arquivos de output
-  - metadata da unificação
-- O Plano Pro **não possui histórico**, download posterior ou reprocessamento.
-- Após a entrega do arquivo, todos os dados devem ser descartados.
+- O sistema **não deve salvar** arquivos de input ou output permanentemente.
+- O Plano Pro possui **histórico de 30 dias** para download posterior.
+- Após o período de retenção, todos os dados devem ser descartados automaticamente.
 
 ---
 
@@ -109,6 +105,5 @@ Todas as notificações devem:
   - processamento prioritário
   - sem marca d’água
 - Em relação ao **Plano Enterprise**:
-  - não possui histórico
-  - não possui retenção de dados
+  - histórico de 30 dias (Enterprise: 90 dias)
   - não possui customizações contratuais
