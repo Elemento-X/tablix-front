@@ -90,7 +90,7 @@ Validacao de Origin em requests state-changing para `/api/*`:
 
 ### Identificacao
 
-Prioridade de IP: `cf-connecting-ip` > `x-real-ip` > `x-forwarded-for` > `127.0.0.1`
+IP extraido via headers padrao de proxy reverso com fallback seguro
 
 ### Resposta 429
 
@@ -113,7 +113,7 @@ Headers: `X-RateLimit-Remaining: 0`, `Retry-After: 60`
 4. **Filename patterns:** rejeita path traversal (`..`), caracteres invalidos, null bytes, nomes reservados do Windows, extensoes executaveis (`.exe`, `.bat`, `.cmd`, `.sh`, `.php`, `.js`)
 5. **Magic numbers:** ZIP signature para XLSX, CDF signature para XLS, texto valido para CSV
 6. **PDF disfarce:** rejeita arquivos com magic bytes `%PDF` nomeados como `.csv`
-7. **Zip bomb:** analise de compression ratio via central directory do ZIP (limite: 100:1)
+7. **Zip bomb:** protecao contra zip bombs via analise de compression ratio
 
 ### Sanitizacao de nomes
 
@@ -155,7 +155,7 @@ Token one-time para prevenir replay attacks:
 
 1. Gerado em `/api/preview` apos todas as validacoes passarem
 2. Armazenado no Redis com TTL curto, vinculado ao fingerprint do usuario
-3. Consumido atomicamente em `/api/process` ou `/api/unification/complete` (GET + DEL atomico)
+3. Consumido atomicamente em `/api/process` ou `/api/unification/complete` (operacao atomica no Redis)
 4. Validacao: formato hex, existencia no storage, e binding correto ao fingerprint
 
 Garante que cada preview gera no maximo 1 processamento.
@@ -227,20 +227,20 @@ Logging estruturado em JSON para acoes de seguranca:
 12. Valida extensao de cada arquivo (pos-sanitizacao)
 13. Valida conteudo de cada arquivo (magic numbers + zip bomb)
 14. Consome unification token (atomico)
-15. Incrementa quota atomicamente (Lua script)
+15. Incrementa quota atomicamente
 16. Processa e retorna arquivo
 
 ### POST /api/unification/complete
 
 **Fluxo de seguranca:**
-1. Rate limiting (100 req/min — namespace api)
+1. Rate limiting (100 req/min)
 2. Valida Content-Type (application/json)
 3. Valida tamanho do body (max 1MB)
 4. Fingerprint do usuario
 5. Parseia body JSON
 6. Valida presenca do token
 7. Consome unification token (atomico, vinculado ao fingerprint)
-8. Incrementa quota atomicamente (Lua script, previne race condition)
+8. Incrementa quota atomicamente (previne race condition)
 9. Retorna contagem atualizada + usage
 
 ### GET /api/usage

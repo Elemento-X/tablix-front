@@ -99,7 +99,7 @@ Testes unitarios das funcoes core do sistema:
 
 - **limits.ts** — constantes de plano, formatacao de tamanho, verificacoes de limite
 - **fingerprint.ts** — extracao de IP, geracao de ID, hashing, cookie management, getUserPlan
-- **redis.ts** — client singleton, InMemoryStore (get/set/incr/expire/cleanup), storage abstraction, Lua scripts
+- **redis.ts** — client singleton, InMemoryStore (get/set/incr/expire/cleanup), storage abstraction, operacoes atomicas
 - **usage-tracker.ts** — checkUnificationLimit, atomicIncrementUnification, checkFileSizeLimit, getUserUsage
 - **audit-logger.ts** — logging estruturado, mascaramento de IP, truncamento de fingerprint
 - **spreadsheet-merge.ts** — logica de merge de planilhas

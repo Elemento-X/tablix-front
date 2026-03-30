@@ -68,7 +68,7 @@ O fingerprint e temporario. Quando a integracao com o backend Fastify (auth JWT)
 **Arquivo:** `src/lib/usage-tracker.ts`
 
 - Contadores mensais armazenados no Redis com TTL automatico
-- Incremento atomico via Lua script para prevenir race conditions
+- Incremento atomico no Redis para prevenir race conditions
 - Fallback in-memory para desenvolvimento (sem persistencia entre restarts)
 
 Fluxo:
@@ -110,7 +110,7 @@ Envia 1 arquivo para validacao e extracao de colunas. Nao incrementa a quota.
 ```json
 {
   "columns": ["ID", "Nome", "Email"],
-  "unificationToken": "hex-token-64-chars",
+  "unificationToken": "<token>",
   "usage": {
     "current": 0,
     "max": 1,
@@ -153,7 +153,7 @@ Registra a conclusao de uma unificacao. Consome token + incrementa quota atomica
 |----------|--------|-----------|
 | Upload (`/api/preview`) | 10 req | 1 min |
 | Process (`/api/process`) | 5 req | 1 min |
-| Geral (`/api/usage`) | 100 req | 1 min |
+| Geral (`/api/usage`, `/api/unification/complete`) | 100 req | 1 min |
 
 - **Producao:** Upstash Redis (sliding window) — efetivo em ambiente serverless
 - **Desenvolvimento:** in-memory fallback (nao persiste entre invocacoes)

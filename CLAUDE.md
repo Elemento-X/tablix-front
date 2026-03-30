@@ -83,5 +83,5 @@ Regra detalhada em `.claude/rules/qa-pipeline.md`
 
 - Toda feature nova precisa de testes (mínimo 90% coverage em `src/lib/` e `src/hooks/`)
 - Alterações em segurança ou regras de negócio devem ser documentadas internamente
-- SECURITY.md, FREE_PLAN.md, PRO_PLAN.md, USAGE_LIMITS.md devem refletir o estado real do código
+- docs/SECURITY.md, docs/FREE_PLAN.md, docs/PRO_PLAN.md, docs/USAGE_LIMITS.md devem refletir o estado real do código
 - Se uma mudança contradiz a documentação existente: PARAR e perguntar ao usuário qual está correto antes de qualquer ação

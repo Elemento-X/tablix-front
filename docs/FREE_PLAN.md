@@ -60,7 +60,7 @@ No Plano Free, o arquivo final **sempre** deve conter marca d’água.
 
 - O arquivo unificado deve conter uma coluna adicional chamada **"Gerado por Tablix"**.
 - A coluna deve estar presente em **todas as linhas** do resultado.
-- O valor pode ser fixo (ex: `tablix.app`).
+- O valor pode ser fixo (ex: `tablix.com.br`).
 - A coluna **não pode ser removida**.
 
 ---
