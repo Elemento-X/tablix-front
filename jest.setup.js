@@ -14,6 +14,25 @@ if (typeof global.crypto === 'undefined') {
   global.crypto = webcrypto
 }
 
+// Polyfill for window.matchMedia (used by use-reduced-motion hook)
+// Guard: only define when window exists (skips server-side test environments)
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  })
+}
+
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
   useRouter() {

@@ -343,6 +343,11 @@ describe('UploadPageContent — handleProcess quota ordering (card 2.10)', () =>
         { timeout: 3000 },
       )
 
+      // Drain pending state updates (setIsProcessing(false) in finally)
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50))
+      })
+
       const consumeIdx = mergeOrder.indexOf('consumeQuota')
       const mergeIdx = mergeOrder.indexOf('mergeSpreadsheets')
       expect(consumeIdx).toBeLessThan(mergeIdx)
@@ -757,12 +762,13 @@ describe('UploadPageContent — handleProcess quota ordering (card 2.10)', () =>
         expect(processBtn.disabled).toBe(true)
       })
 
-      // Resolve the hanging promise to clean up
-      act(() => {
+      // Resolve the hanging promise and drain all pending state updates
+      await act(async () => {
         resolveProcess!({
           ok: false,
           json: async () => ({ error: 'cancelled' }),
         } as unknown as Response)
+        await new Promise((resolve) => setTimeout(resolve, 50))
       })
     })
   })
