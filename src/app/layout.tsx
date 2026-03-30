@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { LocaleProvider } from '@/lib/i18n'
+import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from 'sonner'
 import './globals.css'
 
@@ -41,15 +42,17 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <body
         className={`${geistSans.className} ${geistMono.className} font-sans antialiased`}
       >
-        <LocaleProvider>
-          {children}
-          <Analytics />
-          <Toaster position="top-right" richColors />
-        </LocaleProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <LocaleProvider>
+            {children}
+            <Analytics />
+            <Toaster position="top-right" richColors />
+          </LocaleProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -133,6 +133,8 @@
     "maxTotalSize": "Tamaño máx",
     "maxRows": "filas",
     "maxColumns": "columnas",
+    "maxRowsLabel": "Máx",
+    "maxColumnsLabel": "Máx",
     "clickToAddMore": "Haz clic arriba para agregar más archivos",
     "loading": "Cargando información del plan..."
   },
@@ -165,6 +167,21 @@
     "goHome": "Volver al inicio",
     "uploadTitle": "Error en el procesamiento",
     "uploadDescription": "Ocurrió un error durante la carga o procesamiento del archivo. Intenta de nuevo."
+  },
+  "dropzone": {
+    "dragActive": "Suelta los archivos aqui...",
+    "disabled": "Carga deshabilitada"
+  },
+  "theme": {
+    "switchToLight": "Cambiar a tema claro",
+    "switchToDark": "Cambiar a tema oscuro"
+  },
+  "a11y": {
+    "selectLanguage": "Seleccionar idioma",
+    "themeToggle": "Alternar tema",
+    "usageProgress": "Progreso de uso del plan",
+    "columnToggle": "Seleccionar o deseleccionar columna",
+    "removeFile": "Eliminar"
   },
   "billingPeriods": {
     "month": "mes",

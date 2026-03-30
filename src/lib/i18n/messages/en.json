@@ -133,6 +133,8 @@
     "maxTotalSize": "Max total size",
     "maxRows": "rows",
     "maxColumns": "columns",
+    "maxRowsLabel": "Max",
+    "maxColumnsLabel": "Max",
     "clickToAddMore": "Click above to add more files",
     "loading": "Loading plan information..."
   },
@@ -165,6 +167,21 @@
     "goHome": "Go to home",
     "uploadTitle": "Processing error",
     "uploadDescription": "An error occurred during file upload or processing. Please try again."
+  },
+  "dropzone": {
+    "dragActive": "Drop the files here...",
+    "disabled": "Upload disabled"
+  },
+  "theme": {
+    "switchToLight": "Switch to light theme",
+    "switchToDark": "Switch to dark theme"
+  },
+  "a11y": {
+    "selectLanguage": "Select language",
+    "themeToggle": "Toggle theme",
+    "usageProgress": "Plan usage progress",
+    "columnToggle": "Select or deselect column",
+    "removeFile": "Remove"
   },
   "billingPeriods": {
     "month": "month",
