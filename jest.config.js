@@ -34,6 +34,7 @@ const customJestConfig = {
     },
   },
   testTimeout: 15000,
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/e2e/'],
   testMatch: [
     '**/__tests__/**/*.test.[jt]s?(x)',
     '**/?(*.)+(spec|test).[jt]s?(x)',
