@@ -96,7 +96,10 @@
   },
   "footer": {
     "security": "Your files are processed temporarily and securely.",
-    "privacy": "Tablix does not store your files. They are discarded after processing."
+    "privacy": "Tablix does not store your files. They are discarded after processing.",
+    "privacyPolicy": "Privacy Policy",
+    "terms": "Terms of Use",
+    "copyright": "© {year} Tablix Tecnologia. All rights reserved."
   },
   "upload": {
     "title": "Upload your spreadsheet",
@@ -201,6 +204,169 @@
     "annual": {
       "price": "24.90",
       "total": "$298.80/year"
+    }
+  },
+  "legal": {
+    "backToHome": "Back to home",
+    "lastUpdated": "Last updated: {date}",
+    "tableOfContents": "Table of Contents",
+    "privacy": {
+      "title": "Privacy Policy",
+      "intro": {
+        "title": "Introduction",
+        "p1": "Tablix Tecnologia (\"Tablix\", \"we\") operates the service available at tablix.me. This Privacy Policy explains how we collect, use, and protect your information when you use our service.",
+        "p2": "By using Tablix, you agree to the practices described in this policy. If you do not agree, please do not use the service."
+      },
+      "dataCollection": {
+        "title": "Data we collect",
+        "description": "We collect only the data strictly necessary for the service to function:",
+        "fingerprint": "Anonymous identifier (fingerprint) — used to control Free plan usage limits. Stored as an httpOnly cookie.",
+        "ipHash": "IP address hash — used together with the fingerprint for identification. We never store the full IP address.",
+        "usageCounters": "Usage counters — number of unifications performed in the month, stored in Redis with automatic expiration.",
+        "locale": "Language preference — stored locally in your browser (localStorage)."
+      },
+      "spreadsheetProcessing": {
+        "title": "Spreadsheet processing",
+        "p1": "Your files are processed entirely in your browser (client-side) on the Free plan. This means your data is never sent to our servers during processing.",
+        "p2": "On the Pro plan, larger files may be processed on the server. In this case, data is processed in memory and discarded immediately after generating the output file. We do not store, copy, or retain your files.",
+        "p3": "We never access, read, or analyze the contents of your spreadsheets for any purpose other than the processing you requested."
+      },
+      "cookies": {
+        "title": "Cookies and local storage",
+        "description": "We use the following cookies and local storage data:",
+        "tablixFp": "tablix_fp — httpOnly cookie that stores your anonymous identifier. Expires in 1 year.",
+        "theme": "theme — Theme preference (light/dark). Stored via localStorage.",
+        "localePref": "locale — Language preference. Stored via localStorage.",
+        "noCookies": "We do not use tracking, marketing, or advertising cookies."
+      },
+      "storage": {
+        "title": "Storage and retention",
+        "p1": "Usage counters are stored in Redis (Upstash) and expire automatically at the end of each billing period.",
+        "p2": "The fingerprint cookie expires in 1 year or when you clear your browser data.",
+        "p3": "We do not maintain a database with personal information. There is no \"account\" on the Free plan — only the anonymous identifier."
+      },
+      "security": {
+        "title": "Security",
+        "description": "We employ the following measures to protect your data:",
+        "csp": "Content Security Policy (CSP) — restricts which resources can be loaded.",
+        "rateLimit": "Rate limiting — protects against abuse and brute force attacks.",
+        "headers": "Security headers — HSTS, X-Frame-Options, X-Content-Type-Options, and others.",
+        "validation": "File validation — MIME type, extension, and magic number verification before processing.",
+        "httpOnly": "httpOnly cookies — not accessible via JavaScript, protecting against XSS attacks."
+      },
+      "rights": {
+        "title": "Your rights (LGPD)",
+        "description": "In accordance with the Brazilian General Data Protection Law (Law 13,709/2018), you have the right to:",
+        "access": "Access your data — You can check your usage status directly in the Tablix interface.",
+        "deletion": "Request deletion — By clearing your browser cookies, the fingerprint is removed. Redis counters expire automatically.",
+        "info": "Request information — Contact us to learn what data is associated with your identifier.",
+        "legalBasis": "Legal basis: we use legitimate interest (Art. 7, IX of the LGPD) as the basis for processing data necessary for the service to function.",
+        "contact": "To exercise any of these rights, contact us at: contact@tablix.me"
+      },
+      "thirdParty": {
+        "title": "Third-party services",
+        "description": "We use the following third-party services:",
+        "vercel": "Vercel — Hosting and CDN. Subject to Vercel's privacy policy.",
+        "upstash": "Upstash Redis — Usage counter storage. Data encrypted in transit and at rest.",
+        "analytics": "Vercel Analytics — Anonymous performance metrics. Does not collect personally identifiable data."
+      },
+      "changes": {
+        "title": "Changes to this policy",
+        "p1": "We may update this Privacy Policy periodically. Significant changes will be communicated through a notice on the service.",
+        "p2": "Continued use of Tablix after changes constitutes acceptance of the updated policy."
+      },
+      "contact": {
+        "title": "Contact",
+        "p1": "For questions, requests, or complaints related to privacy:",
+        "controller": "Controller: Tablix Tecnologia",
+        "email": "Email: contact@tablix.me",
+        "address": "Address: São Paulo - SP, Brazil"
+      }
+    },
+    "terms": {
+      "title": "Terms of Use",
+      "acceptance": {
+        "title": "Acceptance of terms",
+        "p1": "By accessing and using Tablix (\"Service\"), available at tablix.me, you agree to these Terms of Use. If you do not agree with any part of these terms, do not use the Service.",
+        "p2": "Tablix is operated by Tablix Tecnologia, based in São Paulo - SP, Brazil."
+      },
+      "serviceDescription": {
+        "title": "Service description",
+        "p1": "Tablix is a web tool for spreadsheet processing. The service allows you to upload CSV and XLSX files, select specific columns, and generate new files with filtered data.",
+        "p2": "Processing on the Free plan is done entirely in your browser. On the Pro plan, larger files may be processed on our servers."
+      },
+      "plans": {
+        "title": "Plans and limits",
+        "freeTitle": "Free Plan",
+        "freeDescription": "Free, no registration required. Subject to the following limits:",
+        "freeLimit1": "1 unification per month",
+        "freeLimit2": "Up to 500 rows per spreadsheet",
+        "freeLimit3": "Up to 3 columns per output file",
+        "freeLimit4": "Up to 3 files per upload",
+        "freeLimit5": "Maximum 1 MB total upload size",
+        "proTitle": "Pro Plan",
+        "proDescription": "Requires an active subscription. Includes expanded limits:",
+        "proLimit1": "Up to 40 unifications per month",
+        "proLimit2": "Up to 5,000 rows per spreadsheet",
+        "proLimit3": "Up to 10 columns per output file",
+        "proLimit4": "Up to 15 files per upload",
+        "proLimit5": "Maximum 2 MB per file (30 MB total)",
+        "proLimit6": "Priority server-side processing",
+        "limitsNote": "Limits may be adjusted at any time. Changes will be communicated in advance."
+      },
+      "acceptableUse": {
+        "title": "Acceptable use",
+        "description": "By using Tablix, you agree not to:",
+        "rule1": "Attempt to circumvent your plan's usage limits.",
+        "rule2": "Use the service to process illegal or unlawfully obtained data.",
+        "rule3": "Reverse engineer, decompile, or attempt to extract the service's source code.",
+        "rule4": "Upload malicious files, viruses, or harmful code.",
+        "rule5": "Use automation (bots, scrapers) to access the service without prior authorization.",
+        "rule6": "Intentionally overload the service's infrastructure."
+      },
+      "userContent": {
+        "title": "User content",
+        "p1": "You are solely responsible for the files you upload to Tablix. The service does not claim ownership of your data.",
+        "p2": "On the Free plan, files are processed entirely in your browser and are never sent to our servers.",
+        "p3": "On the Pro plan, files are processed in server memory and discarded immediately after processing. We do not store, copy, or retain your files."
+      },
+      "ip": {
+        "title": "Intellectual property",
+        "p1": "Tablix, including its interface, source code, design, and brand, are the exclusive property of Tablix Tecnologia.",
+        "p2": "You receive a limited, non-exclusive, and revocable license to use the Service in accordance with these Terms."
+      },
+      "liability": {
+        "title": "Limitation of liability",
+        "p1": "Tablix is provided \"as-is\", without warranties of any kind, express or implied.",
+        "p2": "We are not responsible for losses or damages resulting from the use of the service, including but not limited to: data loss, service interruptions, or inaccurate processing results.",
+        "p3": "The total liability of Tablix Tecnologia, in any case, is limited to the amount paid by the user in the last 12 months."
+      },
+      "availability": {
+        "title": "Availability",
+        "p1": "We strive to keep Tablix available 24 hours a day, 7 days a week, but we do not guarantee uninterrupted availability.",
+        "p2": "We may perform scheduled or emergency maintenance that may result in temporary unavailability."
+      },
+      "suspension": {
+        "title": "Suspension and termination",
+        "p1": "We reserve the right to suspend or terminate access for any user who violates these Terms of Use.",
+        "p2": "We may discontinue the Service or any feature at any time, with reasonable prior notice when possible."
+      },
+      "changes": {
+        "title": "Changes to terms",
+        "p1": "We may update these Terms of Use periodically. Significant changes will be communicated through a notice on the service.",
+        "p2": "Continued use of Tablix after changes constitutes acceptance of the updated terms."
+      },
+      "governingLaw": {
+        "title": "Governing law",
+        "p1": "These terms are governed by the laws of the Federative Republic of Brazil.",
+        "p2": "The courts of São Paulo - SP are elected to resolve any disputes arising from these Terms."
+      },
+      "contact": {
+        "title": "Contact",
+        "p1": "For questions about these Terms of Use:",
+        "email": "Email: contact@tablix.me",
+        "address": "Address: São Paulo - SP, Brazil"
+      }
     }
   }
 }

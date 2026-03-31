@@ -144,4 +144,30 @@
     font-size: 0.9375rem;
     letter-spacing: normal;
   }
+  button,
+  [role='button'],
+  a {
+    cursor: pointer;
+  }
+}
+
+/* Legal pages typography */
+.prose-legal h2 {
+  @apply text-foreground mt-10 mb-4 text-xl font-semibold first:mt-0;
+}
+
+.prose-legal p {
+  @apply mb-4 text-[15px] leading-relaxed text-stone-700 dark:text-stone-300;
+}
+
+.prose-legal ul {
+  @apply mb-4 list-disc space-y-2 pl-6;
+}
+
+.prose-legal li {
+  @apply text-[15px] leading-relaxed text-stone-700 dark:text-stone-300;
+}
+
+.prose-legal section {
+  @apply scroll-mt-20;
 }

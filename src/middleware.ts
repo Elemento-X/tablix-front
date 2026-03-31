@@ -31,8 +31,8 @@ export function middleware(request: NextRequest) {
   const isDev = process.env.NODE_ENV === 'development'
 
   const scriptSrc = isDev
-    ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live"
-    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live`
+    ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-scripts.com"
+    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live https://*.vercel-scripts.com`
 
   // unsafe-inline is required for Tailwind/CSS-in-JS; nonce omitted since unsafe-inline overrides it
   const styleSrc = "style-src 'self' 'unsafe-inline'"
@@ -43,7 +43,7 @@ export function middleware(request: NextRequest) {
     styleSrc,
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    `connect-src 'self' ${isDev ? 'ws://localhost:* ' : ''}https://vercel.live https://*.vercel-insights.com https://*.vercel-scripts.com`,
+    `connect-src 'self' ${isDev ? 'ws://localhost:* ws://127.0.0.1:* ws://0.0.0.0:* ' : ''}https://vercel.live https://*.vercel-insights.com https://*.vercel-scripts.com`,
     "frame-ancestors 'self'",
     "base-uri 'self'",
     "form-action 'self'",

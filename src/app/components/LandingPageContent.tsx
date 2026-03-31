@@ -8,7 +8,14 @@ import { Card, CardContent } from '@/components/card'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import { useLocale } from '@/lib/i18n'
 import { motion } from 'framer-motion'
-import { ArrowRight, Check, CheckCircle, Download, Eye, FileSpreadsheet } from 'lucide-react'
+import {
+  ArrowRight,
+  Check,
+  CheckCircle,
+  Download,
+  Eye,
+  FileSpreadsheet,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 
@@ -93,7 +100,9 @@ export function LandingPageContent() {
         <div className="grid gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-4 md:gap-8">
           {[
             {
-              icon: <FileSpreadsheet className="text-muted-foreground h-6 w-6" />,
+              icon: (
+                <FileSpreadsheet className="text-muted-foreground h-6 w-6" />
+              ),
               title: t('howItWorks.steps.upload.title'),
               description: t('howItWorks.steps.upload.description'),
             },
@@ -125,8 +134,12 @@ export function LandingPageContent() {
                 delay: index * 0.08,
               }}
             >
-              <div className="bg-background w-fit rounded-lg p-3">{step.icon}</div>
-              <h3 className="text-foreground mt-4 font-semibold">{step.title}</h3>
+              <div className="bg-background w-fit rounded-lg p-3">
+                {step.icon}
+              </div>
+              <h3 className="text-foreground mt-4 font-semibold">
+                {step.title}
+              </h3>
               <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
                 {step.description}
               </p>
@@ -142,13 +155,19 @@ export function LandingPageContent() {
           </h2>
           <div className="mt-12 grid gap-8 md:grid-cols-3">
             <div className="text-center">
-              <h3 className="text-foreground font-semibold">{t('audience.roles.analysts')}</h3>
+              <h3 className="text-foreground font-semibold">
+                {t('audience.roles.analysts')}
+              </h3>
             </div>
             <div className="text-center">
-              <h3 className="text-foreground font-semibold">{t('audience.roles.admins')}</h3>
+              <h3 className="text-foreground font-semibold">
+                {t('audience.roles.admins')}
+              </h3>
             </div>
             <div className="text-center">
-              <h3 className="text-foreground font-semibold">{t('audience.roles.recurring')}</h3>
+              <h3 className="text-foreground font-semibold">
+                {t('audience.roles.recurring')}
+              </h3>
             </div>
           </div>
           <p className="text-muted-foreground mx-auto mt-12 max-w-2xl text-center text-lg leading-relaxed text-balance">
@@ -159,7 +178,9 @@ export function LandingPageContent() {
 
       <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-20">
         <div className="mb-8 text-center sm:mb-12">
-          <h2 className="text-foreground text-3xl font-bold sm:text-4xl">{t('pricing.title')}</h2>
+          <h2 className="text-foreground text-3xl font-bold sm:text-4xl">
+            {t('pricing.title')}
+          </h2>
           <p className="text-muted-foreground mt-3 text-base sm:mt-4 sm:text-lg">
             {t('pricing.subtitle')}
           </p>
@@ -206,13 +227,17 @@ export function LandingPageContent() {
         <div className="mx-auto grid max-w-5xl gap-6 sm:gap-8 md:grid-cols-3">
           <Card className="border-border">
             <CardContent className="p-5 sm:p-8">
-              <h3 className="text-foreground text-2xl font-bold">{t('pricing.plans.free.name')}</h3>
+              <h3 className="text-foreground text-2xl font-bold">
+                {t('pricing.plans.free.name')}
+              </h3>
               <div className="mt-4">
                 <span className="text-foreground text-3xl font-bold sm:text-4xl">
                   {t('pricing.plans.free.price')}
                 </span>
               </div>
-              <p className="text-muted-foreground mt-2 text-sm">{t('pricing.plans.free.period')}</p>
+              <p className="text-muted-foreground mt-2 text-sm">
+                {t('pricing.plans.free.period')}
+              </p>
 
               <div className="mt-8 space-y-3">
                 <div className="flex items-start gap-3">
@@ -240,7 +265,11 @@ export function LandingPageContent() {
               </p>
 
               <Link href="/upload">
-                <Button variant="outline" className="mt-8 w-full bg-transparent" size="lg">
+                <Button
+                  variant="outline"
+                  className="mt-8 w-full bg-transparent"
+                  size="lg"
+                >
                   {t('pricing.plans.free.cta')}
                 </Button>
               </Link>
@@ -254,7 +283,9 @@ export function LandingPageContent() {
               </Badge>
             </div>
             <CardContent className="p-5 sm:p-8">
-              <h3 className="text-foreground text-2xl font-bold">{t('pricing.plans.pro.name')}</h3>
+              <h3 className="text-foreground text-2xl font-bold">
+                {t('pricing.plans.pro.name')}
+              </h3>
               <div className="mt-4">
                 <div className="flex items-baseline gap-1">
                   <span className="text-muted-foreground text-sm line-through">
@@ -265,14 +296,18 @@ export function LandingPageContent() {
                   <span className="text-foreground text-3xl font-bold sm:text-4xl">
                     {t('proPricing.currencySymbol')} {proPrice.price}
                   </span>
-                  <span className="text-muted-foreground">/{t('pricing.plans.pro.period')}</span>
+                  <span className="text-muted-foreground">
+                    /{t('pricing.plans.pro.period')}
+                  </span>
                 </div>
               </div>
               <p className="mt-2 text-sm font-medium text-teal-700 dark:text-teal-400">
                 {t('pricing.plans.pro.launchPrice')}
               </p>
               {billingPeriod !== 'monthly' && (
-                <p className="text-muted-foreground mt-1 text-xs">{proPrice.total}</p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  {proPrice.total}
+                </p>
               )}
 
               <div className="mt-8 space-y-3">
@@ -365,7 +400,11 @@ export function LandingPageContent() {
                 {t('pricing.plans.enterprise.description')}
               </p>
 
-              <Button variant="outline" className="mt-8 w-full bg-transparent" size="lg">
+              <Button
+                variant="outline"
+                className="mt-8 w-full bg-transparent"
+                size="lg"
+              >
                 {t('pricing.plans.enterprise.cta')}
               </Button>
             </CardContent>
@@ -375,9 +414,31 @@ export function LandingPageContent() {
 
       <footer className="border-border border-t py-8 sm:py-12">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <p className="text-muted-foreground text-center text-sm">{t('footer.security')}</p>
+          <p className="text-muted-foreground text-center text-sm">
+            {t('footer.security')}
+          </p>
           <p className="text-muted-foreground mt-2 text-center text-sm opacity-70">
             {t('footer.privacy')}
+          </p>
+          <div className="mt-4 flex items-center justify-center gap-4 text-sm">
+            <Link
+              href="/privacy-policy"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t('footer.privacyPolicy')}
+            </Link>
+            <span className="text-muted-foreground opacity-30">|</span>
+            <Link
+              href="/terms"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t('footer.terms')}
+            </Link>
+          </div>
+          <p className="text-muted-foreground mt-3 text-center text-xs opacity-50">
+            {t('footer.copyright', {
+              year: new Date().getFullYear().toString(),
+            })}
           </p>
         </div>
       </footer>
