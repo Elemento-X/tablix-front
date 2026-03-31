@@ -4,7 +4,9 @@ import { expectAnyToast } from '../helpers/toast.helper'
 test.describe('7.4 — Rate Limiting', () => {
   test.describe.configure({ mode: 'serial' })
 
-  test('shows error toast when API returns 429 (mocked)', async ({ uploadPage }) => {
+  test('shows error toast when API returns 429 (mocked)', async ({
+    uploadPage,
+  }) => {
     // Mock /api/preview para retornar 429
     await uploadPage.page.route('**/api/preview', (route) =>
       route.fulfill({

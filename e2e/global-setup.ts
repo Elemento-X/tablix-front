@@ -40,13 +40,17 @@ export default function globalSetup() {
   // valid-common-cols-a.csv — colunas ID, Nome, Email
   writeCsv(
     'valid-common-cols-a.csv',
-    ['ID,Nome,Email', '1,Ana,ana@test.com', '2,Bruno,bruno@test.com'].join('\n'),
+    ['ID,Nome,Email', '1,Ana,ana@test.com', '2,Bruno,bruno@test.com'].join(
+      '\n',
+    ),
   )
 
   // valid-common-cols-b.csv — colunas ID, Nome, Telefone (ID e Nome em comum)
   writeCsv(
     'valid-common-cols-b.csv',
-    ['ID,Nome,Telefone', '3,Carla,11999990000', '4,Diego,11888880000'].join('\n'),
+    ['ID,Nome,Telefone', '3,Carla,11999990000', '4,Diego,11888880000'].join(
+      '\n',
+    ),
   )
 
   // no-common-cols.csv — sem colunas em comum com os outros

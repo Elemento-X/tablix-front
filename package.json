@@ -5,7 +5,7 @@
   "scripts": {
     "build": "npm run lint && next build",
     "dev": "next dev",
-    "lint": "eslint .",
+    "lint": "eslint src --ext .ts,tsx --fix",
     "start": "next start",
     "test": "jest",
     "test:watch": "jest --watch",

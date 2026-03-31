@@ -42,8 +42,8 @@ export function ColumnsStep({
                 {t('columns.detected')} ({detectedColumns.length})
               </h3>
               <p className="text-muted-foreground mt-1 text-sm">
-                {selectedColumns.length} {t('columns.of')} {detectedColumns.length}{' '}
-                {t('columns.selected')}
+                {selectedColumns.length} {t('columns.of')}{' '}
+                {detectedColumns.length} {t('columns.selected')}
                 {usage && ` (${t('columns.max')} ${usage.limits.maxColumns})`}
               </p>
             </div>

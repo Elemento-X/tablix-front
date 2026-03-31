@@ -50,10 +50,14 @@ export function UploadStep({
           </div>
 
           {files.length > 0 && (
-            <div data-testid="file-list" className="bg-muted w-full space-y-2 rounded-lg p-4">
+            <div
+              data-testid="file-list"
+              className="bg-muted w-full space-y-2 rounded-lg p-4"
+            >
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium text-stone-700 dark:text-stone-300">
-                  {files.length} {t('columns.of')} {maxInputFiles} {t('status.files')}
+                  {files.length} {t('columns.of')} {maxInputFiles}{' '}
+                  {t('status.files')}
                 </span>
                 <span className="text-muted-foreground text-xs">
                   {formatFileSize(currentTotalSize)} {t('columns.of')}{' '}
@@ -94,7 +98,9 @@ export function UploadStep({
           )}
 
           <div className="w-full py-4 text-center">
-            <p className="text-muted-foreground text-sm">{t('upload.securityNote')}</p>
+            <p className="text-muted-foreground text-sm">
+              {t('upload.securityNote')}
+            </p>
           </div>
 
           <Button

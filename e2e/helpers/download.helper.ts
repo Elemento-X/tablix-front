@@ -16,7 +16,9 @@ interface ParsedDownload {
 /**
  * Parseia um XLSX baixado pelo Playwright e retorna estrutura navegável.
  */
-export async function parseDownloadedXlsx(download: Download): Promise<ParsedDownload> {
+export async function parseDownloadedXlsx(
+  download: Download,
+): Promise<ParsedDownload> {
   const filePath = await download.path()
   if (!filePath) throw new Error('Download path not available')
 

@@ -52,7 +52,11 @@ test.describe('7.3 — Limites Free Plan', () => {
     await uploadPage.clickContinue()
 
     // Parsing detecta 501 linhas → toast de erro (parsing pode demorar em CI)
-    await expectAnyToast(uploadPage.page, /linhas|rows|limite|limit|erro.*processar|error/i, 15_000)
+    await expectAnyToast(
+      uploadPage.page,
+      /linhas|rows|limite|limit|erro.*processar|error/i,
+      15_000,
+    )
   })
 
   test('rejects files with no common columns', async ({ uploadPage }) => {

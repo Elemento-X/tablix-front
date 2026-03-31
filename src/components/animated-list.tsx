@@ -53,7 +53,11 @@ interface AnimatedListItemProps extends React.HTMLAttributes<HTMLDivElement> {
   children: ReactNode
 }
 
-export function AnimatedListItem({ children, className, ...rest }: AnimatedListItemProps) {
+export function AnimatedListItem({
+  children,
+  className,
+  ...rest
+}: AnimatedListItemProps) {
   const prefersReducedMotion = useReducedMotion()
 
   if (prefersReducedMotion) {
