@@ -5,7 +5,7 @@
 - Dev: `npm run dev`
 - Build: `npm run lint && npm run build`
 - Lint: `npx eslint .`
-- Test (específico): `npm test -- --testPathPattern=<pattern>`
+- Test (específico): `npm test -- --testPathPatterns=<pattern>`
 - Test coverage: `npm run test:coverage`
 - E2E (todos): `npm run test:e2e`
 - E2E (UI mode): `npm run test:e2e:ui`
@@ -61,7 +61,7 @@
 - NÃO gerar documentação (.md, README) sem instrução explícita
 - NÃO fazer push sem instrução explícita
 - NÃO ignorar erros de lint ou TypeScript — corrigir antes de considerar a tarefa concluída
-- NÃO rodar a suíte de testes inteira — sempre rodar testes específicos do arquivo ou módulo alterado (`npm test -- --testPathPattern=<pattern>`)
+- NÃO rodar a suíte de testes inteira — sempre rodar testes específicos do arquivo ou módulo alterado (`npm test -- --testPathPatterns=<pattern>`)
 
 ## Pipeline QA (obrigatorio)
 

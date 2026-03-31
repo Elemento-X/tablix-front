@@ -37,15 +37,15 @@ Desabilita APIs desnecessarias: camera, microphone, geolocation, accelerometer, 
 ### Content-Security-Policy
 
 **Producao:**
-- `script-src 'self' 'nonce-{random}' 'strict-dynamic' https://vercel.live` — nonce gerado por request, propagado via request headers (invisivel ao browser)
+- `script-src 'self' 'nonce-{random}' 'strict-dynamic' https://vercel.live https://*.vercel-scripts.com` — nonce gerado por request, propagado via request headers (invisivel ao browser)
 - `style-src 'self' 'unsafe-inline'` — necessario para Tailwind/CSS-in-JS
 - `connect-src 'self' https://vercel.live https://*.vercel-insights.com https://*.vercel-scripts.com`
 - `default-src 'self'`, `img-src 'self' data: blob: https:`, `font-src 'self' data:`
 - `frame-ancestors 'self'`, `base-uri 'self'`, `form-action 'self'`
 
 **Desenvolvimento:**
-- `script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live` — HMR requer eval
-- `connect-src` inclui `ws://localhost:*` para WebSocket do HMR
+- `script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-scripts.com` — HMR requer eval
+- `connect-src` inclui `ws://localhost:* ws://127.0.0.1:* ws://0.0.0.0:*` para WebSocket do HMR
 - Sem nonce ou strict-dynamic
 
 **Fluxo do nonce:**
