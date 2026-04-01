@@ -1,0 +1,10 @@
+{
+  "root": true,
+  "extends": ["@rocketseat/eslint-config/react"],
+  "rules": {
+    "no-undef": "off"
+  },
+  "env": {
+    "node": true
+  }
+}

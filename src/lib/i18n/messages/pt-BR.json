@@ -1,0 +1,372 @@
+{
+  "meta": {
+    "title": "Tablix - Transforme planilhas complexas em arquivos prontos para uso",
+    "description": "Envie sua planilha, selecione as colunas que você precisa e gere um novo arquivo em segundos. Ferramenta web para processamento e geração de planilhas personalizadas."
+  },
+  "header": {
+    "brand": "Tablix"
+  },
+  "hero": {
+    "title": "Transforme planilhas complexas em arquivos prontos para uso",
+    "subtitle": "Envie sua planilha, selecione as colunas que você precisa e gere um novo arquivo em segundos.",
+    "cta": "Gerar minha planilha"
+  },
+  "howItWorks": {
+    "title": "Como funciona",
+    "steps": {
+      "upload": {
+        "title": "Envie sua planilha",
+        "description": "Faça upload do seu arquivo CSV ou XLSX"
+      },
+      "visualize": {
+        "title": "Visualize as colunas detectadas",
+        "description": "O sistema identifica automaticamente todas as colunas"
+      },
+      "choose": {
+        "title": "Escolha o que deseja manter",
+        "description": "Selecione apenas as colunas necessárias"
+      },
+      "generate": {
+        "title": "Gere o novo arquivo",
+        "description": "Baixe sua planilha limpa e pronta para uso"
+      }
+    }
+  },
+  "audience": {
+    "title": "Para quem é",
+    "roles": {
+      "analysts": "Analistas",
+      "admins": "Times administrativos",
+      "recurring": "Pessoas que lidam com planilhas recorrentes"
+    },
+    "description": "O Tablix foi criado para reduzir tarefas repetitivas e ganhar tempo em atividades operacionais com planilhas."
+  },
+  "pricing": {
+    "title": "Planos",
+    "subtitle": "Escolha o plano ideal para suas necessidades",
+    "billingPeriod": {
+      "monthly": "Mensal",
+      "semester": "Semestral",
+      "annual": "Anual",
+      "annualBadge": "Mais vantajoso"
+    },
+    "plans": {
+      "free": {
+        "name": "Free",
+        "price": "R$ 0",
+        "period": "Para sempre",
+        "features": {
+          "sheetsPerMonth": "1 planilha por mês",
+          "maxRows": "até 500 linhas",
+          "maxColumns": "até 3 colunas"
+        },
+        "description": "Ideal para testar o fluxo e entender se o Tablix resolve seu problema.",
+        "cta": "Começar grátis"
+      },
+      "pro": {
+        "name": "Pro",
+        "badge": "Mais popular",
+        "oldPrice": "R$ 47",
+        "period": "mês",
+        "launchPrice": "Preço de lançamento garantido enquanto a assinatura estiver ativa",
+        "features": {
+          "sheetsPerMonth": "até 40 planilhas por mês",
+          "maxRows": "até 5.000 linhas por planilha",
+          "maxColumns": "até 10 colunas",
+          "priorityProcessing": "processamento prioritário",
+          "noWatermark": "sem marca d'água",
+          "fileHistory": "histórico de arquivos por 30 dias"
+        },
+        "cta": "Assinar Pro"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Personalizado",
+        "period": "Sob consulta",
+        "features": {
+          "customLimits": "Limites customizados",
+          "sla": "SLA garantido",
+          "prioritySupport": "Suporte prioritário",
+          "dedicatedInfra": "Infraestrutura dedicada"
+        },
+        "description": "Para empresas com alto volume ou necessidades específicas.",
+        "cta": "Falar com o time"
+      }
+    }
+  },
+  "footer": {
+    "security": "Seus arquivos são processados de forma temporária e segura.",
+    "privacy": "O Tablix não armazena seus arquivos. Eles são descartados após o processamento.",
+    "privacyPolicy": "Política de Privacidade",
+    "terms": "Termos de Uso",
+    "copyright": "© {year} Tablix Tecnologia. Todos os direitos reservados."
+  },
+  "upload": {
+    "title": "Envie sua planilha",
+    "subtitle": "Plano gratuito: até 500 linhas e 3 colunas",
+    "back": "Voltar",
+    "dropzone": "Clique para selecionar ou arraste arquivos",
+    "dropzoneWithFiles": "arquivo(s) selecionado(s)",
+    "or": "ou",
+    "selectFile": "Selecione um arquivo",
+    "maxSize": "CSV ou XLSX • Máximo 10MB",
+    "processing": "Processando...",
+    "continue": "Continuar",
+    "error": "Erro ao processar arquivo",
+    "securityNote": "Seus arquivos são processados de forma temporária e segura.",
+    "selectAtLeastOne": "Selecione pelo menos um arquivo"
+  },
+  "columns": {
+    "title": "Selecionar Colunas",
+    "subtitle": "Escolha quais colunas incluir no arquivo processado",
+    "detected": "Colunas Detectadas",
+    "selected": "selecionada(s)",
+    "max": "máx",
+    "of": "de",
+    "startOver": "Recomeçar",
+    "deselectAll": "Desmarcar Todas",
+    "selectAll": "Selecionar Todas",
+    "processAndDownload": "Processar e Baixar"
+  },
+  "status": {
+    "plan": "Plano",
+    "unificationsRemaining": "unificações restantes",
+    "files": "arquivos",
+    "maxFiles": "Máx",
+    "maxTotalSize": "Tamanho máx",
+    "maxRows": "linhas",
+    "maxColumns": "colunas",
+    "maxRowsLabel": "Máx",
+    "maxColumnsLabel": "Máx",
+    "clickToAddMore": "Clique acima para adicionar mais arquivos",
+    "loading": "Carregando informações do plano..."
+  },
+  "messages": {
+    "tooManyFiles": "Muitos arquivos. Máximo de {max} arquivos para o plano {plan}.",
+    "fileAlreadyAdded": "Arquivo \"{name}\" já foi adicionado",
+    "fileTooLarge": "\"{name}\" é muito grande. Tamanho máximo para o plano {plan} é {size}.",
+    "totalSizeExceeded": "Tamanho total excedido. Tamanho máximo total para o plano {plan} é {size}.",
+    "fileAdded": "Arquivo adicionado com sucesso",
+    "filesAdded": "{count} arquivos adicionados com sucesso",
+    "selectAtLeastOneColumn": "Selecione pelo menos uma coluna",
+    "tooManyColumns": "Muitas colunas selecionadas. Máximo de {max} colunas para o plano {plan}.",
+    "processingFiles": "Processando arquivos...",
+    "unifiedSuccess": "Unificado {count} arquivo(s) com {rows} linhas!",
+    "processingOnServer": "Arquivos grandes, processando no servidor...",
+    "processFailed": "Falha ao processar arquivo",
+    "processSuccess": "Arquivo processado com sucesso!",
+    "unificationLimitExceeded": "Limite de unificações excedido. Você usou {current}/{max} unificações este mês.",
+    "parsingFile": "Analisando arquivo {current} de {total}: {name}",
+    "rowsExceedLimit": "Total de linhas ({total}) excede o limite. Máximo de {max} linhas para o plano {plan}.",
+    "noCommonColumns": "Nenhuma coluna em comum encontrada. Os arquivos devem ter pelo menos uma coluna em comum.",
+    "foundCommonColumns": "Encontradas {count} colunas em comum. Você pode selecionar até {max} para o plano {plan}.",
+    "parsedSuccessSingle": "Analisado com sucesso! Encontradas {columns} colunas e {rows} linhas.",
+    "parsedSuccessMultiple": "Analisados {files} arquivos! Encontradas {columns} colunas em comum e {rows} linhas no total."
+  },
+  "errorBoundary": {
+    "title": "Algo deu errado",
+    "description": "Ocorreu um erro inesperado. Tente novamente ou volte para a página inicial.",
+    "tryAgain": "Tentar novamente",
+    "goHome": "Voltar ao início",
+    "uploadTitle": "Erro no processamento",
+    "uploadDescription": "Ocorreu um erro durante o upload ou processamento do arquivo. Tente novamente."
+  },
+  "dropzone": {
+    "dragActive": "Solte os arquivos aqui...",
+    "disabled": "Upload desabilitado"
+  },
+  "theme": {
+    "switchToLight": "Mudar para tema claro",
+    "switchToDark": "Mudar para tema escuro"
+  },
+  "a11y": {
+    "selectLanguage": "Selecionar idioma",
+    "themeToggle": "Alternar tema",
+    "usageProgress": "Progresso de uso do plano",
+    "columnToggle": "Selecionar ou desmarcar coluna",
+    "removeFile": "Remover"
+  },
+  "billingPeriods": {
+    "month": "mês",
+    "totalSemester": "R$ {price} a cada 6 meses",
+    "totalAnnual": "R$ {price}/ano"
+  },
+  "proPricing": {
+    "currencySymbol": "R$",
+    "monthly": {
+      "price": "29,90",
+      "total": "R$ 29,90/mês"
+    },
+    "semester": {
+      "price": "26,90",
+      "total": "R$ 161,40 a cada 6 meses"
+    },
+    "annual": {
+      "price": "24,90",
+      "total": "R$ 298,80/ano"
+    }
+  },
+  "legal": {
+    "backToHome": "Voltar ao início",
+    "lastUpdated": "Última atualização: {date}",
+    "tableOfContents": "Índice",
+    "privacy": {
+      "title": "Política de Privacidade",
+      "intro": {
+        "title": "Introdução",
+        "p1": "A Tablix Tecnologia (\"Tablix\", \"nós\") opera o serviço disponível em tablix.me. Esta Política de Privacidade explica como coletamos, usamos e protegemos suas informações quando você utiliza nosso serviço.",
+        "p2": "Ao utilizar o Tablix, você concorda com as práticas descritas nesta política. Se não concordar, por favor não utilize o serviço."
+      },
+      "dataCollection": {
+        "title": "Dados que coletamos",
+        "description": "Coletamos apenas os dados estritamente necessários para o funcionamento do serviço:",
+        "fingerprint": "Identificador anônimo (fingerprint) — usado para controlar limites de uso do plano Free. Armazenado como cookie httpOnly.",
+        "ipHash": "Hash do endereço IP — usado em conjunto com o fingerprint para identificação. Nunca armazenamos o IP completo.",
+        "usageCounters": "Contadores de uso — número de unificações realizadas no mês, armazenados no Redis com expiração automática.",
+        "locale": "Preferência de idioma — armazenada localmente no seu navegador (localStorage)."
+      },
+      "spreadsheetProcessing": {
+        "title": "Processamento de planilhas",
+        "p1": "Seus arquivos são processados inteiramente no seu navegador (client-side) no plano Free. Isso significa que seus dados nunca são enviados para nossos servidores durante o processamento.",
+        "p2": "No plano Pro, arquivos maiores podem ser processados no servidor. Nesse caso, os dados são processados em memória e descartados imediatamente após a geração do arquivo de saída. Não armazenamos, copiamos ou retemos seus arquivos.",
+        "p3": "Nunca acessamos, lemos ou analisamos o conteúdo das suas planilhas para qualquer finalidade além do processamento solicitado por você."
+      },
+      "cookies": {
+        "title": "Cookies e armazenamento local",
+        "description": "Utilizamos os seguintes cookies e dados de armazenamento local:",
+        "tablixFp": "tablix_fp — Cookie httpOnly que armazena seu identificador anônimo. Expira em 1 ano.",
+        "theme": "theme — Preferência de tema (claro/escuro). Armazenado via localStorage.",
+        "localePref": "locale — Preferência de idioma. Armazenado via localStorage.",
+        "noCookies": "Não utilizamos cookies de rastreamento, marketing ou publicidade."
+      },
+      "storage": {
+        "title": "Armazenamento e retenção",
+        "p1": "Contadores de uso são armazenados no Redis (Upstash) e expiram automaticamente ao final de cada período de faturamento.",
+        "p2": "O fingerprint no cookie expira em 1 ano ou quando você limpa os dados do navegador.",
+        "p3": "Não mantemos banco de dados com informações pessoais. Não existe \"conta\" no plano Free — apenas o identificador anônimo."
+      },
+      "security": {
+        "title": "Segurança",
+        "description": "Empregamos as seguintes medidas para proteger seus dados:",
+        "csp": "Content Security Policy (CSP) — restringe quais recursos podem ser carregados.",
+        "rateLimit": "Rate limiting — protege contra abuso e ataques de força bruta.",
+        "headers": "Headers de segurança — HSTS, X-Frame-Options, X-Content-Type-Options e outros.",
+        "validation": "Validação de arquivos — verificação de tipo MIME, extensão e magic numbers antes do processamento.",
+        "httpOnly": "Cookies httpOnly — não acessíveis via JavaScript, protegendo contra ataques XSS."
+      },
+      "rights": {
+        "title": "Seus direitos (LGPD)",
+        "description": "De acordo com a Lei Geral de Proteção de Dados (Lei 13.709/2018), você tem o direito de:",
+        "access": "Acessar seus dados — Você pode verificar seu status de uso diretamente na interface do Tablix.",
+        "deletion": "Solicitar exclusão — Ao limpar os cookies do seu navegador, o fingerprint é removido. Os contadores no Redis expiram automaticamente.",
+        "info": "Solicitar informações — Entre em contato conosco para saber quais dados estão associados ao seu identificador.",
+        "legalBasis": "Base legal: utilizamos legítimo interesse (Art. 7º, IX da LGPD) como base para o tratamento dos dados necessários ao funcionamento do serviço.",
+        "contact": "Para exercer qualquer desses direitos, entre em contato pelo e-mail: contact@tablix.me"
+      },
+      "thirdParty": {
+        "title": "Serviços de terceiros",
+        "description": "Utilizamos os seguintes serviços de terceiros:",
+        "vercel": "Vercel — Hospedagem e CDN. Sujeito à política de privacidade da Vercel.",
+        "upstash": "Upstash Redis — Armazenamento de contadores de uso. Dados criptografados em trânsito e em repouso.",
+        "analytics": "Vercel Analytics — Métricas anônimas de performance. Não coleta dados pessoais identificáveis."
+      },
+      "changes": {
+        "title": "Alterações nesta política",
+        "p1": "Podemos atualizar esta Política de Privacidade periodicamente. Alterações significativas serão comunicadas através de aviso no serviço.",
+        "p2": "O uso continuado do Tablix após alterações constitui aceitação da política atualizada."
+      },
+      "contact": {
+        "title": "Contato",
+        "p1": "Para dúvidas, solicitações ou reclamações relacionadas à privacidade:",
+        "controller": "Controlador: Tablix Tecnologia",
+        "email": "E-mail: contact@tablix.me",
+        "address": "Endereço: São Paulo - SP, Brasil"
+      }
+    },
+    "terms": {
+      "title": "Termos de Uso",
+      "acceptance": {
+        "title": "Aceitação dos termos",
+        "p1": "Ao acessar e utilizar o Tablix (\"Serviço\"), disponível em tablix.me, você concorda com estes Termos de Uso. Se não concordar com qualquer parte destes termos, não utilize o Serviço.",
+        "p2": "O Tablix é operado pela Tablix Tecnologia, com sede em São Paulo - SP, Brasil."
+      },
+      "serviceDescription": {
+        "title": "Descrição do serviço",
+        "p1": "O Tablix é uma ferramenta web para processamento de planilhas. O serviço permite que você faça upload de arquivos CSV e XLSX, selecione colunas específicas e gere novos arquivos com os dados filtrados.",
+        "p2": "O processamento no plano Free é realizado inteiramente no seu navegador. No plano Pro, arquivos maiores podem ser processados em nossos servidores."
+      },
+      "plans": {
+        "title": "Planos e limites",
+        "freeTitle": "Plano Free",
+        "freeDescription": "Gratuito, sem necessidade de cadastro. Sujeito aos seguintes limites:",
+        "freeLimit1": "1 unificação por mês",
+        "freeLimit2": "Até 500 linhas por planilha",
+        "freeLimit3": "Até 3 colunas por arquivo de saída",
+        "freeLimit4": "Até 3 arquivos por upload",
+        "freeLimit5": "Tamanho total máximo de 1 MB por upload",
+        "proTitle": "Plano Pro",
+        "proDescription": "Requer assinatura ativa. Inclui limites expandidos:",
+        "proLimit1": "Até 40 unificações por mês",
+        "proLimit2": "Até 5.000 linhas por planilha",
+        "proLimit3": "Até 10 colunas por arquivo de saída",
+        "proLimit4": "Até 15 arquivos por upload",
+        "proLimit5": "Tamanho máximo de 2 MB por arquivo (30 MB total)",
+        "proLimit6": "Processamento prioritário no servidor",
+        "limitsNote": "Os limites podem ser ajustados a qualquer momento. Alterações serão comunicadas com antecedência."
+      },
+      "acceptableUse": {
+        "title": "Uso aceitável",
+        "description": "Ao utilizar o Tablix, você concorda em não:",
+        "rule1": "Tentar contornar os limites de uso do seu plano.",
+        "rule2": "Utilizar o serviço para processar dados ilegais ou obtidos de forma ilícita.",
+        "rule3": "Realizar engenharia reversa, descompilar ou tentar extrair o código-fonte do serviço.",
+        "rule4": "Enviar arquivos maliciosos, com vírus ou código prejudicial.",
+        "rule5": "Utilizar automação (bots, scrapers) para acessar o serviço sem autorização prévia.",
+        "rule6": "Sobrecarregar intencionalmente a infraestrutura do serviço."
+      },
+      "userContent": {
+        "title": "Conteúdo do usuário",
+        "p1": "Você é o único responsável pelos arquivos que envia ao Tablix. O serviço não reivindica propriedade sobre seus dados.",
+        "p2": "No plano Free, os arquivos são processados inteiramente no seu navegador e nunca são enviados aos nossos servidores.",
+        "p3": "No plano Pro, os arquivos são processados em memória no servidor e descartados imediatamente após o processamento. Não armazenamos, copiamos ou retemos seus arquivos."
+      },
+      "ip": {
+        "title": "Propriedade intelectual",
+        "p1": "O Tablix, incluindo sua interface, código-fonte, design e marca, são propriedade exclusiva da Tablix Tecnologia.",
+        "p2": "Você recebe uma licença limitada, não exclusiva e revogável para utilizar o Serviço de acordo com estes Termos."
+      },
+      "liability": {
+        "title": "Limitação de responsabilidade",
+        "p1": "O Tablix é fornecido \"como está\" (as-is), sem garantias de qualquer tipo, expressas ou implícitas.",
+        "p2": "Não nos responsabilizamos por perdas ou danos resultantes do uso do serviço, incluindo, mas não se limitando a: perda de dados, interrupções de serviço ou resultados imprecisos no processamento.",
+        "p3": "A responsabilidade total da Tablix Tecnologia, em qualquer caso, está limitada ao valor pago pelo usuário nos últimos 12 meses."
+      },
+      "availability": {
+        "title": "Disponibilidade",
+        "p1": "Nos esforçamos para manter o Tablix disponível 24 horas por dia, 7 dias por semana, mas não garantimos disponibilidade ininterrupta.",
+        "p2": "Podemos realizar manutenções programadas ou emergenciais que podem resultar em indisponibilidade temporária."
+      },
+      "suspension": {
+        "title": "Suspensão e encerramento",
+        "p1": "Reservamo-nos o direito de suspender ou encerrar o acesso de qualquer usuário que viole estes Termos de Uso.",
+        "p2": "Podemos descontinuar o Serviço ou qualquer funcionalidade a qualquer momento, com aviso prévio razoável quando possível."
+      },
+      "changes": {
+        "title": "Alterações nos termos",
+        "p1": "Podemos atualizar estes Termos de Uso periodicamente. Alterações significativas serão comunicadas através de aviso no serviço.",
+        "p2": "O uso continuado do Tablix após alterações constitui aceitação dos termos atualizados."
+      },
+      "governingLaw": {
+        "title": "Lei aplicável",
+        "p1": "Estes termos são regidos pelas leis da República Federativa do Brasil.",
+        "p2": "Fica eleito o foro da Comarca de São Paulo - SP para dirimir quaisquer questões oriundas destes Termos."
+      },
+      "contact": {
+        "title": "Contato",
+        "p1": "Para dúvidas sobre estes Termos de Uso:",
+        "email": "E-mail: contact@tablix.me",
+        "address": "Endereço: São Paulo - SP, Brasil"
+      }
+    }
+  }
+}
