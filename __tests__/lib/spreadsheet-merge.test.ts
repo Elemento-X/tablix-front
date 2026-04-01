@@ -7,19 +7,43 @@ import {
   downloadBlob,
   type MergeOptions,
 } from '@/lib/spreadsheet-merge'
-import * as XLSX from 'xlsx'
 
-// Mock XLSX library
-jest.mock('xlsx', () => ({
-  read: jest.fn(),
-  utils: {
-    book_new: jest.fn(() => ({ SheetNames: [], Sheets: {} })),
-    json_to_sheet: jest.fn(() => ({})),
-    book_append_sheet: jest.fn(),
-    sheet_to_json: jest.fn(),
-  },
-  write: jest.fn(() => new ArrayBuffer(100)),
+// Mock excel-utils module
+const mockWorksheetToJson = jest.fn()
+const mockWriteBuffer = jest.fn(() => Promise.resolve(new ArrayBuffer(100)))
+const mockAddWorksheet = jest.fn(() => ({
+  columns: null,
+  addRow: jest.fn(),
 }))
+const mockWorkbook = {
+  addWorksheet: mockAddWorksheet,
+  worksheets: [{ name: 'Sheet1' }],
+  xlsx: {
+    load: jest.fn(),
+    writeBuffer: mockWriteBuffer,
+  },
+}
+const mockExcelJS = {
+  Workbook: jest.fn(() => mockWorkbook),
+}
+
+jest.mock('@/lib/excel-utils', () => ({
+  getExcelJS: jest.fn(() => Promise.resolve(mockExcelJS)),
+  worksheetToJson: (...args: unknown[]) => mockWorksheetToJson(...args),
+  createWorkbookFromJson: jest.fn(() => Promise.resolve(mockWorkbook)),
+  addSheetFromJson: jest.fn(() => ({
+    columns: null,
+    addRow: jest.fn(),
+  })),
+}))
+
+// Mock xls-parser (Web Worker not available in jsdom)
+jest.mock('@/lib/xls-parser', () => ({
+  parseXls: jest.fn(),
+}))
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const excelUtils = require('@/lib/excel-utils')
 
 // Mock papaparse
 jest.mock('papaparse', () => ({
@@ -33,28 +57,31 @@ jest.mock('papaparse', () => ({
   })),
 }))
 
-// Mock FileReader
-class MockFileReader {
-  onload: ((event: { target: { result: ArrayBuffer } }) => void) | null = null
-  onerror: (() => void) | null = null
-  result: ArrayBuffer | null = null
-
-  readAsArrayBuffer() {
-    setTimeout(() => {
-      this.result = new ArrayBuffer(100)
-      if (this.onload) {
-        this.onload({ target: { result: this.result } })
-      }
-    }, 0)
-  }
+/**
+ * Polyfill arrayBuffer for jsdom's File/Blob (not available in older jsdom).
+ * Must set on both prototypes to ensure File instances inherit it.
+ */
+function arrayBufferPolyfill(this: Blob): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as ArrayBuffer)
+    reader.onerror = () => reject(new Error('Failed to read blob'))
+    reader.readAsArrayBuffer(this)
+  })
 }
-
-// @ts-expect-error — MockFileReader satisfies the subset of FileReader used in the module
-global.FileReader = MockFileReader
+Blob.prototype.arrayBuffer = arrayBufferPolyfill
+File.prototype.arrayBuffer = arrayBufferPolyfill
 
 describe('spreadsheet-merge.ts', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    // Reset default mock for worksheetToJson
+    mockWorksheetToJson.mockReturnValue([
+      { Name: 'John', Email: 'john@test.com' },
+      { Name: 'Jane', Email: 'jane@test.com' },
+    ])
+    mockWorkbook.worksheets = [{ name: 'Sheet1' }]
+    mockWriteBuffer.mockResolvedValue(new ArrayBuffer(100))
   })
 
   describe('canProcessClientSide', () => {
@@ -190,16 +217,8 @@ describe('spreadsheet-merge.ts', () => {
     })
 
     describe('Excel file processing', () => {
-      it('should parse Excel file and return merged result', async () => {
-        // Mock XLSX.read for Excel files
-        const mockWorkbook = {
-          SheetNames: ['Sheet1'],
-          Sheets: {
-            Sheet1: {},
-          },
-        }
-        ;(XLSX.read as jest.Mock).mockReturnValue(mockWorkbook)
-        ;(XLSX.utils.sheet_to_json as jest.Mock).mockReturnValue([
+      it('should parse Excel file via ExcelJS and return merged result', async () => {
+        mockWorksheetToJson.mockReturnValue([
           { Name: 'John', Email: 'john@test.com' },
           { Name: 'Jane', Email: 'jane@test.com' },
         ])
@@ -218,14 +237,13 @@ describe('spreadsheet-merge.ts', () => {
 
         expect(result).toHaveProperty('blob')
         expect(result).toHaveProperty('filename')
+        expect(excelUtils.getExcelJS).toHaveBeenCalled()
+        expect(mockWorksheetToJson).toHaveBeenCalled()
       })
 
       it('should throw error when no sheets found in workbook', async () => {
-        const mockWorkbook = {
-          SheetNames: [],
-          Sheets: {},
-        }
-        ;(XLSX.read as jest.Mock).mockReturnValue(mockWorkbook)
+        // Empty worksheets array
+        mockWorkbook.worksheets = []
 
         const file = new File([''], 'test.xlsx', {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -243,8 +261,65 @@ describe('spreadsheet-merge.ts', () => {
       })
     })
 
+    describe('XLS file processing (legacy)', () => {
+      it('should parse XLS file via parseXls worker and merge rows', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const xlsParser = require('@/lib/xls-parser')
+        ;(xlsParser.parseXls as jest.Mock).mockResolvedValueOnce({
+          columns: ['Name', 'Email'],
+          rows: [
+            { Name: 'Alice', Email: 'alice@test.com' },
+            { Name: 'Bob', Email: 'bob@test.com' },
+          ],
+          rowCount: 2,
+        })
+
+        const file = new File([''], 'legacy.xls', {
+          type: 'application/vnd.ms-excel',
+        })
+
+        const options: MergeOptions = {
+          files: [file],
+          selectedColumns: ['Name', 'Email'],
+          addWatermark: false,
+        }
+
+        const result = await mergeSpreadsheets(options)
+
+        expect(result).toHaveProperty('blob')
+        expect(result.rowCount).toBe(2)
+        expect(xlsParser.parseXls).toHaveBeenCalled()
+      })
+    })
+
+    describe('CSV parse error in parseFileData', () => {
+      it('should propagate CSV parse errors from PapaParse', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const Papa = require('papaparse')
+        ;(Papa.parse as jest.Mock).mockReturnValueOnce({
+          data: [],
+          errors: [{ message: 'Malformed CSV: unexpected EOF' }],
+          meta: { fields: [] },
+        })
+
+        const file = new File(['bad,csv'], 'broken.csv', {
+          type: 'text/csv',
+        })
+
+        const options: MergeOptions = {
+          files: [file],
+          selectedColumns: ['Name'],
+          addWatermark: false,
+        }
+
+        await expect(mergeSpreadsheets(options)).rejects.toThrow(
+          'Malformed CSV: unexpected EOF',
+        )
+      })
+    })
+
     describe('watermark functionality (Free plan)', () => {
-      it('should add watermark column when addWatermark is true', async () => {
+      it('should add watermark column and About sheet when addWatermark is true', async () => {
         const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', {
           type: 'text/csv',
         })
@@ -257,12 +332,20 @@ describe('spreadsheet-merge.ts', () => {
 
         await mergeSpreadsheets(options)
 
-        // Verify book_append_sheet was called twice (data sheet + About sheet)
-        expect(XLSX.utils.book_append_sheet).toHaveBeenCalledTimes(2)
+        // Verify createWorkbookFromJson was called with watermark column
+        expect(excelUtils.createWorkbookFromJson).toHaveBeenCalledWith(
+          'Dados Unificados',
+          expect.any(Array),
+          ['Name', 'Email', 'Gerado por Tablix'],
+        )
 
-        // Verify the "Sobre" (About) sheet was added
-        const calls = (XLSX.utils.book_append_sheet as jest.Mock).mock.calls
-        expect(calls[1][2]).toBe('Sobre')
+        // Verify addSheetFromJson was called for the "Sobre" sheet
+        expect(excelUtils.addSheetFromJson).toHaveBeenCalledWith(
+          mockWorkbook,
+          'Sobre',
+          expect.any(Array),
+          ['Info', 'Valor'],
+        )
       })
 
       it('should not add watermark when addWatermark is false', async () => {
@@ -278,12 +361,15 @@ describe('spreadsheet-merge.ts', () => {
 
         await mergeSpreadsheets(options)
 
-        // Verify book_append_sheet was called only once (data sheet only)
-        expect(XLSX.utils.book_append_sheet).toHaveBeenCalledTimes(1)
+        // Verify createWorkbookFromJson called without watermark column
+        expect(excelUtils.createWorkbookFromJson).toHaveBeenCalledWith(
+          'Dados Unificados',
+          expect.any(Array),
+          ['Name', 'Email'],
+        )
 
-        // Verify the sheet is named "Dados Unificados"
-        const calls = (XLSX.utils.book_append_sheet as jest.Mock).mock.calls
-        expect(calls[0][2]).toBe('Dados Unificados')
+        // Verify addSheetFromJson was NOT called
+        expect(excelUtils.addSheetFromJson).not.toHaveBeenCalled()
       })
     })
 
@@ -305,12 +391,11 @@ describe('spreadsheet-merge.ts', () => {
 
         await mergeSpreadsheets(options)
 
-        // Verify json_to_sheet was called with correct header
-        expect(XLSX.utils.json_to_sheet).toHaveBeenCalledWith(
+        // Verify createWorkbookFromJson was called with only Name header
+        expect(excelUtils.createWorkbookFromJson).toHaveBeenCalledWith(
+          'Dados Unificados',
           expect.any(Array),
-          expect.objectContaining({
-            header: ['Name'],
-          }),
+          ['Name'],
         )
       })
 
@@ -366,6 +451,22 @@ describe('spreadsheet-merge.ts', () => {
 
         const today = new Date().toISOString().split('T')[0]
         expect(result.filename).toBe(`tablix-unificado-${today}.xlsx`)
+      })
+
+      it('should use ExcelJS writeBuffer for output generation', async () => {
+        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', {
+          type: 'text/csv',
+        })
+
+        const options: MergeOptions = {
+          files: [file],
+          selectedColumns: ['Name', 'Email'],
+          addWatermark: false,
+        }
+
+        await mergeSpreadsheets(options)
+
+        expect(mockWriteBuffer).toHaveBeenCalled()
       })
     })
   })
@@ -431,45 +532,23 @@ describe('spreadsheet-merge.ts', () => {
 
       downloadBlob(blob, filename)
 
-      expect(capturedAnchor.download).toBe(filename)
+      expect(capturedAnchor!.download).toBe(filename)
     })
   })
 
   describe('error handling', () => {
-    it('should handle file read errors gracefully', async () => {
-      // Create a custom FileReader that fails
-      class FailingFileReader {
-        onload: ((event: { target: { result: ArrayBuffer } }) => void) | null =
-          null
-
-        onerror: (() => void) | null = null
-
-        readAsArrayBuffer() {
-          setTimeout(() => {
-            if (this.onerror) {
-              this.onerror()
-            }
-          }, 0)
-        }
-      }
-
-      // @ts-expect-error — FailingFileReader satisfies the subset of FileReader used in the module
-      global.FileReader = FailingFileReader
-
+    it('should handle arrayBuffer failure gracefully', async () => {
       const file = new File(['content'], 'test.csv', { type: 'text/csv' })
+      // Override arrayBuffer to simulate failure
+      file.arrayBuffer = () => Promise.reject(new Error('Read failed'))
+
       const options: MergeOptions = {
         files: [file],
         selectedColumns: ['Name'],
         addWatermark: false,
       }
 
-      await expect(mergeSpreadsheets(options)).rejects.toThrow(
-        'Failed to read file',
-      )
-
-      // Restore original mock
-      // @ts-expect-error — MockFileReader satisfies the subset of FileReader used in the module
-      global.FileReader = MockFileReader
+      await expect(mergeSpreadsheets(options)).rejects.toThrow('Read failed')
     })
   })
 
@@ -492,8 +571,9 @@ describe('spreadsheet-merge.ts', () => {
 
       await mergeSpreadsheets(options)
 
-      // Check that json_to_sheet was called with sanitized data
-      expect(XLSX.utils.json_to_sheet).toHaveBeenCalledWith(
+      // Check that createWorkbookFromJson was called with sanitized data
+      expect(excelUtils.createWorkbookFromJson).toHaveBeenCalledWith(
+        'Dados Unificados',
         expect.arrayContaining([
           expect.objectContaining({
             Name: "'=SUM(A1:A10)",
@@ -529,7 +609,8 @@ describe('spreadsheet-merge.ts', () => {
 
       await mergeSpreadsheets(options)
 
-      expect(XLSX.utils.json_to_sheet).toHaveBeenCalledWith(
+      expect(excelUtils.createWorkbookFromJson).toHaveBeenCalledWith(
+        'Dados Unificados',
         expect.arrayContaining([
           expect.objectContaining({ Col: "'+cmd|/C calc" }),
           expect.objectContaining({ Col: "'-1+1" }),
@@ -560,7 +641,8 @@ describe('spreadsheet-merge.ts', () => {
 
       await mergeSpreadsheets(options)
 
-      expect(XLSX.utils.json_to_sheet).toHaveBeenCalledWith(
+      expect(excelUtils.createWorkbookFromJson).toHaveBeenCalledWith(
+        'Dados Unificados',
         expect.arrayContaining([
           expect.objectContaining({ Num: 42, Bool: true, Empty: null }),
         ]),
@@ -586,7 +668,8 @@ describe('spreadsheet-merge.ts', () => {
 
       await mergeSpreadsheets(options)
 
-      expect(XLSX.utils.json_to_sheet).toHaveBeenCalledWith(
+      expect(excelUtils.createWorkbookFromJson).toHaveBeenCalledWith(
+        'Dados Unificados',
         expect.arrayContaining([
           expect.objectContaining({ Name: 'Normal text', Calc: 'A=B+C' }),
         ]),
