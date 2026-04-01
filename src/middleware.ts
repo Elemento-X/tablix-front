@@ -44,6 +44,7 @@ export function middleware(request: NextRequest) {
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     `connect-src 'self' ${isDev ? 'ws://localhost:* ws://127.0.0.1:* ws://0.0.0.0:* ' : ''}https://vercel.live https://*.vercel-insights.com https://*.vercel-scripts.com`,
+    "worker-src 'self'",
     "frame-ancestors 'self'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -66,7 +67,6 @@ export function middleware(request: NextRequest) {
   response.headers.set('X-Frame-Options', 'SAMEORIGIN')
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.headers.set('X-XSS-Protection', '1; mode=block')
 
   // Permissions Policy
   response.headers.set(

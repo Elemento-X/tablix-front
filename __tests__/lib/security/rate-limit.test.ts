@@ -620,7 +620,7 @@ describe('rate-limit.ts', () => {
       // Failure path — Upstash throws, falls back to in-memory
       mockLimitFn.mockRejectedValueOnce(new Error('Redis connection lost'))
       const consoleSpy = jest
-        .spyOn(console, 'warn')
+        .spyOn(console, 'error')
         .mockImplementation(() => {})
 
       const fallbackResult = await limiter.check(request)
@@ -745,7 +745,7 @@ describe('rate-limit.ts', () => {
       process.env.NODE_ENV = 'production'
 
       const consoleSpy = jest
-        .spyOn(console, 'warn')
+        .spyOn(console, 'error')
         .mockImplementation(() => {})
 
       // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -763,6 +763,293 @@ describe('rate-limit.ts', () => {
         '[Rate Limit] Redis failed:',
         'Redis unavailable',
       )
+    })
+  })
+
+  describe('circuit breaker', () => {
+    afterEach(() => {
+      process.env.NODE_ENV = 'test'
+      jest.restoreAllMocks()
+    })
+
+    it('should open circuit after CIRCUIT_BREAKER_THRESHOLD consecutive Redis failures', async () => {
+      jest.resetModules()
+
+      const mockLimitFn = jest
+        .fn()
+        .mockRejectedValue(new Error('Redis down'))
+
+      jest.doMock('@/lib/redis', () => ({
+        getRedisClient: () => ({}),
+      }))
+
+      jest.doMock('@upstash/ratelimit', () => ({
+        Ratelimit: class {
+          static slidingWindow() { return {} }
+          limit = mockLimitFn
+        },
+      }))
+
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { rateLimit: rl, __resetRateLimitStore: reset } = require('@/lib/security/rate-limit')
+      reset()
+
+      const limiter = rl({ interval: 60000, maxRequests: 10, namespace: 'cb-test-1' })
+      const request = new NextRequest('http://localhost:3000/test', {
+        headers: new Headers({ 'x-forwarded-for': '10.10.10.1' }),
+      })
+
+      // 3 failures → CIRCUIT_BREAKER_THRESHOLD = 3 → circuit opens
+      await limiter.check(request)
+      await limiter.check(request)
+      await limiter.check(request)
+
+      // After threshold, circuit breaker open log should appear
+      const circuitOpenLog = consoleSpy.mock.calls.find((args) =>
+        typeof args[0] === 'string' && args[0].includes('Circuit breaker OPEN'),
+      )
+      expect(circuitOpenLog).toBeDefined()
+    })
+
+    it('should skip Redis (use in-memory) when circuit is OPEN', async () => {
+      jest.resetModules()
+
+      let callCount = 0
+      const mockLimitFn = jest.fn().mockImplementation(() => {
+        callCount++
+        return Promise.reject(new Error('Redis down'))
+      })
+
+      jest.doMock('@/lib/redis', () => ({
+        getRedisClient: () => ({}),
+      }))
+
+      jest.doMock('@upstash/ratelimit', () => ({
+        Ratelimit: class {
+          static slidingWindow() { return {} }
+          limit = mockLimitFn
+        },
+      }))
+
+      jest.spyOn(console, 'error').mockImplementation(() => {})
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { rateLimit: rl, __resetRateLimitStore: reset } = require('@/lib/security/rate-limit')
+      reset()
+
+      const limiter = rl({ interval: 60000, maxRequests: 10, namespace: 'cb-test-2' })
+      const request = new NextRequest('http://localhost:3000/test', {
+        headers: new Headers({ 'x-forwarded-for': '10.10.10.2' }),
+      })
+
+      // Trigger 3 failures to open the circuit
+      await limiter.check(request)
+      await limiter.check(request)
+      await limiter.check(request)
+
+      const callsAfterOpen = callCount
+
+      // Additional requests while circuit is OPEN should skip Redis entirely
+      await limiter.check(request)
+      await limiter.check(request)
+
+      // Redis should not have been called again after circuit opened
+      expect(mockLimitFn).toHaveBeenCalledTimes(callsAfterOpen)
+    })
+
+    it('should transition from OPEN to HALF_OPEN after OPEN_DURATION_MS and allow one request', async () => {
+      jest.resetModules()
+      jest.useFakeTimers({ now: Date.now() })
+
+      let callCount = 0
+      const mockLimitFn = jest.fn().mockImplementation(() => {
+        callCount++
+        return Promise.reject(new Error('Redis still down'))
+      })
+
+      jest.doMock('@/lib/redis', () => ({
+        getRedisClient: () => ({}),
+      }))
+
+      jest.doMock('@upstash/ratelimit', () => ({
+        Ratelimit: class {
+          static slidingWindow() { return {} }
+          limit = mockLimitFn
+        },
+      }))
+
+      jest.spyOn(console, 'error').mockImplementation(() => {})
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { rateLimit: rl, __resetRateLimitStore: reset } = require('@/lib/security/rate-limit')
+      reset()
+
+      const limiter = rl({ interval: 60000, maxRequests: 10, namespace: 'cb-test-3' })
+      const request = new NextRequest('http://localhost:3000/test', {
+        headers: new Headers({ 'x-forwarded-for': '10.10.10.3' }),
+      })
+
+      // Open the circuit (3 failures)
+      await limiter.check(request)
+      await limiter.check(request)
+      await limiter.check(request)
+
+      const callsAfterOpen = callCount
+
+      // Advance past OPEN_DURATION_MS (30s) — circuit should go HALF_OPEN
+      jest.advanceTimersByTime(30_001)
+      jest.setSystemTime(Date.now() + 30_001)
+
+      // This request should reach Redis (HALF_OPEN allows one attempt)
+      await limiter.check(request)
+
+      expect(mockLimitFn.mock.calls.length).toBeGreaterThan(callsAfterOpen)
+
+      jest.useRealTimers()
+    })
+
+    it('should re-open circuit when HALF_OPEN probe fails (back to OPEN state)', async () => {
+      // When the half-open probe fails, recordRedisFailure() sets state back to 'open'
+      // The circuit does NOT stay in half-open — it returns to open with refreshed openedAt
+      jest.resetModules()
+      jest.useFakeTimers({ now: Date.now() })
+
+      const mockLimitFn = jest.fn().mockRejectedValue(new Error('Redis still failing'))
+
+      jest.doMock('@/lib/redis', () => ({
+        getRedisClient: () => ({}),
+      }))
+
+      jest.doMock('@upstash/ratelimit', () => ({
+        Ratelimit: class {
+          static slidingWindow() { return {} }
+          limit = mockLimitFn
+        },
+      }))
+
+      jest.spyOn(console, 'error').mockImplementation(() => {})
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { rateLimit: rl, __resetRateLimitStore: reset } = require('@/lib/security/rate-limit')
+      reset()
+
+      const limiter = rl({ interval: 60000, maxRequests: 10, namespace: 'cb-test-5' })
+      const request = new NextRequest('http://localhost:3000/test', {
+        headers: new Headers({ 'x-forwarded-for': '10.10.10.5' }),
+      })
+
+      // Open the circuit (3 failures)
+      await limiter.check(request)
+      await limiter.check(request)
+      await limiter.check(request)
+      const callsAfterOpen = mockLimitFn.mock.calls.length
+
+      // Advance past OPEN_DURATION_MS → next call transitions to HALF_OPEN and allows probe
+      jest.advanceTimersByTime(30_001)
+      jest.setSystemTime(Date.now() + 30_001)
+
+      // Half-open probe — Redis fails → recordRedisFailure → state goes back to 'open'
+      await limiter.check(request)
+      expect(mockLimitFn.mock.calls.length).toBe(callsAfterOpen + 1)
+
+      // Circuit is OPEN again — next request should skip Redis
+      await limiter.check(request)
+      expect(mockLimitFn.mock.calls.length).toBe(callsAfterOpen + 1) // no new Redis call
+
+      jest.useRealTimers()
+    })
+
+    it('should reset circuit to CLOSED on Redis success after HALF_OPEN probe', async () => {
+      jest.resetModules()
+      jest.useFakeTimers({ now: Date.now() })
+
+      let failCount = 0
+      const mockLimitFn = jest.fn().mockImplementation(() => {
+        failCount++
+        if (failCount <= 3) {
+          return Promise.reject(new Error('Redis down'))
+        }
+        // After circuit opens and half-open probe: success
+        return Promise.resolve({ success: true, remaining: 9 })
+      })
+
+      jest.doMock('@/lib/redis', () => ({
+        getRedisClient: () => ({}),
+      }))
+
+      jest.doMock('@upstash/ratelimit', () => ({
+        Ratelimit: class {
+          static slidingWindow() { return {} }
+          limit = mockLimitFn
+        },
+      }))
+
+      jest.spyOn(console, 'error').mockImplementation(() => {})
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { rateLimit: rl, __resetRateLimitStore: reset } = require('@/lib/security/rate-limit')
+      reset()
+
+      const limiter = rl({ interval: 60000, maxRequests: 10, namespace: 'cb-test-4' })
+      const request = new NextRequest('http://localhost:3000/test', {
+        headers: new Headers({ 'x-forwarded-for': '10.10.10.4' }),
+      })
+
+      // Open the circuit
+      await limiter.check(request)
+      await limiter.check(request)
+      await limiter.check(request)
+
+      // Advance past OPEN_DURATION_MS → HALF_OPEN
+      jest.advanceTimersByTime(30_001)
+      jest.setSystemTime(Date.now() + 30_001)
+
+      // Half-open probe succeeds → circuit should close
+      const result = await limiter.check(request)
+      expect(result.success).toBe(true)
+      expect(result.remaining).toBe(9)
+
+      // Subsequent request also goes to Redis (circuit is CLOSED again)
+      const result2 = await limiter.check(request)
+      expect(result2.success).toBe(true)
+
+      jest.useRealTimers()
+    })
+  })
+
+  describe('NODE_ENV guards', () => {
+    afterEach(() => {
+      process.env.NODE_ENV = 'test'
+    })
+
+    it('should clear in-memory store when called in test environment', () => {
+      // Arrange: use the rateLimit directly so inMemoryStore gets an entry
+      const limiter = rateLimit({ interval: 60000, maxRequests: 1, namespace: 'guard-test' })
+      const request = createRequest({ 'x-forwarded-for': '99.1.1.1' })
+
+      // Prime the store
+      limiter.check(request)
+
+      // Reset should succeed silently in test env
+      expect(() => __resetRateLimitStore()).not.toThrow()
+    })
+
+    it('should be a no-op when called outside test environment', async () => {
+      // Prime the store
+      const limiter = rateLimit({ interval: 60000, maxRequests: 1, namespace: 'guard-test-2' })
+      const request = createRequest({ 'x-forwarded-for': '99.1.1.2' })
+      await limiter.check(request)
+
+      // Simulate production — guard should prevent the clear
+      process.env.NODE_ENV = 'production'
+      __resetRateLimitStore()
+
+      // Store was NOT cleared: same IP on same limiter should still be blocked
+      process.env.NODE_ENV = 'test'
+      const result = await limiter.check(request)
+      expect(result.success).toBe(false)
     })
   })
 })

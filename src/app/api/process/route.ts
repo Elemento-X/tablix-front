@@ -10,7 +10,7 @@ import {
   validateColumnSelection,
   sanitizeString,
   validateContentType,
-  validateBodySize,
+  parseMultipartWithLimit,
 } from '@/lib/security/validation-schemas'
 import {
   getUserFingerprint,
@@ -31,12 +31,6 @@ export async function POST(request: NextRequest) {
         { error: contentTypeCheck.error },
         { status: 415 },
       )
-    }
-
-    // Reject oversized bodies before parsing
-    const bodySizeCheck = validateBodySize(request, 'multipart')
-    if (!bodySizeCheck.valid) {
-      return NextResponse.json({ error: bodySizeCheck.error }, { status: 413 })
     }
 
     // Apply rate limiting
@@ -61,7 +55,13 @@ export async function POST(request: NextRequest) {
     const plan = getUserPlan(request)
     const limits = getPlanLimits(plan)
 
-    const formData = await request.formData()
+    // Parse multipart body with streaming byte limit (prevents oversized payload attacks)
+    const formDataResult = await parseMultipartWithLimit(request)
+    if ('error' in formDataResult) {
+      return NextResponse.json({ error: formDataResult.error }, { status: 413 })
+    }
+
+    const { formData } = formDataResult
     const files = formData
       .getAll('files')
       .filter((f): f is File => f instanceof File)

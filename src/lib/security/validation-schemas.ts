@@ -49,7 +49,104 @@ export const planLimitSchema = z.object({
 const MAX_MULTIPART_BODY = 60 * 1024 * 1024 // 60MB (enterprise max file + multipart overhead)
 const MAX_JSON_BODY = 1 * 1024 * 1024 // 1MB (JSON payloads are small)
 
-// Validate Content-Length against body size limit
+/**
+ * Read the request body with a hard byte limit (streaming).
+ * Content-Length is untrusted (attacker-controlled header), so we count
+ * actual bytes read from the stream and abort if the limit is exceeded.
+ *
+ * Returns the body as an ArrayBuffer if within limit, or an error string.
+ */
+export async function readBodyWithLimit(
+  request: Request,
+  type: 'multipart' | 'json',
+): Promise<{ body: ArrayBuffer } | { error: string }> {
+  const maxSize = type === 'multipart' ? MAX_MULTIPART_BODY : MAX_JSON_BODY
+
+  // Fast reject: Content-Length header as early hint (untrusted but cheap)
+  const contentLength = request.headers.get('content-length')
+  if (contentLength) {
+    const claimed = parseInt(contentLength, 10)
+    if (!isNaN(claimed) && claimed > maxSize) {
+      return {
+        error: `Request body too large (max ${maxSize / (1024 * 1024)}MB)`,
+      }
+    }
+  }
+
+  // Stream the body and count actual bytes
+  const body = request.body
+  if (!body) {
+    return { error: 'Missing request body' }
+  }
+
+  const reader = body.getReader()
+  const chunks: Uint8Array[] = []
+  let totalBytes = 0
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      totalBytes += value.byteLength
+      if (totalBytes > maxSize) {
+        reader.cancel()
+        return {
+          error: `Request body too large (max ${maxSize / (1024 * 1024)}MB)`,
+        }
+      }
+
+      chunks.push(value)
+    }
+  } finally {
+    reader.releaseLock()
+  }
+
+  // Concatenate chunks into a single ArrayBuffer
+  const result = new Uint8Array(totalBytes)
+  let offset = 0
+  for (const chunk of chunks) {
+    result.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+
+  return { body: result.buffer }
+}
+
+/**
+ * Read multipart body with streaming byte limit, then parse as FormData.
+ * Prevents attackers from sending oversized payloads via fake Content-Length.
+ *
+ * Uses readBodyWithLimit to enforce real byte counting, then reconstructs
+ * a synthetic Request to parse the buffered body as multipart/form-data.
+ */
+export async function parseMultipartWithLimit(
+  request: Request,
+): Promise<{ formData: FormData } | { error: string }> {
+  const bodyResult = await readBodyWithLimit(request, 'multipart')
+  if ('error' in bodyResult) {
+    return { error: bodyResult.error }
+  }
+
+  const contentType = request.headers.get('content-type') || ''
+  const syntheticRequest = new Request('http://localhost', {
+    method: 'POST',
+    headers: { 'content-type': contentType },
+    body: bodyResult.body,
+  })
+
+  try {
+    const formData = await syntheticRequest.formData()
+    return { formData }
+  } catch {
+    return { error: 'Invalid multipart form data' }
+  }
+}
+
+/**
+ * @deprecated Use readBodyWithLimit() for streaming validation.
+ * Kept for backwards compatibility during migration — validates only Content-Length header.
+ */
 export function validateBodySize(
   request: { headers: { get(name: string): string | null } },
   type: 'multipart' | 'json',

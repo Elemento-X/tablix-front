@@ -10,6 +10,7 @@ import { consumeUnificationToken } from '@/lib/security/unification-token'
 import {
   validateContentType,
   validateBodySize,
+  readBodyWithLimit,
 } from '@/lib/security/validation-schemas'
 import { rateLimiters } from '@/lib/security/rate-limit'
 
@@ -30,6 +31,7 @@ jest.mock('@/lib/security/unification-token', () => ({
 jest.mock('@/lib/security/validation-schemas', () => ({
   validateContentType: jest.fn(() => ({ valid: true })),
   validateBodySize: jest.fn(() => ({ valid: true })),
+  readBodyWithLimit: jest.fn(),
 }))
 
 jest.mock('@/lib/security/rate-limit', () => ({
@@ -57,6 +59,31 @@ describe('POST /api/unification/complete', () => {
     // Default: validation passes
     ;(validateContentType as jest.Mock).mockReturnValue({ valid: true })
     ;(validateBodySize as jest.Mock).mockReturnValue({ valid: true })
+    // Default: readBodyWithLimit reads the actual request body stream
+    ;(readBodyWithLimit as jest.Mock).mockImplementation(
+      async (request: Request) => {
+        const body = request.body
+        if (!body) {
+          return { error: 'Missing request body' }
+        }
+        const reader = body.getReader()
+        const chunks: Uint8Array[] = []
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          chunks.push(value)
+        }
+        reader.releaseLock()
+        const totalBytes = chunks.reduce((sum, c) => sum + c.byteLength, 0)
+        const result = new Uint8Array(totalBytes)
+        let offset = 0
+        for (const chunk of chunks) {
+          result.set(chunk, offset)
+          offset += chunk.byteLength
+        }
+        return { body: result.buffer }
+      },
+    )
 
     // Default: rate limit passes
     ;(rateLimiters.api.check as jest.Mock).mockResolvedValue({
@@ -107,8 +134,8 @@ describe('POST /api/unification/complete', () => {
 
   describe('body size validation', () => {
     it('should return 413 when body is too large', async () => {
-      ;(validateBodySize as jest.Mock).mockReturnValue({
-        valid: false,
+      // readBodyWithLimit is the real gate now (replaces validateBodySize)
+      ;(readBodyWithLimit as jest.Mock).mockResolvedValue({
         error: 'Request body too large (max 1MB)',
       })
 
@@ -122,12 +149,38 @@ describe('POST /api/unification/complete', () => {
   })
 
   describe('token validation', () => {
-    it('should return 400 when no body provided', async () => {
+    it('should return 413 when no body provided (missing body)', async () => {
+      // readBodyWithLimit returns error when body stream is absent
+      ;(readBodyWithLimit as jest.Mock).mockResolvedValue({
+        error: 'Missing request body',
+      })
+
       const request = new NextRequest(
         'http://localhost:3000/api/unification/complete',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+        },
+      )
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(413)
+      expect(data.error).toBe('Missing request body')
+    })
+
+    it('should return 400 when body is not valid JSON', async () => {
+      // readBodyWithLimit returns bytes that are not valid JSON
+      ;(readBodyWithLimit as jest.Mock).mockResolvedValue({
+        body: new TextEncoder().encode('not-valid-json').buffer,
+      })
+
+      const request = new NextRequest(
+        'http://localhost:3000/api/unification/complete',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: 'not-valid-json',
         },
       )
       const response = await POST(request)

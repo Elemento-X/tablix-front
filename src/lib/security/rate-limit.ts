@@ -11,6 +11,66 @@ interface RateLimitStore {
 
 const inMemoryStore = new Map<string, RateLimitStore>()
 
+/**
+ * Circuit breaker for Redis rate limiter.
+ * Prevents cascading failures when Redis is down by stopping attempts
+ * after consecutive failures and periodically retrying.
+ *
+ * States:
+ * - CLOSED: normal operation, requests go to Redis
+ * - OPEN: Redis is down, skip Redis for OPEN_DURATION_MS, use in-memory fallback
+ * - HALF_OPEN: try one request to Redis to check if it's back
+ */
+const CIRCUIT_BREAKER_THRESHOLD = 3 // consecutive failures to open circuit
+const CIRCUIT_BREAKER_OPEN_DURATION_MS = 30_000 // 30s before half-open retry
+
+interface CircuitBreakerState {
+  failures: number
+  state: 'closed' | 'open' | 'half-open'
+  openedAt: number
+}
+
+const circuitBreaker: CircuitBreakerState = {
+  failures: 0,
+  state: 'closed',
+  openedAt: 0,
+}
+
+function shouldSkipRedis(): boolean {
+  if (circuitBreaker.state === 'closed') return false
+
+  if (circuitBreaker.state === 'open') {
+    // Check if enough time has passed to try half-open
+    if (
+      Date.now() - circuitBreaker.openedAt >=
+      CIRCUIT_BREAKER_OPEN_DURATION_MS
+    ) {
+      circuitBreaker.state = 'half-open'
+      return false // allow one request through
+    }
+    return true // still open, skip Redis
+  }
+
+  // half-open: allow request through (already returned false above on transition)
+  return false
+}
+
+function recordRedisSuccess() {
+  circuitBreaker.failures = 0
+  circuitBreaker.state = 'closed'
+}
+
+function recordRedisFailure() {
+  circuitBreaker.failures++
+  if (circuitBreaker.failures >= CIRCUIT_BREAKER_THRESHOLD) {
+    circuitBreaker.state = 'open'
+    circuitBreaker.openedAt = Date.now()
+    console.error(
+      `[Rate Limit] Circuit breaker OPEN after ${circuitBreaker.failures} consecutive Redis failures. Falling back to in-memory for ${CIRCUIT_BREAKER_OPEN_DURATION_MS / 1000}s.`,
+    )
+  }
+}
+
 // Cleanup old entries every 10 minutes
 const cleanupInterval = setInterval(
   () => {
@@ -29,8 +89,12 @@ if (typeof cleanupInterval.unref === 'function') {
   cleanupInterval.unref()
 }
 
-// Export reset function for testing
+/**
+ * Reset in-memory rate limit store for testing only.
+ * Guarded: no-op in production to prevent abuse.
+ */
 export function __resetRateLimitStore() {
+  if (process.env.NODE_ENV !== 'test') return
   inMemoryStore.clear()
 }
 
@@ -104,32 +168,36 @@ export function rateLimit(options: RateLimitOptions) {
       const baseIdentifier = getIdentifier(request)
       const identifier = `${namespace}:${baseIdentifier}`
 
-      // Use Upstash Rate Limit if available
+      // Use Upstash Rate Limit if available (with circuit breaker)
       const limiter = getUpstashLimiter()
-      if (limiter) {
+      if (limiter && !shouldSkipRedis()) {
         try {
           const result = await limiter.limit(baseIdentifier)
+          recordRedisSuccess()
           return {
             success: result.success,
             remaining: result.remaining,
           }
         } catch (error) {
-          console.warn(
+          recordRedisFailure()
+          console.error(
             '[Rate Limit] Redis failed:',
             error instanceof Error ? error.message : 'Unknown error',
           )
 
-          // In production, fail-closed: reject request when Redis is unavailable
-          // In-memory fallback is ineffective in serverless (each instance has its own memory)
-          if (process.env.NODE_ENV === 'production') {
+          // If circuit is not open yet, fail-closed in production
+          if (
+            process.env.NODE_ENV === 'production' &&
+            circuitBreaker.state !== 'open'
+          ) {
             return { success: false, remaining: 0 }
           }
 
-          // Fall through to in-memory implementation (development only)
+          // Circuit is open: fall through to in-memory as degraded fallback
         }
       }
 
-      // In-memory fallback implementation (development/test only)
+      // In-memory fallback (degraded mode during circuit breaker open, or development/test)
       const now = Date.now()
       const record = inMemoryStore.get(identifier)
 
