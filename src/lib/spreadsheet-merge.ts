@@ -1,0 +1,242 @@
+import * as XLSX from 'xlsx'
+import Papa from 'papaparse'
+import { PLAN_LIMITS, type PlanType } from '@/lib/limits'
+
+export interface MergeOptions {
+  files: File[]
+  selectedColumns: string[]
+  addWatermark: boolean // For Free plan
+  plan?: PlanType
+}
+
+export interface MergeResult {
+  blob: Blob
+  filename: string
+  rowCount: number
+}
+
+interface RowData {
+  [key: string]: string | number | boolean | null
+}
+
+/**
+ * Sanitize cell value to prevent formula injection in spreadsheets.
+ * Cells starting with =, +, -, @, tab, or carriage return can trigger
+ * formula execution when opened in Excel/Google Sheets (CSV injection / DDE attacks).
+ */
+function sanitizeCellValue(
+  value: string | number | boolean | null,
+): string | number | boolean | null {
+  if (typeof value !== 'string') return value
+
+  const dangerousPrefixes = ['=', '+', '-', '@', '\t', '\r', '\n']
+  if (dangerousPrefixes.some((prefix) => value.startsWith(prefix))) {
+    return `'${value}`
+  }
+
+  return value
+}
+
+/**
+ * Parse a single file and extract data
+ */
+async function parseFileData(file: File): Promise<RowData[]> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result
+
+        if (!data) {
+          throw new Error('Failed to read file')
+        }
+
+        // CSV files
+        if (file.name.endsWith('.csv')) {
+          const text = new TextDecoder().decode(data as ArrayBuffer)
+          const parsed = Papa.parse(text, {
+            header: true,
+            skipEmptyLines: true,
+          })
+
+          if (parsed.errors.length > 0) {
+            throw new Error(parsed.errors[0].message)
+          }
+
+          resolve(parsed.data as RowData[])
+          return
+        }
+
+        // Excel files
+        const workbook = XLSX.read(data, { type: 'array' })
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
+
+        if (!firstSheet) {
+          throw new Error('No sheets found in workbook')
+        }
+
+        const jsonData = XLSX.utils.sheet_to_json<RowData>(firstSheet)
+        resolve(jsonData)
+      } catch (err) {
+        reject(err instanceof Error ? err : new Error('Failed to parse file'))
+      }
+    }
+
+    reader.onerror = () => {
+      reject(new Error('Failed to read file'))
+    }
+
+    reader.readAsArrayBuffer(file)
+  })
+}
+
+/**
+ * Merge multiple spreadsheet files into one
+ * - Extracts only selected columns
+ * - Concatenates all rows
+ * - Optionally adds watermark for Free plan
+ */
+export async function mergeSpreadsheets(
+  options: MergeOptions,
+): Promise<MergeResult> {
+  const { files, selectedColumns, addWatermark, plan = 'free' } = options
+  const limits = PLAN_LIMITS[plan]
+
+  if (files.length === 0) {
+    throw new Error('No files to merge')
+  }
+
+  if (selectedColumns.length === 0) {
+    throw new Error('No columns selected')
+  }
+
+  // Parse all files and collect data
+  const allRows: RowData[] = []
+
+  for (const file of files) {
+    const fileData = await parseFileData(file)
+
+    // Filter to only selected columns, sanitize values, and add to merged data
+    for (const row of fileData) {
+      // Enforce row limit based on plan
+      if (allRows.length >= limits.maxRows) {
+        throw new Error(
+          `Row limit exceeded: max ${limits.maxRows} rows for ${limits.name} plan`,
+        )
+      }
+
+      const filteredRow: RowData = {}
+
+      for (const col of selectedColumns) {
+        // Sanitize cell value to prevent formula injection (CSV injection / DDE)
+        const rawValue = row[col] !== undefined ? row[col] : null
+        filteredRow[col] = sanitizeCellValue(rawValue)
+      }
+
+      // Add watermark column for Free plan
+      if (addWatermark) {
+        filteredRow['Gerado por Tablix'] = 'tablix.com.br'
+      }
+
+      allRows.push(filteredRow)
+    }
+  }
+
+  // Create workbook with merged data
+  const workbook = XLSX.utils.book_new()
+
+  // Create main data sheet
+  const columnsWithWatermark = addWatermark
+    ? [...selectedColumns, 'Gerado por Tablix']
+    : selectedColumns
+
+  const worksheet = XLSX.utils.json_to_sheet(allRows, {
+    header: columnsWithWatermark,
+  })
+
+  // Set column widths
+  const colWidths = columnsWithWatermark.map((col) => ({
+    wch: Math.max(col.length, 15),
+  }))
+  worksheet['!cols'] = colWidths
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Dados Unificados')
+
+  // Add "About" sheet for Free plan
+  if (addWatermark) {
+    const aboutData = [
+      { Info: 'Arquivo gerado por', Valor: 'Tablix' },
+      { Info: 'Website', Valor: 'https://tablix.com.br' },
+      { Info: 'Plano', Valor: 'Free' },
+      {
+        Info: 'Data de geração',
+        Valor: new Date().toLocaleDateString('pt-BR'),
+      },
+      { Info: 'Total de linhas', Valor: allRows.length.toString() },
+      { Info: 'Arquivos unificados', Valor: files.length.toString() },
+      { Info: '', Valor: '' },
+      {
+        Info: 'Upgrade para Pro',
+        Valor: "Remova marca d'água e aumente os limites!",
+      },
+    ]
+
+    const aboutSheet = XLSX.utils.json_to_sheet(aboutData)
+    aboutSheet['!cols'] = [{ wch: 25 }, { wch: 40 }]
+    XLSX.utils.book_append_sheet(workbook, aboutSheet, 'Sobre')
+  }
+
+  // Generate file
+  const excelBuffer = XLSX.write(workbook, {
+    bookType: 'xlsx',
+    type: 'array',
+  })
+
+  const blob = new Blob([excelBuffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  })
+
+  const timestamp = new Date().toISOString().split('T')[0]
+  const filename = `tablix-unificado-${timestamp}.xlsx`
+
+  return {
+    blob,
+    filename,
+    rowCount: allRows.length,
+  }
+}
+
+/**
+ * Determine if files can be processed client-side based on plan limits.
+ * Free plan: always client-side (plan limits guarantee small files).
+ * Pro/Enterprise: client-side if total size < 10MB, server-side otherwise.
+ */
+export function canProcessClientSide(
+  files: File[],
+  plan: PlanType = 'free',
+): boolean {
+  const limits = PLAN_LIMITS[plan]
+
+  // Free plan: total size is capped at maxTotalSize (1MB), always client-side
+  if (plan === 'free') return true
+
+  // Pro/Enterprise: use 10MB threshold for browser performance
+  const MAX_CLIENT_TOTAL = Math.min(limits.maxTotalSize, 10 * 1024 * 1024)
+  const totalSize = files.reduce((sum, f) => sum + f.size, 0)
+  return totalSize <= MAX_CLIENT_TOTAL
+}
+
+/**
+ * Download a blob as a file
+ */
+export function downloadBlob(blob: Blob, filename: string): void {
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  window.URL.revokeObjectURL(url)
+  document.body.removeChild(a)
+}

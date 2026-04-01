@@ -1,0 +1,663 @@
+import {
+  validateFile,
+  sanitizeFileName,
+  validateFileContent,
+  FILE_VALIDATOR,
+} from '@/lib/security/file-validator'
+
+describe('file-validator.ts', () => {
+  describe('FILE_VALIDATOR constants', () => {
+    it('should have correct max file size', () => {
+      expect(FILE_VALIDATOR.MAX_FILE_SIZE).toBe(10 * 1024 * 1024) // 10MB
+    })
+
+    it('should have correct allowed MIME types', () => {
+      expect(FILE_VALIDATOR.ALLOWED_MIME_TYPES).toEqual([
+        'text/csv',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ])
+    })
+
+    it('should have correct allowed extensions', () => {
+      expect(FILE_VALIDATOR.ALLOWED_EXTENSIONS).toEqual([
+        '.csv',
+        '.xls',
+        '.xlsx',
+      ])
+    })
+  })
+
+  describe('validateFile', () => {
+    const createMockFile = (name: string, size: number, type: string): File => {
+      const file = new File(['test content'], name, { type })
+      Object.defineProperty(file, 'size', { value: size, writable: false })
+      return file
+    }
+
+    describe('file size validation', () => {
+      it('should reject empty files', () => {
+        const file = createMockFile('test.csv', 0, 'text/csv')
+        const result = validateFile(file)
+        expect(result.valid).toBe(false)
+        expect(result.error).toBe('File is empty')
+      })
+
+      it('should accept files under 10MB', () => {
+        const file = createMockFile('test.csv', 5 * 1024 * 1024, 'text/csv')
+        const result = validateFile(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should reject files over 10MB', () => {
+        const file = createMockFile('test.csv', 11 * 1024 * 1024, 'text/csv')
+        const result = validateFile(file)
+        expect(result.valid).toBe(false)
+        expect(result.error).toContain('File size exceeds maximum')
+      })
+    })
+
+    describe('file extension validation', () => {
+      it('should accept .csv files', () => {
+        const file = createMockFile('data.csv', 1000, 'text/csv')
+        const result = validateFile(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should accept .xlsx files', () => {
+        const file = createMockFile(
+          'data.xlsx',
+          1000,
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        const result = validateFile(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should accept .xls files', () => {
+        const file = createMockFile(
+          'data.xls',
+          1000,
+          'application/vnd.ms-excel',
+        )
+        const result = validateFile(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should reject files with invalid extensions', () => {
+        const file = createMockFile('test.txt', 1000, 'text/plain')
+        const result = validateFile(file)
+        expect(result.valid).toBe(false)
+        expect(result.error).toContain('Invalid file type')
+      })
+
+      it('should be case-insensitive for extensions', () => {
+        const file = createMockFile('DATA.CSV', 1000, 'text/csv')
+        const result = validateFile(file)
+        expect(result.valid).toBe(true)
+      })
+    })
+
+    describe('MIME type validation', () => {
+      it('should accept text/csv', () => {
+        const file = createMockFile('test.csv', 1000, 'text/csv')
+        const result = validateFile(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should accept Excel MIME types', () => {
+        const file = createMockFile(
+          'test.xlsx',
+          1000,
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        const result = validateFile(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should reject invalid MIME types', () => {
+        const file = createMockFile('test.csv', 1000, 'application/pdf')
+        const result = validateFile(file)
+        expect(result.valid).toBe(false)
+        expect(result.error).toContain('Invalid MIME type')
+      })
+    })
+
+    describe('suspicious filename patterns', () => {
+      it('should reject files with path traversal', () => {
+        const file = createMockFile('../etc/passwd.csv', 1000, 'text/csv')
+        const result = validateFile(file)
+        expect(result.valid).toBe(false)
+        expect(result.error).toBe('File name contains suspicious patterns')
+      })
+
+      it('should reject files with special characters', () => {
+        const file = createMockFile('test<script>.csv', 1000, 'text/csv')
+        const result = validateFile(file)
+        expect(result.valid).toBe(false)
+        expect(result.error).toBe('File name contains suspicious patterns')
+      })
+
+      it('should reject files with null bytes', () => {
+        const file = createMockFile('file\0name.csv', 1000, 'text/csv')
+        const result = validateFile(file)
+        expect(result.valid).toBe(false)
+        expect(result.error).toBe('File name contains suspicious patterns')
+      })
+
+      it('should reject Windows reserved names', () => {
+        const reservedNames = [
+          'CON.csv',
+          'PRN.csv',
+          'AUX.csv',
+          'NUL.csv',
+          'COM1.csv',
+          'LPT1.csv',
+        ]
+
+        reservedNames.forEach((filename) => {
+          const file = createMockFile(filename, 1000, 'text/csv')
+          const result = validateFile(file)
+          expect(result.valid).toBe(false)
+          expect(result.error).toBe('File name contains suspicious patterns')
+        })
+      })
+
+      it('should accept valid filenames', () => {
+        const validNames = [
+          'data.csv',
+          'my-file_123.xlsx',
+          'Report 2024.csv',
+          'sales_data.xlsx',
+        ]
+
+        validNames.forEach((filename) => {
+          const file = createMockFile(filename, 1000, 'text/csv')
+          const result = validateFile(file)
+          expect(result.valid).toBe(true)
+        })
+      })
+    })
+  })
+
+  describe('sanitizeFileName', () => {
+    it('should remove path traversal attempts', () => {
+      expect(sanitizeFileName('../../../etc/passwd')).toBe('___etc_passwd')
+    })
+
+    it('should replace special characters with underscores', () => {
+      expect(sanitizeFileName('my<file>.csv')).toBe('my_file_.csv')
+      expect(sanitizeFileName('file:name|test.csv')).toBe('file_name_test.csv')
+    })
+
+    it('should prevent hidden files', () => {
+      expect(sanitizeFileName('.hidden')).toBe('_.hidden')
+    })
+
+    it('should limit filename length', () => {
+      const longName = 'a'.repeat(300) + '.csv'
+      const result = sanitizeFileName(longName)
+      expect(result.length).toBeLessThanOrEqual(255)
+      expect(result.endsWith('.csv')).toBe(true)
+    })
+
+    it('should preserve valid filenames', () => {
+      expect(sanitizeFileName('valid_file-123.csv')).toBe('valid_file-123.csv')
+    })
+
+    it('should handle multiple path traversal attempts', () => {
+      expect(sanitizeFileName('../../folder/../file.csv')).toBe(
+        '__folder__file.csv',
+      )
+    })
+  })
+
+  describe('validateFileContent', () => {
+    const createFileWithBytes = (
+      bytes: number[],
+      name: string = 'test.csv',
+    ): File => {
+      const buffer = new Uint8Array(bytes)
+      const blob = new Blob([buffer])
+      const file = new File([blob], name)
+
+      // Mock slice and arrayBuffer methods
+      file.slice = jest.fn((start?: number, end?: number) => {
+        const slicedBytes = bytes.slice(start, end)
+        const slicedBuffer = new Uint8Array(slicedBytes)
+        const slicedBlob = new Blob([slicedBuffer])
+
+        // Mock arrayBuffer on the returned blob
+        slicedBlob.arrayBuffer = jest.fn(async () => {
+          return slicedBuffer.buffer as ArrayBuffer
+        })
+
+        return slicedBlob as unknown as Blob
+      })
+
+      return file
+    }
+
+    it('should validate ZIP signature for XLSX files', async () => {
+      // ZIP signature 0x50 0x4B 0x03 0x04 + empty EOCD at offset 4
+      // EOCD: 50 4B 05 06 + 18 zeros (22 bytes total)
+      const zipBytes = [
+        0x50,
+        0x4b,
+        0x03,
+        0x04, // Local file header signature
+        0x50,
+        0x4b,
+        0x05,
+        0x06, // EOCD signature
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0, // 18 zero bytes
+      ]
+      const file = createFileWithBytes(zipBytes, 'test.xlsx')
+      Object.defineProperty(file, 'size', { value: 1000 })
+
+      const result = await validateFileContent(file)
+      expect(result.valid).toBe(true)
+    })
+
+    it('should reject XLSX files with invalid signature', async () => {
+      const file = createFileWithBytes(
+        [0x00, 0x00, 0x00, 0x00, 0, 0, 0, 0],
+        'test.xlsx',
+      )
+
+      const result = await validateFileContent(file)
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain('invalid format')
+    })
+
+    it('should validate text content for CSV files', async () => {
+      const textBytes = [0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f] // "Hello Wo" in ASCII
+      const file = createFileWithBytes(textBytes, 'test.csv')
+
+      const result = await validateFileContent(file)
+      expect(result.valid).toBe(true)
+    })
+
+    it('should accept .xls files with valid CDF magic bytes', async () => {
+      // Microsoft Compound Document Format signature
+      const cdfBytes = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]
+      const file = createFileWithBytes(cdfBytes, 'data.xls')
+
+      const result = await validateFileContent(file)
+      expect(result.valid).toBe(true)
+    })
+
+    it('should reject .xls files with invalid magic bytes', async () => {
+      const fakeBytes = [0x50, 0x4b, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00]
+      const file = createFileWithBytes(fakeBytes, 'fake.xls')
+
+      const result = await validateFileContent(file)
+      expect(result.valid).toBe(false)
+      expect(result.error).toBe('File claims to be XLS but has invalid format')
+    })
+
+    it('should reject CSV files with binary content', async () => {
+      // CSV expects text, but 0xff and 0xfe are allowed (BOM markers)
+      // To make it fail, we need mostly high bytes
+      const binaryBytes = [0xfd, 0xfc, 0xfb, 0xfa, 0xf9, 0xf8, 0xf7, 0xf6]
+      const file = createFileWithBytes(binaryBytes, 'test.csv')
+
+      const result = await validateFileContent(file)
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain('invalid format')
+    })
+
+    it('should handle errors gracefully', async () => {
+      const mockFile = {
+        name: 'test.csv',
+        slice: jest.fn(() => {
+          throw new Error('Slice error')
+        }),
+      } as unknown as File
+
+      const result = await validateFileContent(mockFile)
+      expect(result.valid).toBe(false)
+      expect(result.error).toBe('Failed to validate file content')
+    })
+
+    it('should reject ZIP without EOCD (fail-closed)', async () => {
+      // ZIP magic bytes but no EOCD — should be rejected
+      const file = createFileWithBytes(
+        [0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0],
+        'large.xlsx',
+      )
+
+      const result = await validateFileContent(file)
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain('missing end-of-central-directory')
+    })
+
+    it('should validate ZIP with alternate signature byte (0x05 at position 2)', async () => {
+      // XLSX ZIP can have 0x50 0x4B 0x05 signature + EOCD
+      const zipBytes = [
+        0x50,
+        0x4b,
+        0x05,
+        0x06, // Alternate ZIP signature (also serves as EOCD)
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0, // 18 zero bytes
+      ]
+      const file = createFileWithBytes(zipBytes, 'test.xlsx')
+      Object.defineProperty(file, 'size', { value: 1000 })
+
+      const result = await validateFileContent(file)
+      expect(result.valid).toBe(true)
+    })
+
+    describe('isText robustness (card 3.8)', () => {
+      it('should accept CSV with printable ASCII', async () => {
+        // "Name,Age" in ASCII
+        const file = createFileWithBytes(
+          [0x4e, 0x61, 0x6d, 0x65, 0x2c, 0x41, 0x67, 0x65],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should accept CSV with tabs and newlines', async () => {
+        // Tab (0x09), LF (0x0A), CR (0x0D), and text
+        const file = createFileWithBytes(
+          [0x41, 0x09, 0x42, 0x0a, 0x43, 0x0d, 0x0a, 0x44],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should accept CSV with UTF-8 BOM', async () => {
+        // UTF-8 BOM (EF BB BF) followed by text
+        const file = createFileWithBytes(
+          [0xef, 0xbb, 0xbf, 0x41, 0x42, 0x43, 0x44, 0x45],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should accept CSV with UTF-16 LE BOM', async () => {
+        // UTF-16 LE BOM (FF FE) followed by printable bytes
+        const file = createFileWithBytes(
+          [0xff, 0xfe, 0x41, 0x00, 0x42, 0x00, 0x43, 0x00],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should reject CSV with null bytes (0x00 control char)', async () => {
+        // Null byte is a control character, not printable ASCII
+        const file = createFileWithBytes(
+          [0x00, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+      })
+
+      it('should reject CSV with bell character (0x07)', async () => {
+        const file = createFileWithBytes(
+          [0x41, 0x42, 0x07, 0x43, 0x44, 0x45, 0x46, 0x47],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+      })
+
+      it('should reject CSV with escape character (0x1B)', async () => {
+        const file = createFileWithBytes(
+          [0x41, 0x1b, 0x5b, 0x33, 0x31, 0x6d, 0x58, 0x58],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+      })
+
+      it('should reject CSV with form feed (0x0C)', async () => {
+        const file = createFileWithBytes(
+          [0x41, 0x0c, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+      })
+
+      it('should reject CSV with high non-BOM bytes (0x80-0xEE, 0xF0+)', async () => {
+        // 0x80 is not printable ASCII, not a BOM marker
+        const file = createFileWithBytes(
+          [0x80, 0x81, 0x82, 0x41, 0x42, 0x43, 0x44, 0x45],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+      })
+    })
+
+    describe('zip bomb ratio check (card 3.X)', () => {
+      function createXlsxWithRatio(
+        compressedSize: number,
+        uncompressedSize: number,
+      ): File {
+        // Build a minimal ZIP with one entry that has specific compressed/uncompressed sizes
+        // Local file header (30 bytes) + Central directory entry (46 bytes) + EOCD (22 bytes)
+        const fileName = 'xl/worksheets/sheet1.xml'
+        const fnBytes = new TextEncoder().encode(fileName)
+        const fnLen = fnBytes.length
+
+        // Local file header
+        const localHeader = new Uint8Array(30 + fnLen + compressedSize)
+        const localView = new DataView(localHeader.buffer)
+        localView.setUint32(0, 0x04034b50, true) // Local file header signature
+        localView.setUint16(4, 20, true) // Version needed
+        localView.setUint16(8, 8, true) // Compression method: deflate
+        localView.setUint32(18, compressedSize, true)
+        localView.setUint32(22, uncompressedSize, true)
+        localView.setUint16(26, fnLen, true) // File name length
+        localHeader.set(fnBytes, 30)
+        // Fill compressed data with zeros
+        for (let i = 0; i < compressedSize; i++) {
+          localHeader[30 + fnLen + i] = 0
+        }
+
+        const cdOffset = localHeader.length
+
+        // Central directory entry
+        const cdEntry = new Uint8Array(46 + fnLen)
+        const cdView = new DataView(cdEntry.buffer)
+        cdView.setUint32(0, 0x02014b50, true) // Central directory signature
+        cdView.setUint16(4, 20, true) // Version made by
+        cdView.setUint16(6, 20, true) // Version needed
+        cdView.setUint16(10, 8, true) // Compression method: deflate
+        cdView.setUint32(20, compressedSize, true)
+        cdView.setUint32(24, uncompressedSize, true)
+        cdView.setUint16(28, fnLen, true) // File name length
+        cdEntry.set(fnBytes, 46)
+
+        const cdSize = cdEntry.length
+
+        // EOCD
+        const eocd = new Uint8Array(22)
+        const eocdView = new DataView(eocd.buffer)
+        eocdView.setUint32(0, 0x06054b50, true) // EOCD signature
+        eocdView.setUint16(8, 1, true) // Total entries
+        eocdView.setUint16(10, 1, true) // Total entries
+        eocdView.setUint32(12, cdSize, true) // CD size
+        eocdView.setUint32(16, cdOffset, true) // CD offset
+
+        // Combine all parts
+        const fullBuffer = new Uint8Array(
+          localHeader.length + cdEntry.length + eocd.length,
+        )
+        fullBuffer.set(localHeader, 0)
+        fullBuffer.set(cdEntry, localHeader.length)
+        fullBuffer.set(eocd, localHeader.length + cdEntry.length)
+
+        const blob = new Blob([fullBuffer])
+        const file = new File([blob], 'test.xlsx', {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+
+        // Override slice for magic number check
+        const originalSlice = file.slice.bind(file)
+        Object.defineProperty(file, 'slice', {
+          value: (start?: number, end?: number) => {
+            const slicedBlob = originalSlice(start, end)
+            Object.defineProperty(slicedBlob, 'arrayBuffer', {
+              value: async () =>
+                fullBuffer.slice(start || 0, end || fullBuffer.length).buffer,
+            })
+            return slicedBlob
+          },
+        })
+
+        // Override arrayBuffer for full file read
+        Object.defineProperty(file, 'arrayBuffer', {
+          value: async () => fullBuffer.buffer,
+        })
+
+        return file
+      }
+
+      it('should accept XLSX with normal compression ratio (< 100:1)', async () => {
+        // 1000 bytes compressed, 50000 bytes uncompressed = 50:1 ratio
+        const file = createXlsxWithRatio(100, 5000)
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should reject XLSX with suspicious compression ratio (> 100:1)', async () => {
+        // 10 bytes compressed, 5000 bytes uncompressed = 500:1 ratio
+        const file = createXlsxWithRatio(10, 5000)
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+        expect(result.error).toBe('File rejected: suspicious compression ratio')
+      })
+
+      it('should accept XLSX with exactly 100:1 ratio', async () => {
+        // 100 bytes compressed, 10000 bytes uncompressed = 100:1 ratio (at limit)
+        const file = createXlsxWithRatio(100, 10000)
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should reject XLSX with ratio just over 100:1', async () => {
+        // 100 bytes compressed, 10100 bytes uncompressed = 101:1 ratio
+        const file = createXlsxWithRatio(100, 10100)
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+        expect(result.error).toBe('File rejected: suspicious compression ratio')
+      })
+
+      it('should reject XLSX with corrupted central directory (cdOffset + cdSize > byteLength)', async () => {
+        // Build a ZIP where the EOCD reports a central directory that extends beyond the buffer
+        // Magic bytes (ZIP) + EOCD with cdOffset=0 and cdSize > actual file length
+        const eocd = new Uint8Array(22)
+        const eocdView = new DataView(eocd.buffer)
+        eocdView.setUint32(0, 0x06054b50, true) // EOCD signature
+        eocdView.setUint16(8, 0, true) // entries on disk
+        eocdView.setUint16(10, 0, true) // total entries
+        eocdView.setUint32(12, 9999, true) // cdSize = 9999 (way beyond buffer)
+        eocdView.setUint32(16, 0, true) // cdOffset = 0
+
+        const magic = new Uint8Array([
+          0x50, 0x4b, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00,
+        ])
+        const full = new Uint8Array(magic.length + eocd.length)
+        full.set(magic, 0)
+        full.set(eocd, magic.length)
+
+        const file = new File([full], 'corrupt.xlsx', {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+
+        const sliceImpl = (start?: number, end?: number) => {
+          const sliced = full.slice(start, end)
+          const blob = new Blob([sliced])
+          Object.defineProperty(blob, 'arrayBuffer', {
+            value: async () => sliced.buffer as ArrayBuffer,
+          })
+          return blob as Blob
+        }
+        Object.defineProperty(file, 'slice', { value: sliceImpl })
+        Object.defineProperty(file, 'arrayBuffer', {
+          value: async () => full.buffer as ArrayBuffer,
+        })
+
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+        expect(result.error).toBe(
+          'Invalid ZIP structure: corrupted central directory',
+        )
+      })
+
+      it('should reject XLSX when arrayBuffer throws (catch branch — fail-closed)', async () => {
+        // Build a file with valid ZIP magic bytes but whose arrayBuffer() throws
+        const magic = new Uint8Array([
+          0x50, 0x4b, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00,
+        ])
+
+        const file = new File([magic], 'throw.xlsx', {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+
+        const sliceImpl = (start?: number, end?: number) => {
+          const sliced = magic.slice(start, end)
+          const blob = new Blob([sliced])
+          Object.defineProperty(blob, 'arrayBuffer', {
+            value: async () => sliced.buffer as ArrayBuffer,
+          })
+          return blob as Blob
+        }
+        Object.defineProperty(file, 'slice', { value: sliceImpl })
+        // arrayBuffer throws to exercise the catch block
+        Object.defineProperty(file, 'arrayBuffer', {
+          value: async () => {
+            throw new Error('IO error reading file')
+          },
+        })
+
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(false)
+        expect(result.error).toBe('Invalid XLSX: cannot read ZIP structure')
+      })
+    })
+  })
+})

@@ -1,0 +1,414 @@
+'use client'
+
+import { useState } from 'react'
+import { toast } from 'sonner'
+import { useUsage, formatFileSize } from '@/hooks/use-usage'
+import { useFileParser } from '@/hooks/use-file-parser'
+import { useLocale } from '@/lib/i18n'
+import {
+  validateFile,
+  validateFileContent,
+  sanitizeFileName,
+} from '@/lib/security'
+import {
+  mergeSpreadsheets,
+  canProcessClientSide,
+  downloadBlob,
+} from '@/lib/spreadsheet-merge'
+
+export type UploadStep = 'upload' | 'columns'
+
+export interface UploadFlowState {
+  files: File[]
+  isUploading: boolean
+  detectedColumns: string[]
+  selectedColumns: string[]
+  isProcessing: boolean
+  step: UploadStep
+  unificationToken: string | null
+  maxInputFiles: number
+  maxTotalSize: number
+  currentTotalSize: number
+}
+
+export interface UploadFlowActions {
+  handleFilesAccepted: (files: File[]) => Promise<void>
+  handleRemoveFile: (index: number) => void
+  handleToggleColumn: (column: string) => void
+  handleSelectAll: () => void
+  handleDeselectAll: () => void
+  handleProcess: () => Promise<void>
+  handleUpload: () => Promise<void>
+  handleStartOver: () => void
+}
+
+export function useUploadFlow() {
+  const { t } = useLocale()
+  const { usage, isLoading: isLoadingUsage, refetch: refetchUsage } = useUsage()
+  const { parseFile } = useFileParser()
+  const [files, setFiles] = useState<File[]>([])
+  const [isUploading, setIsUploading] = useState(false)
+  const [detectedColumns, setDetectedColumns] = useState<string[]>([])
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([])
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [step, setStep] = useState<UploadStep>('upload')
+  const [unificationToken, setUnificationToken] = useState<string | null>(null)
+
+  const maxInputFiles = usage?.limits.maxInputFiles ?? 3
+  const maxTotalSize = usage?.limits.maxTotalSize ?? 1 * 1024 * 1024
+  const currentTotalSize = files.reduce((sum, file) => sum + file.size, 0)
+
+  const handleFilesAccepted = async (selectedFiles: File[]) => {
+    if (selectedFiles.length === 0) {
+      return
+    }
+
+    const newFiles: File[] = []
+
+    const totalFilesAfterAdd = files.length + selectedFiles.length
+    if (totalFilesAfterAdd > maxInputFiles) {
+      toast.error(
+        t('messages.tooManyFiles', {
+          max: maxInputFiles,
+          plan: usage?.plan.toUpperCase() ?? 'FREE',
+        }),
+      )
+      return
+    }
+
+    for (const file of selectedFiles) {
+      const safeName = sanitizeFileName(file.name)
+
+      if (files.some((f) => f.name === file.name && f.size === file.size)) {
+        toast.error(t('messages.fileAlreadyAdded', { name: safeName }))
+        continue
+      }
+
+      if (usage && file.size > usage.limits.maxFileSize) {
+        toast.error(
+          t('messages.fileTooLarge', {
+            name: safeName,
+            plan: usage.plan.toUpperCase(),
+            size: formatFileSize(usage.limits.maxFileSize),
+          }),
+        )
+        continue
+      }
+
+      const newTotalSize =
+        currentTotalSize + newFiles.reduce((s, f) => s + f.size, 0) + file.size
+      if (newTotalSize > maxTotalSize) {
+        toast.error(
+          t('messages.totalSizeExceeded', {
+            plan: usage?.plan.toUpperCase() ?? 'FREE',
+            size: formatFileSize(maxTotalSize),
+          }),
+        )
+        break
+      }
+
+      const basicValidation = validateFile(file)
+      if (!basicValidation.valid) {
+        toast.error(
+          `"${safeName}": ${basicValidation.error || t('upload.error') || 'Invalid file'}`,
+        )
+        continue
+      }
+
+      const contentValidation = await validateFileContent(file)
+      if (!contentValidation.valid) {
+        toast.error(
+          `"${safeName}": ${contentValidation.error || t('upload.error') || 'Invalid file content'}`,
+        )
+        continue
+      }
+
+      newFiles.push(file)
+    }
+
+    if (newFiles.length > 0) {
+      setFiles((prev) => [...prev, ...newFiles])
+      toast.success(
+        newFiles.length === 1
+          ? t('messages.fileAdded')
+          : t('messages.filesAdded', { count: newFiles.length }),
+      )
+    }
+  }
+
+  const handleRemoveFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const handleToggleColumn = (column: string) => {
+    setSelectedColumns((prev) =>
+      prev.includes(column)
+        ? prev.filter((c) => c !== column)
+        : [...prev, column],
+    )
+  }
+
+  const handleSelectAll = () => {
+    setSelectedColumns([...detectedColumns])
+  }
+
+  const handleDeselectAll = () => {
+    setSelectedColumns([])
+  }
+
+  const handleStartOver = () => {
+    setStep('upload')
+    setDetectedColumns([])
+    setSelectedColumns([])
+    setFiles([])
+    setUnificationToken(null)
+  }
+
+  const handleProcess = async () => {
+    if (selectedColumns.length === 0) {
+      toast.error(t('messages.selectAtLeastOneColumn'))
+      return
+    }
+
+    if (usage && selectedColumns.length > usage.limits.maxColumns) {
+      toast.error(
+        t('messages.tooManyColumns', {
+          max: usage.limits.maxColumns,
+          plan: usage.plan.toUpperCase(),
+        }),
+      )
+      return
+    }
+
+    if (!unificationToken) {
+      toast.error(t('messages.processFailed'))
+      return
+    }
+
+    setIsProcessing(true)
+
+    try {
+      const useClientSide = canProcessClientSide(files, usage?.plan ?? 'free')
+      const addWatermark = usage?.plan === 'free'
+
+      const consumeQuota = async () => {
+        const completeResponse = await fetch('/api/unification/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: unificationToken }),
+        })
+
+        if (!completeResponse.ok) {
+          const completeData = await completeResponse.json()
+          toast.error(completeData.error || t('messages.processFailed'))
+          return false
+        }
+
+        return true
+      }
+
+      if (useClientSide) {
+        if (!(await consumeQuota())) return
+
+        toast.info(t('messages.processingFiles'))
+
+        const result = await mergeSpreadsheets({
+          files,
+          selectedColumns,
+          addWatermark,
+        })
+
+        downloadBlob(result.blob, result.filename)
+
+        toast.success(
+          t('messages.unifiedSuccess', {
+            count: files.length,
+            rows: result.rowCount,
+          }),
+        )
+
+        refetchUsage()
+        handleStartOver()
+      } else {
+        toast.info(t('messages.processingOnServer'))
+
+        const formData = new FormData()
+        files.forEach((file) => formData.append('files', file))
+        formData.append('columns', JSON.stringify(selectedColumns))
+        formData.append('token', unificationToken)
+
+        const response = await fetch('/api/process', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) {
+          const data = await response.json()
+          toast.error(data.error || t('messages.processFailed'))
+          return
+        }
+
+        const blob = await response.blob()
+        const timestamp = new Date().toISOString().split('T')[0]
+        downloadBlob(blob, `tablix-unificado-${timestamp}.xlsx`)
+
+        toast.success(t('messages.processSuccess'))
+
+        refetchUsage()
+        handleStartOver()
+      }
+    } catch (err) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('[handleProcess]', err)
+      }
+      toast.error(t('messages.processFailed'))
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleUpload = async () => {
+    if (files.length === 0) {
+      toast.error(t('upload.selectAtLeastOne'))
+      return
+    }
+
+    if (usage && usage.unifications.remaining <= 0) {
+      toast.error(
+        t('messages.unificationLimitExceeded', {
+          current: usage.unifications.current,
+          max: usage.unifications.max,
+        }),
+      )
+      return
+    }
+
+    setIsUploading(true)
+
+    try {
+      const allColumns: Set<string>[] = []
+      let totalRowCount = 0
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        toast.info(
+          t('messages.parsingFile', {
+            current: i + 1,
+            total: files.length,
+            name: sanitizeFileName(file.name),
+          }),
+        )
+
+        const result = await parseFile(file)
+        allColumns.push(new Set(result.columns))
+        totalRowCount += result.rowCount
+      }
+
+      if (usage && totalRowCount > usage.limits.maxRows) {
+        toast.error(
+          t('messages.rowsExceedLimit', {
+            total: totalRowCount,
+            max: usage.limits.maxRows,
+            plan: usage.plan.toUpperCase(),
+          }),
+        )
+        setIsUploading(false)
+        return
+      }
+
+      let commonColumns: string[]
+      if (allColumns.length === 1) {
+        commonColumns = Array.from(allColumns[0])
+      } else {
+        const firstFileColumns = allColumns[0]
+        commonColumns = Array.from(firstFileColumns).filter((col) =>
+          allColumns.every((colSet) => colSet.has(col)),
+        )
+      }
+
+      if (commonColumns.length === 0) {
+        toast.error(t('messages.noCommonColumns'))
+        setIsUploading(false)
+        return
+      }
+
+      if (usage && commonColumns.length > usage.limits.maxColumns) {
+        toast.info(
+          t('messages.foundCommonColumns', {
+            count: commonColumns.length,
+            max: usage.limits.maxColumns,
+            plan: usage.plan.toUpperCase(),
+          }),
+        )
+      }
+
+      toast.success(
+        files.length === 1
+          ? t('messages.parsedSuccessSingle', {
+              columns: commonColumns.length,
+              rows: totalRowCount,
+            })
+          : t('messages.parsedSuccessMultiple', {
+              files: files.length,
+              columns: commonColumns.length,
+              rows: totalRowCount,
+            }),
+      )
+
+      const previewFormData = new FormData()
+      previewFormData.append('files', files[0])
+
+      const previewResponse = await fetch('/api/preview', {
+        method: 'POST',
+        body: previewFormData,
+      })
+
+      if (!previewResponse.ok) {
+        const previewData = await previewResponse.json()
+        toast.error(previewData.error || t('messages.processFailed'))
+        setIsUploading(false)
+        return
+      }
+
+      const previewData = await previewResponse.json()
+      setUnificationToken(previewData.unificationToken)
+
+      setDetectedColumns(commonColumns)
+      const maxSelectable = usage?.limits.maxColumns ?? 3
+      setSelectedColumns(commonColumns.slice(0, maxSelectable))
+      setStep('columns')
+    } catch (err) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('[handleUpload]', err)
+      }
+      toast.error(t('upload.error'))
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  return {
+    // State
+    files,
+    isUploading,
+    detectedColumns,
+    selectedColumns,
+    isProcessing,
+    step,
+    usage,
+    isLoadingUsage,
+    maxInputFiles,
+    maxTotalSize,
+    currentTotalSize,
+
+    // Actions
+    handleFilesAccepted,
+    handleRemoveFile,
+    handleToggleColumn,
+    handleSelectAll,
+    handleDeselectAll,
+    handleProcess,
+    handleUpload,
+    handleStartOver,
+  }
+}
