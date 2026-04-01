@@ -71,8 +71,7 @@ const mockDownloadBlob = jest.fn()
 
 jest.mock('@/lib/spreadsheet-merge', () => ({
   mergeSpreadsheets: (...args: unknown[]) => mockMergeSpreadsheets(...args),
-  canProcessClientSide: (...args: unknown[]) =>
-    mockCanProcessClientSide(...args),
+  canProcessClientSide: (...args: unknown[]) => mockCanProcessClientSide(...args),
   downloadBlob: (...args: unknown[]) => mockDownloadBlob(...args),
 }))
 
@@ -82,9 +81,7 @@ function createFile(name: string, size = 100): File {
   return new File(['x'.repeat(size)], name, { type: 'text/csv' })
 }
 
-function setupFetchMock(
-  responses: Record<string, { ok: boolean; json?: unknown; blob?: Blob }>,
-) {
+function setupFetchMock(responses: Record<string, { ok: boolean; json?: unknown; blob?: Blob }>) {
   global.fetch = jest.fn().mockImplementation((url: string) => {
     const resp = responses[url]
     if (!resp) return Promise.reject(new Error(`Unmocked URL: ${url}`))
@@ -165,9 +162,7 @@ describe('useUploadFlow', () => {
       })
 
       expect(result.current.files).toHaveLength(0)
-      expect(mockToast.error).toHaveBeenCalledWith(
-        expect.stringContaining('messages.tooManyFiles'),
-      )
+      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('messages.tooManyFiles'))
     })
 
     it('rejects duplicate files', async () => {
@@ -197,9 +192,7 @@ describe('useUploadFlow', () => {
       })
 
       expect(result.current.files).toHaveLength(0)
-      expect(mockToast.error).toHaveBeenCalledWith(
-        expect.stringContaining('messages.fileTooLarge'),
-      )
+      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('messages.fileTooLarge'))
     })
 
     it('rejects when total size exceeded', async () => {
@@ -235,9 +228,7 @@ describe('useUploadFlow', () => {
       })
 
       expect(result.current.files).toHaveLength(0)
-      expect(mockToast.error).toHaveBeenCalledWith(
-        expect.stringContaining('Invalid extension'),
-      )
+      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('Invalid extension'))
     })
 
     it('rejects files failing content validation', async () => {
@@ -252,25 +243,18 @@ describe('useUploadFlow', () => {
       })
 
       expect(result.current.files).toHaveLength(0)
-      expect(mockToast.error).toHaveBeenCalledWith(
-        expect.stringContaining('Zip bomb detected'),
-      )
+      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('Zip bomb detected'))
     })
 
     it('shows plural message when multiple files added', async () => {
       const { result } = renderHook(() => useUploadFlow())
 
       await act(async () => {
-        await result.current.handleFilesAccepted([
-          createFile('a.csv'),
-          createFile('b.csv'),
-        ])
+        await result.current.handleFilesAccepted([createFile('a.csv'), createFile('b.csv')])
       })
 
       expect(result.current.files).toHaveLength(2)
-      expect(mockToast.success).toHaveBeenCalledWith(
-        expect.stringContaining('messages.filesAdded'),
-      )
+      expect(mockToast.success).toHaveBeenCalledWith(expect.stringContaining('messages.filesAdded'))
     })
   })
 
@@ -279,10 +263,7 @@ describe('useUploadFlow', () => {
       const { result } = renderHook(() => useUploadFlow())
 
       await act(async () => {
-        await result.current.handleFilesAccepted([
-          createFile('a.csv'),
-          createFile('b.csv'),
-        ])
+        await result.current.handleFilesAccepted([createFile('a.csv'), createFile('b.csv')])
       })
 
       act(() => {
@@ -448,10 +429,7 @@ describe('useUploadFlow', () => {
       const { result } = renderHook(() => useUploadFlow())
 
       await act(async () => {
-        await result.current.handleFilesAccepted([
-          createFile('a.csv'),
-          createFile('b.csv'),
-        ])
+        await result.current.handleFilesAccepted([createFile('a.csv'), createFile('b.csv')])
       })
 
       await act(async () => {
@@ -574,9 +552,7 @@ describe('useUploadFlow', () => {
         await hook.result.current.handleProcess()
       })
 
-      expect(mockToast.error).toHaveBeenCalledWith(
-        'messages.selectAtLeastOneColumn',
-      )
+      expect(mockToast.error).toHaveBeenCalledWith('messages.selectAtLeastOneColumn')
     })
 
     it('rejects when columns exceed maxColumns', async () => {
@@ -630,11 +606,14 @@ describe('useUploadFlow', () => {
       })
 
       expect(mockDownloadBlob).toHaveBeenCalled()
-      expect(mockToast.success).toHaveBeenCalledWith(
-        expect.stringContaining('messages.unifiedSuccess'),
-      )
       expect(mockRefetchUsage).toHaveBeenCalled()
       expect(hook.result.current.isProcessing).toBe(false)
+      expect(hook.result.current.step).toBe('result')
+      expect(hook.result.current.resultData).toEqual({
+        fileCount: 1,
+        rowCount: 50,
+        columnCount: 2,
+      })
     })
 
     it('server-side process: downloads blob on success', async () => {
@@ -647,8 +626,13 @@ describe('useUploadFlow', () => {
       })
 
       expect(mockDownloadBlob).toHaveBeenCalled()
-      expect(mockToast.success).toHaveBeenCalledWith('messages.processSuccess')
       expect(mockRefetchUsage).toHaveBeenCalled()
+      expect(hook.result.current.step).toBe('result')
+      expect(hook.result.current.resultData).toEqual({
+        fileCount: 1,
+        rowCount: 0,
+        columnCount: 2,
+      })
     })
 
     it('handles consumeQuota failure', async () => {
@@ -819,9 +803,7 @@ describe('useUploadFlow', () => {
         await result.current.handleFilesAccepted(files)
       })
 
-      expect(mockToast.error).toHaveBeenCalledWith(
-        expect.stringContaining('"FREE"'),
-      )
+      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('"FREE"'))
     })
 
     it('handles basic validation with no error message', async () => {
@@ -832,9 +814,7 @@ describe('useUploadFlow', () => {
         await result.current.handleFilesAccepted([createFile('test.csv')])
       })
 
-      expect(mockToast.error).toHaveBeenCalledWith(
-        expect.stringContaining('upload.error'),
-      )
+      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('upload.error'))
     })
 
     it('handles content validation with no error message', async () => {
@@ -845,9 +825,7 @@ describe('useUploadFlow', () => {
         await result.current.handleFilesAccepted([createFile('test.csv')])
       })
 
-      expect(mockToast.error).toHaveBeenCalledWith(
-        expect.stringContaining('upload.error'),
-      )
+      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('upload.error'))
     })
 
     it('handles single file parsed success message', async () => {
@@ -959,8 +937,8 @@ describe('useUploadFlow', () => {
         expect.stringContaining('messages.totalSizeExceeded'),
       )
       // The plan fallback should resolve to 'FREE' (the ?? 'FREE' branch)
-      const call = (mockToast.error as jest.Mock).mock.calls.find(
-        (c: string[]) => c[0].includes('messages.totalSizeExceeded'),
+      const call = (mockToast.error as jest.Mock).mock.calls.find((c: string[]) =>
+        c[0].includes('messages.totalSizeExceeded'),
       )
       expect(call[0]).toContain('FREE')
     })
@@ -980,10 +958,7 @@ describe('useUploadFlow', () => {
       const { result } = renderHook(() => useUploadFlow())
 
       await act(async () => {
-        await result.current.handleFilesAccepted([
-          createFile('a.csv'),
-          createFile('b.csv'),
-        ])
+        await result.current.handleFilesAccepted([createFile('a.csv'), createFile('b.csv')])
       })
       await act(async () => {
         await result.current.handleUpload()
@@ -1066,10 +1041,7 @@ describe('useUploadFlow', () => {
       })
 
       // canProcessClientSide must have been called — verify it was called with 'free' fallback
-      expect(mockCanProcessClientSide).toHaveBeenCalledWith(
-        expect.any(Array),
-        'free',
-      )
+      expect(mockCanProcessClientSide).toHaveBeenCalledWith(expect.any(Array), 'free')
     })
   })
 })

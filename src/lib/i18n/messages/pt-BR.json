@@ -163,6 +163,58 @@
     "parsedSuccessSingle": "Analisado com sucesso! Encontradas {columns} colunas e {rows} linhas.",
     "parsedSuccessMultiple": "Analisados {files} arquivos! Encontradas {columns} colunas em comum e {rows} linhas no total."
   },
+  "export": {
+    "sheetName": "Dados Unificados",
+    "watermarkColumn": "Gerado por Tablix",
+    "watermarkValue": "tablix.com.br",
+    "aboutSheetName": "Sobre",
+    "aboutHeaderInfo": "Info",
+    "aboutHeaderValue": "Valor",
+    "aboutGeneratedBy": "Arquivo gerado por",
+    "aboutWebsite": "Website",
+    "aboutPlan": "Plano",
+    "aboutGeneratedAt": "Data de geração",
+    "aboutTotalRows": "Total de linhas",
+    "aboutFilesUnified": "Arquivos unificados",
+    "aboutUpgradeToPro": "Upgrade para Pro",
+    "aboutUpgradeMessage": "Remova marca d'água e aumente os limites!"
+  },
+  "steps": {
+    "upload": "Upload",
+    "columns": "Colunas",
+    "result": "Resultado"
+  },
+  "result": {
+    "title": "Pronto!",
+    "subtitle": "Sua planilha foi gerada com sucesso",
+    "filesUnified": "{count} arquivo(s) unificado(s)",
+    "rowsProcessed": "{count} linhas processadas",
+    "columnsSelected": "{count} coluna(s) selecionada(s)",
+    "newUnification": "Nova unificação",
+    "upgradePro": "Fazer upgrade para Pro",
+    "upgradeMessage": "Remova marca d'água, processe até 5.000 linhas e 10 colunas.",
+    "remainingQuota": "{remaining} de {max} unificação(ões) restante(s)"
+  },
+  "onboarding": {
+    "tipUpload": "Envie seus arquivos CSV ou XLSX. Vamos detectar as colunas automaticamente.",
+    "tipColumns": "Selecione as colunas que deseja manter no arquivo final.",
+    "gotIt": "Entendi"
+  },
+  "quotaGate": {
+    "title": "Limite atingido",
+    "description": "Você usou todas as suas unificações deste mês."
+  },
+  "processing": {
+    "consumingQuota": "Reservando sua unificação...",
+    "mergingFiles": "Unificando arquivos...",
+    "generatingFile": "Gerando planilha...",
+    "downloading": "Iniciando download..."
+  },
+  "notFound": {
+    "title": "Página não encontrada",
+    "description": "A página que você procura não existe ou foi movida.",
+    "goHome": "Voltar ao início"
+  },
   "errorBoundary": {
     "title": "Algo deu errado",
     "description": "Ocorreu um erro inesperado. Tente novamente ou volte para a página inicial.",
@@ -184,7 +236,8 @@
     "themeToggle": "Alternar tema",
     "usageProgress": "Progresso de uso do plano",
     "columnToggle": "Selecionar ou desmarcar coluna",
-    "removeFile": "Remover"
+    "removeFile": "Remover",
+    "stepIndicator": "Progresso do fluxo"
   },
   "billingPeriods": {
     "month": "mês",
@@ -368,5 +421,12 @@
         "address": "Endereço: São Paulo - SP, Brasil"
       }
     }
+  },
+  "cookieConsent": {
+    "title": "Cookies",
+    "message": "Utilizamos cookies essenciais para o funcionamento do serviço, como controle de uso e preferências. Não usamos cookies de rastreamento ou publicidade.",
+    "accept": "Entendi",
+    "learnMore": "Saiba mais",
+    "ariaLabel": "Aviso de cookies"
   }
 }
