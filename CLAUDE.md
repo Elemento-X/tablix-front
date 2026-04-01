@@ -67,18 +67,41 @@
 
 Toda entrega de codigo passa pelo pipeline completo, sem excecao:
 
+### Pipeline core (sempre)
 ```
 (@tester + @security) em paralelo → @reviewer → Trello
 ```
 
 - **@tester** escreve testes, valida coverage, edge cases (CI rodara automaticamente no futuro)
 - **@security** audita seguranca: OWASP, injection, headers, rate limit
-- **@reviewer** faz code review direto no codigo, recebe achados dos dois como contexto, emite veredito final
-- **@planner** nao faz parte do pipeline — e chamado sob demanda para planejamento e estruturacao de cards
-- 1 comentario consolidado por card por execucao do pipeline (contendo VALIDACAO, AUDITORIA, REVISAO)
+- **@reviewer** faz code review direto no codigo, recebe achados de todos como contexto, emite veredito final
+
+### Pipeline estendido (por tipo de card)
+```
+Card de UI:       core + @design-qa + @copywriter
+Card de landing:  core + @seo + @copywriter + @performance
+Card de infra:    core + @performance
+Pre-release:      core + @performance + @seo
+```
+
+- **@design-qa** valida fidelidade ao spec do @designer (UI)
+- **@performance** audita bundle, runtime, Core Web Vitals (deps, features pesadas, pre-release)
+- **@seo** audita meta tags, structured data, semantic HTML (paginas publicas)
+- **@copywriter** audita copy, microcopy, tom de voz, qualidade multilingue (texto novo)
+
+### Agentes de suporte (sob demanda)
+- **@planner** — planejamento e estruturacao de cards
+- **@analyst** — metricas do pipeline e saude do time (fim de fase, sob demanda, pre-release)
+- **@designer** — specs visuais e UX
+- **@docs** — sincronia documentacao/codigo
+- **@refactor** — refatoracao cirurgica em worktree isolada
+
+### Regras do pipeline
+- 1 comentario consolidado por card por execucao (VALIDACAO, AUDITORIA, REVISAO + agentes estendidos)
 - Reprovacao de QUALQUER agente reinicia o ciclo completo apos correcao
 - Correcoes vao no card existente; descobertas novas viram card novo
 - Historico de reprovacoes no Trello e sagrado — nunca apagar, nunca pular
+- Toda execucao gera entrada em `.claude/metrics/pipeline.jsonl` (schema e categorias em `.claude/metrics/`)
 
 Regra detalhada em `.claude/rules/qa-pipeline.md`
 
