@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function proxy(request: NextRequest) {
-  // CSRF protection: validate Origin header on state-changing API requests
-  if (
+  const isStateChanging =
     request.nextUrl.pathname.startsWith('/api/') &&
     request.method !== 'GET' &&
     request.method !== 'HEAD' &&
     request.method !== 'OPTIONS'
-  ) {
+
+  // CSRF protection layer 1: validate Origin header on state-changing API requests
+  if (isStateChanging) {
     const origin = request.headers.get('origin')
     const host = request.headers.get('host')
 
@@ -22,6 +23,16 @@ export function proxy(request: NextRequest) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
     } catch {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+
+  // CSRF protection layer 2: double-submit cookie validation
+  if (isStateChanging) {
+    const csrfCookie = request.cookies.get('__csrf')?.value
+    const csrfHeader = request.headers.get('X-CSRF-Token')
+
+    if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
   }
@@ -90,6 +101,19 @@ export function proxy(request: NextRequest) {
   )
 
   response.headers.set('Content-Security-Policy', cspHeader)
+
+  // CSRF double-submit cookie: set if not present
+  if (!request.cookies.get('__csrf')?.value) {
+    const csrfToken = crypto.randomUUID()
+    const isProduction = process.env.NODE_ENV === 'production'
+    response.cookies.set('__csrf', csrfToken, {
+      httpOnly: false, // Must be readable by JS for double-submit pattern
+      sameSite: 'strict',
+      secure: isProduction,
+      path: '/',
+      maxAge: 60 * 60 * 24, // 24 hours
+    })
+  }
 
   // Prevent search engines from indexing preview/non-production deploys
   if (
