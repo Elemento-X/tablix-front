@@ -7,7 +7,7 @@ import { useLocale } from '@/lib/i18n'
 import type { ResultData } from '@/hooks/use-upload-flow'
 import type { UsageInfo } from '@/hooks/use-usage'
 import {
-  CheckCircle2,
+  CircleCheckBig,
   FileSpreadsheet,
   Rows3,
   Columns3,
@@ -34,7 +34,7 @@ export function ResultStep({
       <CardContent className="p-4 sm:p-8">
         <section className="flex flex-col items-center gap-6">
           <div className="rounded-full bg-teal-100 p-4 dark:bg-teal-900/30">
-            <CheckCircle2 className="h-10 w-10 text-teal-700 dark:text-teal-400" />
+            <CircleCheckBig className="h-10 w-10 text-teal-700 dark:text-teal-400" />
           </div>
 
           <div className="text-center">

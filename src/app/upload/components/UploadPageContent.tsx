@@ -8,7 +8,7 @@ import { StepIndicator } from '@/components/step-indicator'
 import { StepTransition } from '@/components/step-transition'
 import { useUploadFlow } from '@/hooks/use-upload-flow'
 import { useLocale } from '@/lib/i18n'
-import { ArrowLeft, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, TriangleAlert } from 'lucide-react'
 import Link from 'next/link'
 import { ColumnsStep } from './columns-step'
 import { ResultStep } from './result-step'
@@ -123,7 +123,7 @@ export function UploadPageContent() {
 
         {quotaExhausted && step === 'upload' && (
           <div className="border-destructive/50 bg-destructive/10 mb-6 flex items-start gap-3 rounded-lg border p-4">
-            <AlertTriangle className="text-destructive mt-0.5 h-5 w-5 flex-shrink-0" />
+            <TriangleAlert className="text-destructive mt-0.5 h-5 w-5 flex-shrink-0" />
             <div>
               <p className="text-foreground text-sm font-medium">
                 {t('quotaGate.title')}
