@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 
 permissions:
   contents: read
@@ -99,4 +99,7 @@ jobs:
         run: npm ci
 
       - name: Audit dependencies
-        run: npm audit --audit-level=high
+        # --audit-level=critical: known accepted high-severity risks without available fix:
+        # - xlsx (SheetJS): no fix available, core dependency, input pre-validated by file-validator
+        # - minimatch (via @rocketseat/eslint-config@2.x): dev-only, requires ESLint 9 migration
+        run: npm audit --audit-level=critical
