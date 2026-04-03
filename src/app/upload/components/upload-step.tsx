@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { AnimatedList, AnimatedListItem } from '@/components/animated-list'
 import { Button } from '@/components/button'
 import { Card, CardContent } from '@/components/card'
@@ -7,7 +8,9 @@ import { FileDropzone } from '@/components/file-dropzone'
 import { formatFileSize } from '@/hooks/use-usage'
 import { useLocale } from '@/lib/i18n'
 import { sanitizeFileName } from '@/lib/security'
-import { FileSpreadsheet, Loader2, X } from 'lucide-react'
+import { FileSpreadsheet, Loader2, X, Lightbulb } from 'lucide-react'
+
+const ONBOARDING_KEY = 'tablix-onboarding-upload-seen'
 
 interface UploadStepProps {
   files: File[]
@@ -15,6 +18,7 @@ interface UploadStepProps {
   maxInputFiles: number
   maxTotalSize: number
   currentTotalSize: number
+  quotaExhausted: boolean
   onFilesAccepted: (files: File[]) => Promise<void>
   onRemoveFile: (index: number) => void
   onUpload: () => Promise<void>
@@ -26,18 +30,48 @@ export function UploadStep({
   maxInputFiles,
   maxTotalSize,
   currentTotalSize,
+  quotaExhausted,
   onFilesAccepted,
   onRemoveFile,
   onUpload,
 }: UploadStepProps) {
   const { t } = useLocale()
+  const [showTip, setShowTip] = useState(false)
+
+  useEffect(() => {
+    const seen = localStorage.getItem(ONBOARDING_KEY)
+    if (!seen) {
+      setShowTip(true)
+    }
+  }, [])
+
+  const dismissTip = () => {
+    setShowTip(false)
+    localStorage.setItem(ONBOARDING_KEY, '1')
+  }
 
   return (
     <Card className="border-border">
       <CardContent className="p-4 sm:p-8">
         <section className="flex flex-col items-center gap-4 sm:gap-6">
+          {showTip && (
+            <div className="flex w-full items-start gap-3 rounded-lg border border-teal-200 bg-teal-50/50 p-3 dark:border-teal-800 dark:bg-teal-950/20">
+              <Lightbulb className="mt-0.5 h-4 w-4 flex-shrink-0 text-teal-700 dark:text-teal-400" />
+              <p className="text-foreground flex-1 text-sm">
+                {t('onboarding.tipUpload')}
+              </p>
+              <button
+                type="button"
+                onClick={dismissTip}
+                className="text-muted-foreground hover:text-foreground text-xs font-medium"
+              >
+                {t('onboarding.gotIt')}
+              </button>
+            </div>
+          )}
+
           <div className="bg-muted rounded-full p-4">
-            <FileSpreadsheet className="h-8 w-8 text-stone-700 dark:text-stone-300" />
+            <FileSpreadsheet className="text-foreground/80 h-8 w-8" />
           </div>
 
           <div className="w-full">
@@ -45,7 +79,7 @@ export function UploadStep({
               onFilesAccepted={onFilesAccepted}
               maxFiles={maxInputFiles}
               currentFileCount={files.length}
-              disabled={isUploading}
+              disabled={isUploading || quotaExhausted}
             />
           </div>
 
@@ -55,7 +89,7 @@ export function UploadStep({
               className="bg-muted w-full space-y-2 rounded-lg p-4"
             >
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-sm font-medium text-stone-700 dark:text-stone-300">
+                <span className="text-foreground/80 text-sm font-medium">
                   {files.length} {t('columns.of')} {maxInputFiles}{' '}
                   {t('status.files')}
                 </span>
@@ -107,7 +141,7 @@ export function UploadStep({
             data-testid="btn-continue"
             variant="brand"
             onClick={onUpload}
-            disabled={files.length === 0 || isUploading}
+            disabled={files.length === 0 || isUploading || quotaExhausted}
             className="h-12 w-full"
             size="lg"
           >

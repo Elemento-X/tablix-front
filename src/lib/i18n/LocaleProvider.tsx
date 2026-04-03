@@ -32,6 +32,12 @@ interface LocaleContextType {
 const LocaleContext = createContext<LocaleContextType | undefined>(undefined)
 
 const LOCALE_STORAGE_KEY = 'tablix-locale'
+const LOCALE_COOKIE_KEY = 'tablix-locale'
+
+function setLocaleCookie(value: string) {
+  const secure = window.location.protocol === 'https:' ? '; Secure' : ''
+  document.cookie = `${LOCALE_COOKIE_KEY}=${value}; path=/; max-age=31536000; SameSite=Strict${secure}`
+}
 
 function getNestedValue(obj: Record<string, unknown>, path: string): string {
   const keys = path.split('.')
@@ -52,12 +58,15 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(defaultLocale)
   const [isClient, setIsClient] = useState(false)
 
-  // Initialize locale from localStorage on client side
+  // Initialize locale from localStorage on client side and sync to cookie
   useEffect(() => {
     setIsClient(true)
     const stored = localStorage.getItem(LOCALE_STORAGE_KEY) as Locale | null
     if (stored && stored in messages) {
       setLocaleState(stored)
+      setLocaleCookie(stored)
+    } else {
+      setLocaleCookie(defaultLocale)
     }
   }, [])
 
@@ -65,6 +74,8 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     setLocaleState(newLocale)
     if (isClient) {
       localStorage.setItem(LOCALE_STORAGE_KEY, newLocale)
+      setLocaleCookie(newLocale)
+      document.documentElement.lang = newLocale
     }
   }
 

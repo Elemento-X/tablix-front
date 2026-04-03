@@ -4,12 +4,19 @@
     "description": "Carga tu hoja de cálculo, selecciona las columnas que necesitas y genera un nuevo archivo en segundos. Herramienta web para procesamiento y generación de hojas de cálculo personalizadas."
   },
   "header": {
-    "brand": "Tablix"
+    "brand": "Tablix",
+    "cta": "Empezar gratis",
+    "nav": {
+      "howItWorks": "Cómo funciona",
+      "audience": "Para quién",
+      "pricing": "Precios"
+    }
   },
   "hero": {
-    "title": "Transforma hojas de cálculo complejas en archivos listos para usar",
-    "subtitle": "Carga tu hoja de cálculo, selecciona las columnas que necesitas y genera un nuevo archivo en segundos.",
-    "cta": "Generar mi hoja de cálculo"
+    "title": "Recupera las horas que pierdes en hojas de cálculo",
+    "subtitle": "Unifica archivos, queda solo con lo que importa y ten todo listo en segundos. Sin fórmulas, sin retrabajo.",
+    "cta": "Simplificar mis hojas",
+    "earlyAccess": "Early Access"
   },
   "howItWorks": {
     "title": "Cómo funciona",
@@ -35,11 +42,19 @@
   "audience": {
     "title": "Para quién es",
     "roles": {
-      "analysts": "Analistas",
-      "admins": "Equipos administrativos",
-      "recurring": "Personas que trabajan con hojas de cálculo recurrentes"
-    },
-    "description": "Tablix fue creado para reducir tareas repetitivas y ahorrar tiempo en actividades operativas con hojas de cálculo."
+      "analysts": {
+        "title": "Analistas",
+        "description": "Consolida informes de múltiples fuentes sin copiar y pegar entre pestañas."
+      },
+      "admins": {
+        "title": "Equipos administrativos",
+        "description": "Unifica registros, controles y listados con pocos clics."
+      },
+      "recurring": {
+        "title": "Hojas recurrentes",
+        "description": "Automatiza el merge que haces cada semana — siempre igual, siempre tedioso."
+      }
+    }
   },
   "pricing": {
     "title": "Planes",
@@ -65,7 +80,7 @@
       },
       "pro": {
         "name": "Pro",
-        "badge": "Más popular",
+        "badge": "Recomendado",
         "oldPrice": "$9.90",
         "period": "mes",
         "launchPrice": "Precio de lanzamiento garantizado mientras la suscripción esté activa",
@@ -95,8 +110,24 @@
     }
   },
   "footer": {
-    "security": "Tus archivos se procesan de forma temporal y segura.",
-    "privacy": "Tablix no almacena tus archivos. Se descartan después del procesamiento.",
+    "tagline": "Tus archivos se procesan de forma segura y se descartan después del uso.",
+    "product": {
+      "title": "Producto",
+      "howItWorks": "Cómo funciona",
+      "audience": "Para quién",
+      "pricing": "Precios",
+      "cta": "Empezar gratis"
+    },
+    "legal": {
+      "title": "Legal & Contacto"
+    },
+    "contact": {
+      "email": "contato@tablix.me"
+    },
+    "nav": {
+      "product": "Navegación del producto",
+      "legal": "Legal y contacto"
+    },
     "privacyPolicy": "Política de Privacidad",
     "terms": "Términos de Uso",
     "copyright": "© {year} Tablix Tecnología. Todos los derechos reservados."
@@ -163,6 +194,58 @@
     "parsedSuccessSingle": "¡Analizado exitosamente! Se encontraron {columns} columnas y {rows} filas.",
     "parsedSuccessMultiple": "¡Se analizaron {files} archivos! Se encontraron {columns} columnas en común y {rows} filas en total."
   },
+  "export": {
+    "sheetName": "Datos Unificados",
+    "watermarkColumn": "Generado por Tablix",
+    "watermarkValue": "tablix.me",
+    "aboutSheetName": "Acerca de",
+    "aboutHeaderInfo": "Info",
+    "aboutHeaderValue": "Valor",
+    "aboutGeneratedBy": "Generado por",
+    "aboutWebsite": "Sitio web",
+    "aboutPlan": "Plan",
+    "aboutGeneratedAt": "Fecha de generación",
+    "aboutTotalRows": "Total de filas",
+    "aboutFilesUnified": "Archivos unificados",
+    "aboutUpgradeToPro": "Upgrade a Pro",
+    "aboutUpgradeMessage": "¡Elimina la marca de agua y aumenta tus límites!"
+  },
+  "steps": {
+    "upload": "Carga",
+    "columns": "Columnas",
+    "result": "Resultado"
+  },
+  "result": {
+    "title": "Listo!",
+    "subtitle": "Tu hoja de cálculo fue generada exitosamente",
+    "filesUnified": "{count} archivo(s) unificado(s)",
+    "rowsProcessed": "{count} filas procesadas",
+    "columnsSelected": "{count} columna(s) seleccionada(s)",
+    "newUnification": "Nueva unificación",
+    "upgradePro": "Actualizar a Pro",
+    "upgradeMessage": "Elimina la marca de agua, procesa hasta 5.000 filas y 10 columnas.",
+    "remainingQuota": "{remaining} de {max} unificación(es) restante(s)"
+  },
+  "onboarding": {
+    "tipUpload": "Carga tus archivos CSV o XLSX. Detectaremos las columnas automáticamente.",
+    "tipColumns": "Selecciona las columnas que deseas mantener en el archivo final.",
+    "gotIt": "Entendido"
+  },
+  "quotaGate": {
+    "title": "Límite alcanzado",
+    "description": "Has usado todas tus unificaciones este mes."
+  },
+  "processing": {
+    "consumingQuota": "Reservando tu unificación...",
+    "mergingFiles": "Unificando archivos...",
+    "generatingFile": "Generando hoja de cálculo...",
+    "downloading": "Iniciando descarga..."
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "description": "La página que buscas no existe o fue movida.",
+    "goHome": "Volver al inicio"
+  },
   "errorBoundary": {
     "title": "Algo salió mal",
     "description": "Ocurrió un error inesperado. Intenta de nuevo o vuelve a la página principal.",
@@ -180,11 +263,17 @@
     "switchToDark": "Cambiar a tema oscuro"
   },
   "a11y": {
+    "skipToContent": "Saltar al contenido principal",
     "selectLanguage": "Seleccionar idioma",
     "themeToggle": "Alternar tema",
     "usageProgress": "Progreso de uso del plan",
     "columnToggle": "Seleccionar o deseleccionar columna",
-    "removeFile": "Eliminar"
+    "removeFile": "Eliminar",
+    "stepIndicator": "Progreso del flujo",
+    "mainNavigation": "Navegación principal",
+    "openMenu": "Abrir menú de navegación",
+    "closeMenu": "Cerrar menú de navegación",
+    "navigationMenu": "Menú de navegación"
   },
   "billingPeriods": {
     "month": "mes",
@@ -368,5 +457,35 @@
         "address": "Dirección: São Paulo - SP, Brasil"
       }
     }
+  },
+  "securityBadges": {
+    "title": "Seguridad que puedes verificar",
+    "local": {
+      "title": "Procesamiento local",
+      "subtitle": "Tus datos nunca salen del navegador"
+    },
+    "noStorage": {
+      "title": "Sin almacenamiento",
+      "subtitle": "Los archivos no se guardan en nuestros servidores"
+    },
+    "tls": {
+      "title": "Cifrado TLS",
+      "subtitle": "Toda comunicación protegida por HTTPS"
+    },
+    "validation": {
+      "title": "Validación rigurosa",
+      "subtitle": "Cada archivo verificado antes del procesamiento"
+    }
+  },
+  "pricingPage": {
+    "ctaText": "Listo para simplificar tus hojas de calculo?",
+    "cta": "Empezar gratis"
+  },
+  "cookieConsent": {
+    "title": "Cookies",
+    "message": "Utilizamos cookies esenciales para el funcionamiento del servicio, como control de uso y preferencias. No usamos cookies de rastreo ni publicidad.",
+    "accept": "Entendido",
+    "learnMore": "Más información",
+    "ariaLabel": "Aviso de cookies"
   }
 }

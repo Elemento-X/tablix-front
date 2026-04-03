@@ -17,6 +17,12 @@ jest.mock('@/lib/i18n', () => ({
         'columns.selectAll': 'Select all',
         'columns.processAndDownload': 'Process & Download',
         'upload.processing': 'Processing...',
+        'processing.consumingQuota': 'processing.consumingQuota',
+        'processing.mergingFiles': 'processing.mergingFiles',
+        'processing.generatingFile': 'processing.generatingFile',
+        'processing.downloading': 'processing.downloading',
+        'onboarding.tipColumns': 'onboarding.tipColumns',
+        'onboarding.gotIt': 'onboarding.gotIt',
       }
       return map[key] ?? key
     },
@@ -31,6 +37,7 @@ const defaultProps = {
   detectedColumns: ['Name', 'Email', 'Phone'],
   selectedColumns: ['Name'],
   isProcessing: false,
+  processingPhase: null as import('@/hooks/use-upload-flow').ProcessingPhase | null,
   usage: null,
   onToggleColumn: jest.fn(),
   onSelectAll: jest.fn(),
@@ -153,5 +160,87 @@ describe('ColumnsStep', () => {
     }
     render(<ColumnsStep {...defaultProps} usage={usage} />)
     expect(screen.getByText(/max 50/)).toBeInTheDocument()
+  })
+
+  describe('processingPhase prop', () => {
+    it('shows consuming-quota label during consuming-quota phase', () => {
+      render(
+        <ColumnsStep
+          {...defaultProps}
+          isProcessing
+          processingPhase="consuming-quota"
+        />,
+      )
+      expect(screen.getByText('processing.consumingQuota')).toBeInTheDocument()
+    })
+
+    it('shows merging label during merging phase', () => {
+      render(
+        <ColumnsStep {...defaultProps} isProcessing processingPhase="merging" />,
+      )
+      expect(screen.getByText('processing.mergingFiles')).toBeInTheDocument()
+    })
+
+    it('shows generating label during generating phase', () => {
+      render(
+        <ColumnsStep
+          {...defaultProps}
+          isProcessing
+          processingPhase="generating"
+        />,
+      )
+      expect(screen.getByText('processing.generatingFile')).toBeInTheDocument()
+    })
+
+    it('shows downloading label during downloading phase', () => {
+      render(
+        <ColumnsStep
+          {...defaultProps}
+          isProcessing
+          processingPhase="downloading"
+        />,
+      )
+      expect(screen.getByText('processing.downloading')).toBeInTheDocument()
+    })
+
+    it('falls back to upload.processing label when isProcessing but no phase', () => {
+      render(
+        <ColumnsStep
+          {...defaultProps}
+          isProcessing
+          processingPhase={null}
+        />,
+      )
+      expect(screen.getByText('Processing...')).toBeInTheDocument()
+    })
+
+    it('shows default process button text when not processing', () => {
+      render(<ColumnsStep {...defaultProps} isProcessing={false} processingPhase={null} />)
+      expect(screen.getByText('Process & Download')).toBeInTheDocument()
+    })
+  })
+
+  describe('onboarding tip', () => {
+    beforeEach(() => {
+      localStorage.clear()
+    })
+
+    it('shows onboarding tip when not seen before', () => {
+      render(<ColumnsStep {...defaultProps} />)
+      expect(screen.getByText('onboarding.tipColumns')).toBeInTheDocument()
+    })
+
+    it('does not show onboarding tip when already seen', () => {
+      localStorage.setItem('tablix-onboarding-columns-seen', '1')
+      render(<ColumnsStep {...defaultProps} />)
+      expect(screen.queryByText('onboarding.tipColumns')).toBeNull()
+    })
+
+    it('hides tip and sets localStorage when dismissed', () => {
+      render(<ColumnsStep {...defaultProps} />)
+      fireEvent.click(screen.getByText('onboarding.gotIt'))
+      expect(screen.queryByText('onboarding.tipColumns')).toBeNull()
+      expect(localStorage.getItem('tablix-onboarding-columns-seen')).toBe('1')
+    })
   })
 })

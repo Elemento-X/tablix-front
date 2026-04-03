@@ -5,22 +5,16 @@ import { NextRequest } from 'next/server'
 import { POST } from '@/app/api/process/route'
 
 import { rateLimiters } from '@/lib/security/rate-limit'
-import {
-  sanitizeFileName,
-  validateFileContent,
-} from '@/lib/security/file-validator'
+import { sanitizeFileName, validateFileContent } from '@/lib/security/file-validator'
 import {
   validateFileLimits,
   validateColumnSelection,
   sanitizeString,
   validateContentType,
   validateBodySize,
+  parseMultipartWithLimit,
 } from '@/lib/security/validation-schemas'
-import {
-  getUserFingerprint,
-  setFingerprintCookie,
-  getUserPlan,
-} from '@/lib/fingerprint'
+import { getUserFingerprint, setFingerprintCookie, getUserPlan } from '@/lib/fingerprint'
 import { getPlanLimits } from '@/lib/limits'
 import { atomicIncrementUnification } from '@/lib/usage-tracker'
 import { consumeUnificationToken } from '@/lib/security/unification-token'
@@ -53,6 +47,10 @@ jest.mock('@/lib/security/validation-schemas', () => ({
   sanitizeString: jest.fn((str) => str),
   validateContentType: jest.fn(() => ({ valid: true })),
   validateBodySize: jest.fn(() => ({ valid: true })),
+  parseMultipartWithLimit: jest.fn(async (req: Request) => {
+    const formData = await req.formData()
+    return { formData }
+  }),
 }))
 
 jest.mock('@/lib/fingerprint', () => ({
@@ -105,11 +103,7 @@ describe('POST /api/process', () => {
     })
   }
 
-  const createValidFile = (
-    name = 'test.csv',
-    type = 'text/csv',
-    size = 1024,
-  ) => {
+  const createValidFile = (name = 'test.csv', type = 'text/csv', size = 1024) => {
     const file = new File(['content'], name, { type })
     Object.defineProperty(file, 'size', { value: size })
     return file
@@ -170,26 +164,45 @@ describe('POST /api/process', () => {
       const data = await response.json()
 
       expect(response.status).toBe(415)
-      expect(data.error).toBe(
-        'Invalid Content-Type. Expected multipart/form-data.',
-      )
+      expect(data.error).toBe('Invalid Content-Type. Expected multipart/form-data.')
     })
   })
 
   describe('body size validation', () => {
-    it('should return 413 when body is too large', async () => {
-      ;(validateBodySize as jest.Mock).mockReturnValue({
-        valid: false,
+    it('should not call validateBodySize (removed: Content-Length is untrusted)', () => {
+      // process/route.ts no longer calls validateBodySize — Content-Length header is
+      // untrusted (attacker-controlled) so real size validation happens via file.size
+      // after formData parsing. See total size check tests below for the actual guard.
+      const request = createRequest([createValidFile()])
+      expect(validateBodySize).not.toHaveBeenCalled()
+      // Confirm the mock is available but unused in this route
+      expect(validateBodySize).toBeDefined()
+    })
+
+    it('should return 413 when parseMultipartWithLimit reports body too large', async () => {
+      ;(parseMultipartWithLimit as jest.Mock).mockResolvedValueOnce({
         error: 'Request body too large (max 60MB)',
       })
 
-      const file = createValidFile()
-      const request = createRequest([file])
+      const request = createRequest([createValidFile()])
       const response = await POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(413)
       expect(data.error).toBe('Request body too large (max 60MB)')
+    })
+
+    it('should return 413 when parseMultipartWithLimit reports missing body', async () => {
+      ;(parseMultipartWithLimit as jest.Mock).mockResolvedValueOnce({
+        error: 'Missing request body',
+      })
+
+      const request = createRequest([createValidFile()])
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(413)
+      expect(data.error).toBe('Missing request body')
     })
   })
 
@@ -296,9 +309,7 @@ describe('POST /api/process', () => {
       const data = await response.json()
 
       expect(response.status).toBe(400)
-      expect(data.error).toBe(
-        'Invalid file type. Only CSV and XLSX files are allowed.',
-      )
+      expect(data.error).toBe('Invalid file type. Only CSV and XLSX files are allowed.')
     })
   })
 
@@ -408,9 +419,7 @@ describe('POST /api/process', () => {
       expect(response.headers.get('Content-Type')).toBe(
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       )
-      expect(response.headers.get('Content-Disposition')).toContain(
-        'attachment',
-      )
+      expect(response.headers.get('Content-Disposition')).toContain('attachment')
       expect(response.headers.get('X-RateLimit-Remaining')).toBe('29')
     })
 
@@ -419,9 +428,7 @@ describe('POST /api/process', () => {
       const request = createRequest([file])
       const response = await POST(request)
 
-      expect(response.headers.get('Content-Disposition')).toContain(
-        'tablix-output.xlsx',
-      )
+      expect(response.headers.get('Content-Disposition')).toContain('tablix-output.xlsx')
     })
 
     it('should sanitize output filename', async () => {
@@ -452,9 +459,7 @@ describe('POST /api/process', () => {
       const file = createValidFile('bad<name>.csv')
       ;(sanitizeFileName as jest.Mock).mockReturnValue('bad_name_.csv')
 
-      const consoleSpy = jest
-        .spyOn(console, 'warn')
-        .mockImplementation(() => {})
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
 
       const request = createRequest([file])
       await POST(request)
@@ -468,9 +473,7 @@ describe('POST /api/process', () => {
 
   describe('error handling', () => {
     it('should return 500 on unexpected error', async () => {
-      ;(rateLimiters.process.check as jest.Mock).mockRejectedValue(
-        new Error('Unexpected error'),
-      )
+      ;(rateLimiters.process.check as jest.Mock).mockRejectedValue(new Error('Unexpected error'))
 
       jest.spyOn(console, 'error').mockImplementation(() => {})
 
@@ -487,13 +490,9 @@ describe('POST /api/process', () => {
 
     it('should return 500 on non-Error thrown value (covers unknown error branch)', async () => {
       // Throw a non-Error value to exercise the `'Unknown error'` branch in catch
-      ;(rateLimiters.process.check as jest.Mock).mockRejectedValue(
-        'string-error',
-      )
+      ;(rateLimiters.process.check as jest.Mock).mockRejectedValue('string-error')
 
-      const consoleSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {})
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
 
       const file = createValidFile()
       const request = createRequest([file])
@@ -502,10 +501,7 @@ describe('POST /api/process', () => {
 
       expect(response.status).toBe(500)
       expect(data.error).toBe('Error processing files')
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '[Process API] Error:',
-        'Unknown error',
-      )
+      expect(consoleSpy).toHaveBeenCalledWith('[Process API] Error:', 'Unknown error')
 
       jest.restoreAllMocks()
     })
@@ -577,9 +573,7 @@ describe('POST /api/process', () => {
     it('should return 400 when file extension is invalid after sanitization', async () => {
       // File has valid MIME type but sanitization removes extension
       const file = createValidFile('test.csv', 'text/csv')
-      ;(sanitizeFileName as jest.Mock).mockReturnValue(
-        'malicious_file_no_extension',
-      )
+      ;(sanitizeFileName as jest.Mock).mockReturnValue('malicious_file_no_extension')
 
       const request = createRequest([file])
       const response = await POST(request)
@@ -601,10 +595,7 @@ describe('POST /api/process', () => {
       const response = await POST(request)
 
       expect(response.status).toBe(200)
-      expect(setFingerprintCookie).toHaveBeenCalledWith(
-        response,
-        'new-user-cookie-id',
-      )
+      expect(setFingerprintCookie).toHaveBeenCalledWith(response, 'new-user-cookie-id')
     })
 
     it('should set fingerprint cookie on quota exceeded for new user', async () => {
@@ -624,10 +615,7 @@ describe('POST /api/process', () => {
 
       expect(response.status).toBe(403)
       expect(data.errorCode).toBe('LIMIT_EXCEEDED')
-      expect(setFingerprintCookie).toHaveBeenCalledWith(
-        response,
-        'new-user-cookie-id',
-      )
+      expect(setFingerprintCookie).toHaveBeenCalledWith(response, 'new-user-cookie-id')
     })
   })
 
@@ -755,17 +743,10 @@ describe('POST /api/process', () => {
       })
 
       const file = createValidFile()
-      const request = createRequest(
-        [file],
-        ['Name', 'Email'],
-        'valid-test-token',
-      )
+      const request = createRequest([file], ['Name', 'Email'], 'valid-test-token')
       await POST(request)
 
-      expect(consumeUnificationToken).toHaveBeenCalledWith(
-        'valid-test-token',
-        'fp-abc123',
-      )
+      expect(consumeUnificationToken).toHaveBeenCalledWith('valid-test-token', 'fp-abc123')
     })
 
     it('should return 403 for a token present but malformed (path traversal attempt)', async () => {

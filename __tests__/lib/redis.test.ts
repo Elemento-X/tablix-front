@@ -1,4 +1,4 @@
-import { getRedisClient, storage } from '@/lib/redis'
+import { getRedisClient, storage, __resetRedisClient } from '@/lib/redis'
 import { Redis } from '@upstash/redis'
 
 // Mock the Upstash Redis module
@@ -837,6 +837,50 @@ describe('redis.ts', () => {
       await storage.expire('test1', 120)
       const value2 = await storage.get('test1')
       expect(value2).toBe(10) // Should still exist with new TTL
+    })
+  })
+
+  describe('__resetRedisClient NODE_ENV guard', () => {
+    afterEach(() => {
+      process.env.NODE_ENV = 'test'
+    })
+
+    it('should reset the Redis singleton to null when called in test environment', () => {
+      process.env.UPSTASH_REDIS_REST_URL = 'https://redis.upstash.io'
+      process.env.UPSTASH_REDIS_REST_TOKEN = 'token123'
+
+      // Ensure singleton is created
+      const client1 = getRedisClient()
+      expect(client1).not.toBeNull()
+
+      // Reset in test mode — should succeed
+      expect(() => __resetRedisClient()).not.toThrow()
+
+      // After reset, getRedisClient creates a new instance
+      const client2 = getRedisClient()
+      expect(client2).not.toBeNull()
+    })
+
+    it('should be a no-op in production — singleton remains intact', () => {
+      process.env.UPSTASH_REDIS_REST_URL = 'https://redis.upstash.io'
+      process.env.UPSTASH_REDIS_REST_TOKEN = 'token123'
+
+      // Ensure singleton exists
+      const client1 = getRedisClient()
+      expect(client1).not.toBeNull()
+
+      // Simulate production environment
+      process.env.NODE_ENV = 'production'
+      __resetRedisClient()
+
+      // Back to test so getRedisClient can run
+      process.env.NODE_ENV = 'test'
+
+      // Singleton should still exist — reset was a no-op
+      const client2 = getRedisClient()
+      expect(client2).not.toBeNull()
+      // Same singleton instance (no re-creation happened)
+      expect(client2).toBe(client1)
     })
   })
 })

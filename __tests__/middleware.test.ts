@@ -44,16 +44,14 @@ describe('middleware', () => {
       const request = createRequest()
       const response = middleware(request)
 
-      expect(response.headers.get('Referrer-Policy')).toBe(
-        'strict-origin-when-cross-origin',
-      )
+      expect(response.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin')
     })
 
-    it('should set X-XSS-Protection header', () => {
+    it('should not set deprecated X-XSS-Protection header', () => {
       const request = createRequest()
       const response = middleware(request)
 
-      expect(response.headers.get('X-XSS-Protection')).toBe('1; mode=block')
+      expect(response.headers.get('X-XSS-Protection')).toBeNull()
     })
   })
 
@@ -113,9 +111,7 @@ describe('middleware', () => {
       expect(csp).toContain('https://vercel.live')
 
       // Extract script-src directive and verify no unsafe-inline
-      const scriptSrc = csp!
-        .split(';')
-        .find((d) => d.trim().startsWith('script-src'))
+      const scriptSrc = csp!.split(';').find((d) => d.trim().startsWith('script-src'))
       expect(scriptSrc).not.toContain('unsafe-inline')
       expect(scriptSrc).not.toContain('unsafe-eval')
     })
@@ -152,6 +148,14 @@ describe('middleware', () => {
       expect(csp).toContain('connect-src')
       expect(csp).toContain('https://vercel.live')
       expect(csp).toContain('https://*.vercel-insights.com')
+    })
+
+    it('should have worker-src self directive', () => {
+      const request = createRequest()
+      const response = middleware(request)
+
+      const csp = response.headers.get('Content-Security-Policy')
+      expect(csp).toContain("worker-src 'self'")
     })
 
     it('should have frame-ancestors directive', () => {
@@ -236,11 +240,7 @@ describe('middleware', () => {
   })
 
   describe('CSRF protection', () => {
-    const createPostRequest = (
-      url: string,
-      origin?: string | null,
-      host?: string,
-    ) => {
+    const createPostRequest = (url: string, origin?: string | null, host?: string) => {
       const headers: Record<string, string> = {}
       if (origin !== null && origin !== undefined) {
         headers.origin = origin
@@ -359,9 +359,7 @@ describe('middleware', () => {
       const response = middleware(request)
       const csp = response.headers.get('Content-Security-Policy')
 
-      const scriptSrc = csp!
-        .split(';')
-        .find((d) => d.trim().startsWith('script-src'))
+      const scriptSrc = csp!.split(';').find((d) => d.trim().startsWith('script-src'))
       expect(scriptSrc).toContain('unsafe-eval')
       expect(scriptSrc).toContain('unsafe-inline')
     })
@@ -390,9 +388,7 @@ describe('middleware', () => {
       const response = middleware(request)
       const csp = response.headers.get('Content-Security-Policy')
 
-      const scriptSrc = csp!
-        .split(';')
-        .find((d) => d.trim().startsWith('script-src'))
+      const scriptSrc = csp!.split(';').find((d) => d.trim().startsWith('script-src'))
       expect(scriptSrc).toContain('strict-dynamic')
       expect(scriptSrc).toMatch(/nonce-/)
     })
@@ -411,6 +407,93 @@ describe('middleware', () => {
 
       // Nonce should NOT be in response headers (security: not visible to client JS)
       expect(response.headers.get('x-nonce')).toBeNull()
+    })
+  })
+
+  describe('X-Robots-Tag (preview/development environments)', () => {
+    const originalVercelEnv = process.env.VERCEL_ENV
+
+    afterEach(() => {
+      if (originalVercelEnv === undefined) {
+        delete process.env.VERCEL_ENV
+      } else {
+        process.env.VERCEL_ENV = originalVercelEnv
+      }
+    })
+
+    it('should set X-Robots-Tag noindex when VERCEL_ENV is preview', () => {
+      process.env.VERCEL_ENV = 'preview'
+
+      const request = createRequest()
+      const response = middleware(request)
+
+      expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow')
+    })
+
+    it('should set X-Robots-Tag noindex when VERCEL_ENV is development', () => {
+      process.env.VERCEL_ENV = 'development'
+
+      const request = createRequest()
+      const response = middleware(request)
+
+      expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow')
+    })
+
+    it('should NOT set X-Robots-Tag when VERCEL_ENV is production', () => {
+      process.env.VERCEL_ENV = 'production'
+
+      const request = createRequest()
+      const response = middleware(request)
+
+      expect(response.headers.get('X-Robots-Tag')).toBeNull()
+    })
+
+    it('should NOT set X-Robots-Tag when VERCEL_ENV is undefined', () => {
+      delete process.env.VERCEL_ENV
+
+      const request = createRequest()
+      const response = middleware(request)
+
+      expect(response.headers.get('X-Robots-Tag')).toBeNull()
+    })
+
+    it('should apply X-Robots-Tag to all paths in preview', () => {
+      process.env.VERCEL_ENV = 'preview'
+
+      const paths = [
+        'http://localhost:3000/',
+        'http://localhost:3000/upload',
+        'http://localhost:3000/api/usage',
+      ]
+
+      for (const path of paths) {
+        const request = createRequest(path)
+        const response = middleware(request)
+        expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow')
+      }
+    })
+  })
+
+  describe('CSP connect-src includes Sentry ingest', () => {
+    it('should include Sentry ingest domain in connect-src', () => {
+      const request = createRequest()
+      const response = middleware(request)
+      const csp = response.headers.get('Content-Security-Policy')
+
+      expect(csp).toContain('https://*.ingest.sentry.io')
+    })
+
+    it('should include Sentry ingest in connect-src in development mode', () => {
+      const originalEnv = process.env.NODE_ENV
+      process.env.NODE_ENV = 'development'
+
+      const request = createRequest()
+      const response = middleware(request)
+      const csp = response.headers.get('Content-Security-Policy')
+
+      expect(csp).toContain('https://*.ingest.sentry.io')
+
+      process.env.NODE_ENV = originalEnv
     })
   })
 
@@ -439,11 +522,11 @@ describe('middleware', () => {
       expect(hsts).toContain('preload')
     })
 
-    it('should enable XSS protection', () => {
+    it('should not set deprecated X-XSS-Protection header (CSP is sufficient)', () => {
       const request = createRequest()
       const response = middleware(request)
 
-      expect(response.headers.get('X-XSS-Protection')).toBe('1; mode=block')
+      expect(response.headers.get('X-XSS-Protection')).toBeNull()
     })
 
     it('should restrict form submissions to same origin', () => {

@@ -16,11 +16,7 @@ import { UploadPageContent } from '@/app/upload/components/UploadPageContent'
 // --- Imports after mocks ---------------------------------------------------------
 
 import { useUsage } from '@/hooks/use-usage'
-import {
-  mergeSpreadsheets,
-  canProcessClientSide,
-  downloadBlob,
-} from '@/lib/spreadsheet-merge'
+import { mergeSpreadsheets, canProcessClientSide, downloadBlob } from '@/lib/spreadsheet-merge'
 import { toast } from 'sonner'
 
 // --- Module mocks ----------------------------------------------------------------
@@ -66,13 +62,9 @@ jest.mock('sonner', () => ({
 }))
 
 jest.mock('next/link', () => {
-  const LinkMock = ({
-    children,
-    href,
-  }: {
-    children: React.ReactNode
-    href: string
-  }) => <a href={href}>{children}</a>
+  const LinkMock = ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  )
   LinkMock.displayName = 'Link'
   return LinkMock
 })
@@ -104,9 +96,7 @@ jest.mock('@/components/button', () => ({
 }))
 
 jest.mock('@/components/card', () => ({
-  Card: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="card">{children}</div>
-  ),
+  Card: ({ children }: { children: React.ReactNode }) => <div data-testid="card">{children}</div>,
   CardContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="card-content">{children}</div>
   ),
@@ -114,9 +104,17 @@ jest.mock('@/components/card', () => ({
 
 jest.mock('lucide-react', () => ({
   ArrowLeft: () => <svg data-testid="arrow-left" />,
+  ArrowRight: () => <svg data-testid="arrow-right" />,
+  AlertTriangle: () => <svg data-testid="alert-triangle" />,
+  Check: () => <svg data-testid="check" />,
+  CheckCircle2: () => <svg data-testid="check-circle" />,
+  Columns3: () => <svg data-testid="columns3" />,
   FileSpreadsheet: () => <svg data-testid="file-spreadsheet" />,
   Info: () => <svg data-testid="info" />,
+  Lightbulb: () => <svg data-testid="lightbulb" />,
   Loader2: () => <svg data-testid="loader2" />,
+  RotateCcw: () => <svg data-testid="rotate-ccw" />,
+  Rows3: () => <svg data-testid="rows3" />,
   Upload: () => <svg data-testid="upload" />,
   X: () => <svg data-testid="x" />,
 }))
@@ -200,9 +198,7 @@ function createFetchHandler(
       return Promise.resolve({
         ok: consumeQuotaSucceeds,
         json: async () =>
-          consumeQuotaSucceeds
-            ? { success: true }
-            : { error: 'messages.processFailed' },
+          consumeQuotaSucceeds ? { success: true } : { error: 'messages.processFailed' },
       } as unknown as Response)
     }
 
@@ -231,9 +227,7 @@ function createFetchHandler(
 async function renderAndAdvanceToColumnsStep() {
   const utils = render(<UploadPageContent />)
 
-  const input = utils.container.querySelector(
-    'input[type="file"]',
-  ) as HTMLInputElement
+  const input = utils.container.querySelector('input[type="file"]') as HTMLInputElement
   const file = createSmallFile()
 
   await act(async () => {
@@ -356,9 +350,7 @@ describe('UploadPageContent — handleProcess quota ordering (card 2.10)', () =>
     it('does NOT call mergeSpreadsheets when consumeQuota fails', async () => {
       fetchSpy = jest
         .spyOn(global, 'fetch')
-        .mockImplementation(
-          createFetchHandler({ consumeQuotaSucceeds: false, callOrder }),
-        )
+        .mockImplementation(createFetchHandler({ consumeQuotaSucceeds: false, callOrder }))
 
       await renderAndAdvanceToColumnsStep()
 
@@ -377,9 +369,7 @@ describe('UploadPageContent — handleProcess quota ordering (card 2.10)', () =>
     it('does NOT call downloadBlob when consumeQuota fails', async () => {
       fetchSpy = jest
         .spyOn(global, 'fetch')
-        .mockImplementation(
-          createFetchHandler({ consumeQuotaSucceeds: false, callOrder }),
-        )
+        .mockImplementation(createFetchHandler({ consumeQuotaSucceeds: false, callOrder }))
 
       await renderAndAdvanceToColumnsStep()
 
@@ -403,9 +393,7 @@ describe('UploadPageContent — handleProcess quota ordering (card 2.10)', () =>
     it('calls downloadBlob after consumeQuota succeeds', async () => {
       fetchSpy = jest
         .spyOn(global, 'fetch')
-        .mockImplementation(
-          createFetchHandler({ consumeQuotaSucceeds: true, callOrder }),
-        )
+        .mockImplementation(createFetchHandler({ consumeQuotaSucceeds: true, callOrder }))
 
       await renderAndAdvanceToColumnsStep()
 
@@ -667,9 +655,7 @@ describe('UploadPageContent — handleProcess quota ordering (card 2.10)', () =>
 
       const { container } = render(<UploadPageContent />)
 
-      const input = container.querySelector(
-        'input[type="file"]',
-      ) as HTMLInputElement
+      const input = container.querySelector('input[type="file"]') as HTMLInputElement
       const file = createSmallFile()
 
       await act(async () => {
@@ -711,9 +697,7 @@ describe('UploadPageContent — handleProcess quota ordering (card 2.10)', () =>
         { timeout: 3000 },
       )
 
-      const completeCalls = callOrder.filter(
-        (c) => c === 'fetch:/api/unification/complete',
-      )
+      const completeCalls = callOrder.filter((c) => c === 'fetch:/api/unification/complete')
       expect(completeCalls).toHaveLength(1)
     })
 
@@ -723,34 +707,30 @@ describe('UploadPageContent — handleProcess quota ordering (card 2.10)', () =>
         resolveProcess = resolve
       })
 
-      fetchSpy = jest
-        .spyOn(global, 'fetch')
-        .mockImplementation((input: FetchUrl) => {
-          const url = input.toString()
-          if (url === '/api/preview') {
-            return Promise.resolve({
-              ok: true,
-              json: async () => ({
-                unificationToken: 'token-disable-test',
-                columns: ['name', 'email'],
-                usage: { current: 0, max: 1, remaining: 1 },
-              }),
-            } as unknown as Response)
-          }
-          if (url === '/api/unification/complete') {
-            return processPromise
-          }
+      fetchSpy = jest.spyOn(global, 'fetch').mockImplementation((input: FetchUrl) => {
+        const url = input.toString()
+        if (url === '/api/preview') {
           return Promise.resolve({
             ok: true,
-            json: async () => ({}),
+            json: async () => ({
+              unificationToken: 'token-disable-test',
+              columns: ['name', 'email'],
+              usage: { current: 0, max: 1, remaining: 1 },
+            }),
           } as unknown as Response)
-        })
+        }
+        if (url === '/api/unification/complete') {
+          return processPromise
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({}),
+        } as unknown as Response)
+      })
 
       await renderAndAdvanceToColumnsStep()
 
-      const processBtn = screen
-        .getByText('columns.processAndDownload')
-        .closest('button')!
+      const processBtn = screen.getByText('columns.processAndDownload').closest('button')!
 
       // Button should be enabled before clicking
       expect(processBtn.disabled).toBe(false)

@@ -1,22 +1,61 @@
-import * as XLSX from 'xlsx'
 import Papa from 'papaparse'
 import { PLAN_LIMITS, type PlanType } from '@/lib/limits'
+import {
+  getExcelJS,
+  worksheetToJson,
+  createWorkbookFromJson,
+  addSheetFromJson,
+  type RowData,
+} from '@/lib/excel-utils'
+import { parseXls } from '@/lib/xls-parser'
+
+/** Labels for the exported spreadsheet (i18n-friendly) */
+export interface MergeLabels {
+  sheetName: string
+  watermarkColumn: string
+  watermarkValue: string
+  aboutSheetName: string
+  aboutHeaderInfo: string
+  aboutHeaderValue: string
+  aboutGeneratedBy: string
+  aboutWebsite: string
+  aboutPlan: string
+  aboutGeneratedAt: string
+  aboutTotalRows: string
+  aboutFilesUnified: string
+  aboutUpgradeToPro: string
+  aboutUpgradeMessage: string
+}
+
+const DEFAULT_LABELS: MergeLabels = {
+  sheetName: 'Dados Unificados',
+  watermarkColumn: 'Gerado por Tablix',
+  watermarkValue: 'tablix.me',
+  aboutSheetName: 'Sobre',
+  aboutHeaderInfo: 'Info',
+  aboutHeaderValue: 'Valor',
+  aboutGeneratedBy: 'Arquivo gerado por',
+  aboutWebsite: 'Website',
+  aboutPlan: 'Plano',
+  aboutGeneratedAt: 'Data de geração',
+  aboutTotalRows: 'Total de linhas',
+  aboutFilesUnified: 'Arquivos unificados',
+  aboutUpgradeToPro: 'Upgrade para Pro',
+  aboutUpgradeMessage: "Remova marca d'água e aumente os limites!",
+}
 
 export interface MergeOptions {
   files: File[]
   selectedColumns: string[]
   addWatermark: boolean // For Free plan
   plan?: PlanType
+  labels?: Partial<MergeLabels>
 }
 
 export interface MergeResult {
   blob: Blob
   filename: string
   rowCount: number
-}
-
-interface RowData {
-  [key: string]: string | number | boolean | null
 }
 
 /**
@@ -38,57 +77,48 @@ function sanitizeCellValue(
 }
 
 /**
- * Parse a single file and extract data
+ * Parse a single file and extract data.
+ * CSV: PapaParse (sync, string-based).
+ * XLSX: ExcelJS (async, buffer-based).
+ * XLS (legacy BIFF): SheetJS in Web Worker (CVE-2023-30533 isolated).
  */
 async function parseFileData(file: File): Promise<RowData[]> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
+  const buffer = await file.arrayBuffer()
+  const name = file.name.toLowerCase()
 
-    reader.onload = (e) => {
-      try {
-        const data = e.target?.result
+  // CSV files
+  if (name.endsWith('.csv')) {
+    const text = new TextDecoder().decode(buffer)
+    const parsed = Papa.parse(text, {
+      header: true,
+      skipEmptyLines: true,
+    })
 
-        if (!data) {
-          throw new Error('Failed to read file')
-        }
-
-        // CSV files
-        if (file.name.endsWith('.csv')) {
-          const text = new TextDecoder().decode(data as ArrayBuffer)
-          const parsed = Papa.parse(text, {
-            header: true,
-            skipEmptyLines: true,
-          })
-
-          if (parsed.errors.length > 0) {
-            throw new Error(parsed.errors[0].message)
-          }
-
-          resolve(parsed.data as RowData[])
-          return
-        }
-
-        // Excel files
-        const workbook = XLSX.read(data, { type: 'array' })
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
-
-        if (!firstSheet) {
-          throw new Error('No sheets found in workbook')
-        }
-
-        const jsonData = XLSX.utils.sheet_to_json<RowData>(firstSheet)
-        resolve(jsonData)
-      } catch (err) {
-        reject(err instanceof Error ? err : new Error('Failed to parse file'))
-      }
+    if (parsed.errors.length > 0) {
+      throw new Error(parsed.errors[0].message)
     }
 
-    reader.onerror = () => {
-      reject(new Error('Failed to read file'))
-    }
+    return parsed.data as RowData[]
+  }
 
-    reader.readAsArrayBuffer(file)
-  })
+  // Legacy Excel (.xls) — SheetJS in Web Worker
+  if (name.endsWith('.xls') && !name.endsWith('.xlsx')) {
+    const result = await parseXls(buffer)
+    return result.rows as RowData[]
+  }
+
+  // Modern Excel (.xlsx, .xlsm, .xlsb) — ExcelJS
+  const ExcelJS = await getExcelJS()
+  const workbook = new ExcelJS.Workbook()
+  await workbook.xlsx.load(buffer)
+
+  const worksheet = workbook.worksheets[0]
+
+  if (!worksheet) {
+    throw new Error('No sheets found in workbook')
+  }
+
+  return worksheetToJson(worksheet)
 }
 
 /**
@@ -101,6 +131,7 @@ export async function mergeSpreadsheets(
   options: MergeOptions,
 ): Promise<MergeResult> {
   const { files, selectedColumns, addWatermark, plan = 'free' } = options
+  const l = { ...DEFAULT_LABELS, ...options.labels }
   const limits = PLAN_LIMITS[plan]
 
   if (files.length === 0) {
@@ -136,7 +167,7 @@ export async function mergeSpreadsheets(
 
       // Add watermark column for Free plan
       if (addWatermark) {
-        filteredRow['Gerado por Tablix'] = 'tablix.com.br'
+        filteredRow[l.watermarkColumn] = l.watermarkValue
       }
 
       allRows.push(filteredRow)
@@ -144,54 +175,55 @@ export async function mergeSpreadsheets(
   }
 
   // Create workbook with merged data
-  const workbook = XLSX.utils.book_new()
-
-  // Create main data sheet
   const columnsWithWatermark = addWatermark
-    ? [...selectedColumns, 'Gerado por Tablix']
+    ? [...selectedColumns, l.watermarkColumn]
     : selectedColumns
 
-  const worksheet = XLSX.utils.json_to_sheet(allRows, {
-    header: columnsWithWatermark,
-  })
-
-  // Set column widths
-  const colWidths = columnsWithWatermark.map((col) => ({
-    wch: Math.max(col.length, 15),
-  }))
-  worksheet['!cols'] = colWidths
-
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Dados Unificados')
+  const workbook = await createWorkbookFromJson(
+    l.sheetName,
+    allRows,
+    columnsWithWatermark,
+  )
 
   // Add "About" sheet for Free plan
   if (addWatermark) {
-    const aboutData = [
-      { Info: 'Arquivo gerado por', Valor: 'Tablix' },
-      { Info: 'Website', Valor: 'https://tablix.com.br' },
-      { Info: 'Plano', Valor: 'Free' },
+    const aboutData: RowData[] = [
       {
-        Info: 'Data de geração',
-        Valor: new Date().toLocaleDateString('pt-BR'),
+        [l.aboutHeaderInfo]: l.aboutGeneratedBy,
+        [l.aboutHeaderValue]: 'Tablix',
       },
-      { Info: 'Total de linhas', Valor: allRows.length.toString() },
-      { Info: 'Arquivos unificados', Valor: files.length.toString() },
-      { Info: '', Valor: '' },
       {
-        Info: 'Upgrade para Pro',
-        Valor: "Remova marca d'água e aumente os limites!",
+        [l.aboutHeaderInfo]: l.aboutWebsite,
+        [l.aboutHeaderValue]: 'https://tablix.me',
+      },
+      { [l.aboutHeaderInfo]: l.aboutPlan, [l.aboutHeaderValue]: 'Free' },
+      {
+        [l.aboutHeaderInfo]: l.aboutGeneratedAt,
+        [l.aboutHeaderValue]: new Date().toLocaleDateString(),
+      },
+      {
+        [l.aboutHeaderInfo]: l.aboutTotalRows,
+        [l.aboutHeaderValue]: allRows.length.toString(),
+      },
+      {
+        [l.aboutHeaderInfo]: l.aboutFilesUnified,
+        [l.aboutHeaderValue]: files.length.toString(),
+      },
+      { [l.aboutHeaderInfo]: '', [l.aboutHeaderValue]: '' },
+      {
+        [l.aboutHeaderInfo]: l.aboutUpgradeToPro,
+        [l.aboutHeaderValue]: l.aboutUpgradeMessage,
       },
     ]
 
-    const aboutSheet = XLSX.utils.json_to_sheet(aboutData)
-    aboutSheet['!cols'] = [{ wch: 25 }, { wch: 40 }]
-    XLSX.utils.book_append_sheet(workbook, aboutSheet, 'Sobre')
+    addSheetFromJson(workbook, l.aboutSheetName, aboutData, [
+      l.aboutHeaderInfo,
+      l.aboutHeaderValue,
+    ])
   }
 
   // Generate file
-  const excelBuffer = XLSX.write(workbook, {
-    bookType: 'xlsx',
-    type: 'array',
-  })
+  const excelBuffer = await workbook.xlsx.writeBuffer()
 
   const blob = new Blob([excelBuffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

@@ -1,8 +1,13 @@
 import { useState } from 'react'
-import * as XLSX from 'xlsx'
 import Papa from 'papaparse'
 import { PLAN_LIMITS, type PlanType } from '@/lib/limits'
 import { sanitizeString } from '@/lib/security/validation-schemas'
+import {
+  getExcelJS,
+  worksheetToArray,
+  worksheetToJsonWithHeaders,
+} from '@/lib/excel-utils'
+import { parseXls } from '@/lib/xls-parser'
 
 export interface ParseResult {
   columns: string[]
@@ -13,6 +18,19 @@ export interface ParseResult {
 export interface ParseError {
   message: string
   code?: string
+}
+
+type PreviewRow = Record<string, string | number | boolean | null>
+
+/** Sanitize all string values in preview rows to prevent XSS */
+function sanitizePreviewRows(rows: PreviewRow[]): PreviewRow[] {
+  return rows.map((row) => {
+    const sanitized: PreviewRow = {}
+    for (const [key, value] of Object.entries(row)) {
+      sanitized[key] = typeof value === 'string' ? sanitizeString(value) : value
+    }
+    return sanitized
+  })
 }
 
 const MAX_CLIENT_PARSE_SIZE = 10 * 1024 * 1024 // 10MB
@@ -27,7 +45,7 @@ export function useFileParser() {
 
   /**
    * Parse file in browser (client-side)
-   * Supports .xlsx, .xls, .csv
+   * Supports .xlsx, .csv (and .xls via Web Worker in Phase 2.5)
    * Enforces row limits based on plan and sanitizes column names
    */
   const parseFileInBrowser = async (
@@ -35,118 +53,124 @@ export function useFileParser() {
     plan: PlanType = 'free',
   ): Promise<ParseResult> => {
     const limits = PLAN_LIMITS[plan]
+    const buffer = await file.arrayBuffer()
 
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
+    // CSV files
+    if (file.name.toLowerCase().endsWith('.csv')) {
+      const text = new TextDecoder().decode(buffer)
 
-      reader.onload = (e) => {
-        try {
-          const data = e.target?.result
+      // First pass: count total rows to validate against limit
+      const fullParse = Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+      })
 
-          if (!data) {
-            throw new Error('Failed to read file')
-          }
-
-          // CSV files
-          if (file.name.endsWith('.csv')) {
-            const text = new TextDecoder().decode(data as ArrayBuffer)
-
-            // First pass: count total rows to validate against limit
-            const fullParse = Papa.parse(text, {
-              header: true,
-              skipEmptyLines: true,
-            })
-
-            if (fullParse.errors.length > 0) {
-              throw new Error(fullParse.errors[0].message)
-            }
-
-            const totalRows = fullParse.data.length
-            if (totalRows > limits.maxRows) {
-              throw new Error(
-                `File exceeds row limit: ${totalRows} rows (max ${limits.maxRows} for ${limits.name} plan)`,
-              )
-            }
-
-            // Sanitize column names to prevent XSS
-            const rawColumns = fullParse.meta.fields || []
-            const columns = rawColumns
-              .map((col) => sanitizeString(col))
-              .filter((col) => col.length > 0)
-
-            resolve({
-              columns,
-              rowCount: totalRows,
-              preview: (
-                fullParse.data as Record<
-                  string,
-                  string | number | boolean | null
-                >[]
-              ).slice(0, 5),
-            })
-            return
-          }
-
-          // Excel files (.xlsx, .xls)
-          const workbook = XLSX.read(data, { type: 'array' })
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
-
-          if (!firstSheet) {
-            throw new Error('No sheets found in workbook')
-          }
-
-          // Convert to JSON to extract columns
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 })
-
-          if (jsonData.length === 0) {
-            throw new Error('Empty spreadsheet')
-          }
-
-          // First row = column names — sanitize to prevent XSS
-          const columns = (jsonData[0] as (string | number | boolean | null)[])
-            .filter((col) => col !== null && col !== undefined && col !== '')
-            .map((col) => sanitizeString(String(col).trim()))
-            .filter((col) => col.length > 0)
-
-          if (columns.length === 0) {
-            throw new Error('No columns found in first row')
-          }
-
-          // Get row count (excluding header) and enforce limit
-          const rowCount = jsonData.length - 1
-          if (rowCount > limits.maxRows) {
-            throw new Error(
-              `File exceeds row limit: ${rowCount} rows (max ${limits.maxRows} for ${limits.name} plan)`,
-            )
-          }
-
-          // Get preview (first 5 rows)
-          const preview = XLSX.utils
-            .sheet_to_json<Record<string, string | number | boolean | null>>(
-              firstSheet,
-              {
-                header: columns,
-                range: 1, // Skip header row
-              },
-            )
-            .slice(0, 5)
-
-          resolve({
-            columns,
-            rowCount,
-            preview,
-          })
-        } catch (err) {
-          reject(err instanceof Error ? err : new Error('Failed to parse file'))
-        }
+      if (fullParse.errors.length > 0) {
+        throw new Error(fullParse.errors[0].message)
       }
 
-      reader.onerror = () => {
-        reject(new Error('Failed to read file'))
+      const totalRows = fullParse.data.length
+      if (totalRows > limits.maxRows) {
+        throw new Error(
+          `File exceeds row limit: ${totalRows} rows (max ${limits.maxRows} for ${limits.name} plan)`,
+        )
       }
 
-      reader.readAsArrayBuffer(file)
-    })
+      // Sanitize column names to prevent XSS
+      const rawColumns = fullParse.meta.fields || []
+      const columns = rawColumns
+        .map((col) => sanitizeString(col))
+        .filter((col) => col.length > 0)
+
+      return {
+        columns,
+        rowCount: totalRows,
+        preview: sanitizePreviewRows(
+          (fullParse.data as PreviewRow[]).slice(0, 5),
+        ),
+      }
+    }
+
+    const name = file.name.toLowerCase()
+
+    // Legacy Excel (.xls) — SheetJS in Web Worker (CVE isolated)
+    if (name.endsWith('.xls') && !name.endsWith('.xlsx')) {
+      const result = await parseXls(buffer)
+
+      const columns = result.columns
+        .map((col) => sanitizeString(col))
+        .filter((col) => col.length > 0)
+
+      if (columns.length === 0) {
+        throw new Error('No columns found in first row')
+      }
+
+      if (result.rowCount > limits.maxRows) {
+        throw new Error(
+          `File exceeds row limit: ${result.rowCount} rows (max ${limits.maxRows} for ${limits.name} plan)`,
+        )
+      }
+
+      const preview = sanitizePreviewRows(
+        result.rows.slice(0, 5) as PreviewRow[],
+      )
+
+      return {
+        columns,
+        rowCount: result.rowCount,
+        preview,
+      }
+    }
+
+    // Modern Excel (.xlsx, .xlsm) — ExcelJS
+    const ExcelJS = await getExcelJS()
+    const workbook = new ExcelJS.Workbook()
+    await workbook.xlsx.load(buffer)
+
+    const worksheet = workbook.worksheets[0]
+
+    if (!worksheet) {
+      throw new Error('No sheets found in workbook')
+    }
+
+    // Convert to 2D array to extract columns (first row = headers)
+    const arrayData = worksheetToArray(worksheet)
+
+    if (arrayData.length === 0) {
+      throw new Error('Empty spreadsheet')
+    }
+
+    // First row = column names — sanitize to prevent XSS
+    const columns = (arrayData[0] as (string | number | boolean | null)[])
+      .filter((col) => col !== null && col !== undefined && col !== '')
+      .map((col) => sanitizeString(String(col).trim()))
+      .filter((col) => col.length > 0)
+
+    if (columns.length === 0) {
+      throw new Error('No columns found in first row')
+    }
+
+    // Get row count (excluding header) and enforce limit
+    const rowCount = arrayData.length - 1
+    if (rowCount > limits.maxRows) {
+      throw new Error(
+        `File exceeds row limit: ${rowCount} rows (max ${limits.maxRows} for ${limits.name} plan)`,
+      )
+    }
+
+    // Get preview (first 5 rows) using custom headers starting from row 2
+    const preview = sanitizePreviewRows(
+      worksheetToJsonWithHeaders(worksheet, columns, 2).slice(
+        0,
+        5,
+      ) as PreviewRow[],
+    )
+
+    return {
+      columns,
+      rowCount,
+      preview,
+    }
   }
 
   /**

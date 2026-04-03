@@ -17,7 +17,7 @@
   --secondary: #f5f5f4;
   --secondary-foreground: #1c1917;
   --muted: #f5f5f4;
-  --muted-foreground: #78716c;
+  --muted-foreground: #6b6560;
   --accent: #f5f5f4;
   --accent-foreground: #1c1917;
   --destructive: #dc2626;
@@ -157,7 +157,7 @@
 }
 
 .prose-legal p {
-  @apply mb-4 text-[15px] leading-relaxed text-stone-700 dark:text-stone-300;
+  @apply text-foreground/80 mb-4 text-[15px] leading-relaxed;
 }
 
 .prose-legal ul {
@@ -165,7 +165,7 @@
 }
 
 .prose-legal li {
-  @apply text-[15px] leading-relaxed text-stone-700 dark:text-stone-300;
+  @apply text-foreground/80 text-[15px] leading-relaxed;
 }
 
 .prose-legal section {
