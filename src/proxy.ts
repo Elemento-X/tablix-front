@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // CSRF protection: validate Origin header on state-changing API requests
   if (
     request.nextUrl.pathname.startsWith('/api/') &&
@@ -60,10 +60,7 @@ export function middleware(request: NextRequest) {
 
   // Security Headers
   response.headers.set('X-DNS-Prefetch-Control', 'on')
-  response.headers.set(
-    'Strict-Transport-Security',
-    'max-age=63072000; includeSubDomains; preload',
-  )
+  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
   response.headers.set('X-Frame-Options', 'SAMEORIGIN')
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
@@ -92,10 +89,7 @@ export function middleware(request: NextRequest) {
   response.headers.set('Content-Security-Policy', cspHeader)
 
   // Prevent search engines from indexing preview/non-production deploys
-  if (
-    process.env.VERCEL_ENV === 'preview' ||
-    process.env.VERCEL_ENV === 'development'
-  ) {
+  if (process.env.VERCEL_ENV === 'preview' || process.env.VERCEL_ENV === 'development') {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow')
   }
 

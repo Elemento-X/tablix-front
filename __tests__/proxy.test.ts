@@ -2,9 +2,9 @@
  * @jest-environment node
  */
 import { NextRequest } from 'next/server'
-import { middleware, config } from '@/middleware'
+import { proxy, config } from '@/proxy'
 
-describe('middleware', () => {
+describe('proxy', () => {
   const createRequest = (url = 'http://localhost:3000/') => {
     return new NextRequest(url)
   }
@@ -12,14 +12,14 @@ describe('middleware', () => {
   describe('security headers', () => {
     it('should set X-DNS-Prefetch-Control header', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.headers.get('X-DNS-Prefetch-Control')).toBe('on')
     })
 
     it('should set Strict-Transport-Security header', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.headers.get('Strict-Transport-Security')).toBe(
         'max-age=63072000; includeSubDomains; preload',
@@ -28,28 +28,28 @@ describe('middleware', () => {
 
     it('should set X-Frame-Options header', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.headers.get('X-Frame-Options')).toBe('SAMEORIGIN')
     })
 
     it('should set X-Content-Type-Options header', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff')
     })
 
     it('should set Referrer-Policy header', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin')
     })
 
     it('should not set deprecated X-XSS-Protection header', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.headers.get('X-XSS-Protection')).toBeNull()
     })
@@ -58,7 +58,7 @@ describe('middleware', () => {
   describe('Permissions-Policy header', () => {
     it('should set comprehensive Permissions-Policy header', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       const permissionsPolicy = response.headers.get('Permissions-Policy')
       const requiredPolicies = [
@@ -87,7 +87,7 @@ describe('middleware', () => {
   describe('Content-Security-Policy header', () => {
     it('should set Content-Security-Policy header', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       const csp = response.headers.get('Content-Security-Policy')
       expect(csp).toBeDefined()
@@ -96,7 +96,7 @@ describe('middleware', () => {
 
     it('should have default-src self directive', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       const csp = response.headers.get('Content-Security-Policy')
       expect(csp).toContain("default-src 'self'")
@@ -104,7 +104,7 @@ describe('middleware', () => {
 
     it('should have script-src directive without unsafe-inline', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       const csp = response.headers.get('Content-Security-Policy')
       expect(csp).toContain("script-src 'self'")
@@ -118,7 +118,7 @@ describe('middleware', () => {
 
     it('should have style-src directive', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       const csp = response.headers.get('Content-Security-Policy')
       expect(csp).toContain("style-src 'self' 'unsafe-inline'")
@@ -126,7 +126,7 @@ describe('middleware', () => {
 
     it('should have img-src directive', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       const csp = response.headers.get('Content-Security-Policy')
       expect(csp).toContain("img-src 'self' data: blob: https:")
@@ -134,7 +134,7 @@ describe('middleware', () => {
 
     it('should have font-src directive', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       const csp = response.headers.get('Content-Security-Policy')
       expect(csp).toContain("font-src 'self' data:")
@@ -142,7 +142,7 @@ describe('middleware', () => {
 
     it('should have connect-src directive for Vercel', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       const csp = response.headers.get('Content-Security-Policy')
       expect(csp).toContain('connect-src')
@@ -152,7 +152,7 @@ describe('middleware', () => {
 
     it('should have worker-src self directive', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       const csp = response.headers.get('Content-Security-Policy')
       expect(csp).toContain("worker-src 'self'")
@@ -160,7 +160,7 @@ describe('middleware', () => {
 
     it('should have frame-ancestors directive', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       const csp = response.headers.get('Content-Security-Policy')
       expect(csp).toContain("frame-ancestors 'self'")
@@ -168,7 +168,7 @@ describe('middleware', () => {
 
     it('should have base-uri directive', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       const csp = response.headers.get('Content-Security-Policy')
       expect(csp).toContain("base-uri 'self'")
@@ -176,7 +176,7 @@ describe('middleware', () => {
 
     it('should have form-action directive', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       const csp = response.headers.get('Content-Security-Policy')
       expect(csp).toContain("form-action 'self'")
@@ -186,7 +186,7 @@ describe('middleware', () => {
   describe('response handling', () => {
     it('should return a NextResponse', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response).toBeDefined()
       expect(response.headers).toBeDefined()
@@ -202,7 +202,7 @@ describe('middleware', () => {
 
       for (const path of paths) {
         const request = createRequest(path)
-        const response = middleware(request)
+        const response = proxy(request)
 
         expect(response.headers.get('X-Frame-Options')).toBe('SAMEORIGIN')
         expect(response.headers.get('Content-Security-Policy')).toBeDefined()
@@ -255,7 +255,7 @@ describe('middleware', () => {
       const request = new NextRequest('http://localhost:3000/api/preview', {
         method: 'POST',
       })
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.status).toBe(403)
     })
@@ -266,7 +266,7 @@ describe('middleware', () => {
         'http://evil.com',
         'localhost:3000',
       )
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.status).toBe(403)
     })
@@ -277,7 +277,7 @@ describe('middleware', () => {
         'http://localhost:3000',
         'localhost:3000',
       )
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.status).not.toBe(403)
     })
@@ -290,14 +290,14 @@ describe('middleware', () => {
         method: 'POST',
         headers,
       })
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.status).toBe(403)
     })
 
     it('should not apply CSRF check to GET requests on /api/', () => {
       const request = new NextRequest('http://localhost:3000/api/usage')
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.status).not.toBe(403)
     })
@@ -306,7 +306,7 @@ describe('middleware', () => {
       const request = new NextRequest('http://localhost:3000/upload', {
         method: 'POST',
       })
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.status).not.toBe(403)
     })
@@ -315,7 +315,7 @@ describe('middleware', () => {
       const request = new NextRequest('http://localhost:3000/api/usage', {
         method: 'HEAD',
       })
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.status).not.toBe(403)
     })
@@ -324,7 +324,7 @@ describe('middleware', () => {
       const request = new NextRequest('http://localhost:3000/api/preview', {
         method: 'OPTIONS',
       })
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.status).not.toBe(403)
     })
@@ -335,7 +335,7 @@ describe('middleware', () => {
         'http://evil.com',
         'localhost:3000',
       )
-      const response = middleware(request)
+      const response = proxy(request)
       const body = await response.json()
 
       expect(body.error).toBe('Forbidden')
@@ -356,7 +356,7 @@ describe('middleware', () => {
 
     it('should include unsafe-eval and unsafe-inline in script-src in dev mode', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
       const csp = response.headers.get('Content-Security-Policy')
 
       const scriptSrc = csp!.split(';').find((d) => d.trim().startsWith('script-src'))
@@ -366,7 +366,7 @@ describe('middleware', () => {
 
     it('should include ws://localhost in connect-src in dev mode', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
       const csp = response.headers.get('Content-Security-Policy')
 
       expect(csp).toContain('ws://localhost:*')
@@ -374,7 +374,7 @@ describe('middleware', () => {
 
     it('should not include nonce or strict-dynamic in dev mode', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
       const csp = response.headers.get('Content-Security-Policy')
 
       expect(csp).not.toContain('strict-dynamic')
@@ -385,7 +385,7 @@ describe('middleware', () => {
   describe('production mode CSP', () => {
     it('should include nonce and strict-dynamic in script-src', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
       const csp = response.headers.get('Content-Security-Policy')
 
       const scriptSrc = csp!.split(';').find((d) => d.trim().startsWith('script-src'))
@@ -395,7 +395,7 @@ describe('middleware', () => {
 
     it('should not include ws://localhost in connect-src in prod mode', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
       const csp = response.headers.get('Content-Security-Policy')
 
       expect(csp).not.toContain('ws://localhost')
@@ -403,7 +403,7 @@ describe('middleware', () => {
 
     it('should pass nonce via request headers (not response)', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       // Nonce should NOT be in response headers (security: not visible to client JS)
       expect(response.headers.get('x-nonce')).toBeNull()
@@ -425,7 +425,7 @@ describe('middleware', () => {
       process.env.VERCEL_ENV = 'preview'
 
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow')
     })
@@ -434,7 +434,7 @@ describe('middleware', () => {
       process.env.VERCEL_ENV = 'development'
 
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow')
     })
@@ -443,7 +443,7 @@ describe('middleware', () => {
       process.env.VERCEL_ENV = 'production'
 
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.headers.get('X-Robots-Tag')).toBeNull()
     })
@@ -452,7 +452,7 @@ describe('middleware', () => {
       delete process.env.VERCEL_ENV
 
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.headers.get('X-Robots-Tag')).toBeNull()
     })
@@ -468,7 +468,7 @@ describe('middleware', () => {
 
       for (const path of paths) {
         const request = createRequest(path)
-        const response = middleware(request)
+        const response = proxy(request)
         expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow')
       }
     })
@@ -477,7 +477,7 @@ describe('middleware', () => {
   describe('CSP connect-src includes Sentry ingest', () => {
     it('should include Sentry ingest domain in connect-src', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
       const csp = response.headers.get('Content-Security-Policy')
 
       expect(csp).toContain('https://*.ingest.sentry.io')
@@ -488,7 +488,7 @@ describe('middleware', () => {
       process.env.NODE_ENV = 'development'
 
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
       const csp = response.headers.get('Content-Security-Policy')
 
       expect(csp).toContain('https://*.ingest.sentry.io')
@@ -500,21 +500,21 @@ describe('middleware', () => {
   describe('security best practices', () => {
     it('should prevent clickjacking with X-Frame-Options', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.headers.get('X-Frame-Options')).toBe('SAMEORIGIN')
     })
 
     it('should prevent MIME type sniffing', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff')
     })
 
     it('should enforce HTTPS with HSTS', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       const hsts = response.headers.get('Strict-Transport-Security')
       expect(hsts).toContain('max-age=63072000')
@@ -524,14 +524,14 @@ describe('middleware', () => {
 
     it('should not set deprecated X-XSS-Protection header (CSP is sufficient)', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       expect(response.headers.get('X-XSS-Protection')).toBeNull()
     })
 
     it('should restrict form submissions to same origin', () => {
       const request = createRequest()
-      const response = middleware(request)
+      const response = proxy(request)
 
       const csp = response.headers.get('Content-Security-Policy')
       expect(csp).toContain("form-action 'self'")
