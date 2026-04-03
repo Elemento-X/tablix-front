@@ -32,9 +32,15 @@ function SwitchButtons() {
   const { setLocale } = useLocale()
   return (
     <>
-      <button onClick={() => setLocale('en')} data-testid="to-en">en</button>
-      <button onClick={() => setLocale('es')} data-testid="to-es">es</button>
-      <button onClick={() => setLocale('pt-BR')} data-testid="to-ptbr">pt-BR</button>
+      <button onClick={() => setLocale('en')} data-testid="to-en">
+        en
+      </button>
+      <button onClick={() => setLocale('es')} data-testid="to-es">
+        es
+      </button>
+      <button onClick={() => setLocale('pt-BR')} data-testid="to-ptbr">
+        pt-BR
+      </button>
     </>
   )
 }
@@ -53,7 +59,8 @@ describe('LocaleProvider — cookie write (Card 8.4)', () => {
     })
 
     // Intercept document.cookie writes
-    cookieDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie') ??
+    cookieDescriptor =
+      Object.getOwnPropertyDescriptor(Document.prototype, 'cookie') ??
       Object.getOwnPropertyDescriptor(HTMLDocument.prototype, 'cookie')
 
     Object.defineProperty(document, 'cookie', {
@@ -117,7 +124,7 @@ describe('LocaleProvider — cookie write (Card 8.4)', () => {
     })
   })
 
-  it('cookie has SameSite=Lax', async () => {
+  it('cookie has SameSite=Strict', async () => {
     localStorageMock.getItem.mockReturnValue(null)
 
     render(
@@ -128,7 +135,7 @@ describe('LocaleProvider — cookie write (Card 8.4)', () => {
 
     await waitFor(() => {
       const written = cookieValues.join(' ')
-      expect(written).toContain('SameSite=Lax')
+      expect(written).toContain('SameSite=Strict')
     })
   })
 
@@ -182,7 +189,7 @@ describe('LocaleProvider — cookie write (Card 8.4)', () => {
     const written = cookieValues.join(' ')
     expect(written).toContain('tablix-locale=es')
     expect(written).toContain('path=/')
-    expect(written).toContain('SameSite=Lax')
+    expect(written).toContain('SameSite=Strict')
   })
 
   it('does not write invalid locale to cookie', async () => {
