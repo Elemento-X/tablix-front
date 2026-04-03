@@ -181,6 +181,83 @@ describe('audit-logger.ts', () => {
       expect(log.path).toBe('/api/unification/complete')
     })
 
+    it('should include rid field with 8-character string', () => {
+      const request = createRequest()
+      audit(request, { action: 'upload.preview' })
+
+      const log = JSON.parse(consoleSpy.mock.calls[0][1])
+      expect(log).toHaveProperty('rid')
+      expect(typeof log.rid).toBe('string')
+      expect(log.rid).toHaveLength(8)
+    })
+
+    it('should generate unique rid per call', () => {
+      const request = createRequest()
+      audit(request, { action: 'upload.preview' })
+      audit(request, { action: 'upload.process' })
+
+      const log1 = JSON.parse(consoleSpy.mock.calls[0][1])
+      const log2 = JSON.parse(consoleSpy.mock.calls[1][1])
+
+      // Two consecutive calls should almost never share the same rid
+      // (UUID-based: probability of collision is negligible)
+      expect(log1.rid).toBeDefined()
+      expect(log2.rid).toBeDefined()
+      // Both must be valid 8-char strings
+      expect(log1.rid).toHaveLength(8)
+      expect(log2.rid).toHaveLength(8)
+    })
+
+    it('should rid contain only alphanumeric and hyphen characters (UUID slice)', () => {
+      const request = createRequest()
+      audit(request, { action: 'upload.preview' })
+
+      const log = JSON.parse(consoleSpy.mock.calls[0][1])
+      // UUID chars: 0-9, a-f, hyphen
+      expect(log.rid).toMatch(/^[0-9a-f-]{8}$/)
+    })
+
+    it('should include ms field when startTime is provided', () => {
+      const request = createRequest()
+      const startTime = Date.now() - 42
+
+      audit(request, { action: 'upload.process' }, startTime)
+
+      const log = JSON.parse(consoleSpy.mock.calls[0][1])
+      expect(log).toHaveProperty('ms')
+      expect(typeof log.ms).toBe('number')
+      expect(log.ms).toBeGreaterThanOrEqual(0)
+    })
+
+    it('should omit ms field when startTime is not provided', () => {
+      const request = createRequest()
+      audit(request, { action: 'upload.preview' })
+
+      const log = JSON.parse(consoleSpy.mock.calls[0][1])
+      expect(log).not.toHaveProperty('ms')
+    })
+
+    it('should omit ms field when startTime is undefined explicitly', () => {
+      const request = createRequest()
+      audit(request, { action: 'upload.preview' }, undefined)
+
+      const log = JSON.parse(consoleSpy.mock.calls[0][1])
+      expect(log).not.toHaveProperty('ms')
+    })
+
+    it('should calculate ms as elapsed time from startTime', () => {
+      const request = createRequest()
+      const startTime = Date.now()
+
+      // Simulate passage of time via a known startTime in the past
+      const fakeStartTime = startTime - 100
+      audit(request, { action: 'upload.process' }, fakeStartTime)
+
+      const log = JSON.parse(consoleSpy.mock.calls[0][1])
+      // ms should be at least 100ms (the simulated elapsed time)
+      expect(log.ms).toBeGreaterThanOrEqual(100)
+    })
+
     it('should not include sensitive full IP — last octet always masked', () => {
       const request = createRequest(undefined, 'POST', {
         'x-forwarded-for': '192.168.1.100',

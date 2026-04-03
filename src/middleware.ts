@@ -43,7 +43,7 @@ export function middleware(request: NextRequest) {
     styleSrc,
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    `connect-src 'self' ${isDev ? 'ws://localhost:* ws://127.0.0.1:* ws://0.0.0.0:* ' : ''}https://vercel.live https://*.vercel-insights.com https://*.vercel-scripts.com`,
+    `connect-src 'self' ${isDev ? 'ws://localhost:* ws://127.0.0.1:* ws://0.0.0.0:* ' : ''}https://vercel.live https://*.vercel-insights.com https://*.vercel-scripts.com https://*.ingest.sentry.io`,
     "worker-src 'self'",
     "frame-ancestors 'self'",
     "base-uri 'self'",
@@ -90,6 +90,14 @@ export function middleware(request: NextRequest) {
   )
 
   response.headers.set('Content-Security-Policy', cspHeader)
+
+  // Prevent search engines from indexing preview/non-production deploys
+  if (
+    process.env.VERCEL_ENV === 'preview' ||
+    process.env.VERCEL_ENV === 'development'
+  ) {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+  }
 
   return response
 }
