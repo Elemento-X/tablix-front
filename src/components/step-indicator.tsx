@@ -40,7 +40,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
                       ? 'bg-teal-700 text-white'
                       : isCurrent
                         ? 'border-2 border-teal-700 bg-teal-700/10 text-teal-700 dark:text-teal-400'
-                        : 'border-2 border-stone-300 text-stone-400 dark:border-stone-600 dark:text-stone-500'
+                        : 'border-border text-muted-foreground border-2'
                   }`}
                   aria-current={isCurrent ? 'step' : undefined}
                 >
@@ -64,9 +64,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
               {index < STEPS.length - 1 && (
                 <div
                   className={`mx-3 mb-5 h-0.5 w-12 sm:w-16 ${
-                    index < currentIndex
-                      ? 'bg-teal-700'
-                      : 'bg-stone-200 dark:bg-stone-700'
+                    index < currentIndex ? 'bg-teal-700' : 'bg-border'
                   }`}
                 />
               )}

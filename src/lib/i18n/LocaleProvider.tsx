@@ -1,6 +1,12 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from 'react'
 import { type Locale, defaultLocale } from './config'
 import ptBR from './messages/pt-BR.json'
 import en from './messages/en.json'
@@ -69,6 +75,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     if (isClient) {
       localStorage.setItem(LOCALE_STORAGE_KEY, newLocale)
       setLocaleCookie(newLocale)
+      document.documentElement.lang = newLocale
     }
   }
 
@@ -93,7 +100,9 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     messages: messages[locale],
   }
 
-  return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>
+  return (
+    <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>
+  )
 }
 
 export function useLocale() {

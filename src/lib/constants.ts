@@ -1,1 +1,1 @@
-export const SITE_URL = 'https://tablix.com.br'
+export const SITE_URL = 'https://tablix.me'

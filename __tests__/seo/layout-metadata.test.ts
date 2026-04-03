@@ -78,10 +78,10 @@ describe('generateMetadata()', () => {
     expect((result.description as string).length).toBeGreaterThan(0)
   })
 
-  it('includes metadataBase pointing to tablix.com.br', async () => {
+  it('includes metadataBase pointing to tablix.me', async () => {
     const result = await getMetadata('pt-BR')
     expect(result.metadataBase).toBeDefined()
-    expect(result.metadataBase?.toString()).toContain('tablix.com.br')
+    expect(result.metadataBase?.toString()).toContain('tablix.me')
   })
 
   it('includes alternates.canonical', async () => {
@@ -112,9 +112,9 @@ describe('generateMetadata()', () => {
     expect(result.openGraph?.siteName).toBe('Tablix')
   })
 
-  it('openGraph url points to tablix.com.br', async () => {
+  it('openGraph url points to tablix.me', async () => {
     const result = await getMetadata('pt-BR')
-    expect(result.openGraph?.url?.toString()).toContain('tablix.com.br')
+    expect(result.openGraph?.url?.toString()).toContain('tablix.me')
   })
 
   it('openGraph locale for pt-BR is pt_BR', async () => {

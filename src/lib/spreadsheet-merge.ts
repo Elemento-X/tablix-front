@@ -30,7 +30,7 @@ export interface MergeLabels {
 const DEFAULT_LABELS: MergeLabels = {
   sheetName: 'Dados Unificados',
   watermarkColumn: 'Gerado por Tablix',
-  watermarkValue: 'tablix.com.br',
+  watermarkValue: 'tablix.me',
   aboutSheetName: 'Sobre',
   aboutHeaderInfo: 'Info',
   aboutHeaderValue: 'Valor',
@@ -194,7 +194,7 @@ export async function mergeSpreadsheets(
       },
       {
         [l.aboutHeaderInfo]: l.aboutWebsite,
-        [l.aboutHeaderValue]: 'https://tablix.com.br',
+        [l.aboutHeaderValue]: 'https://tablix.me',
       },
       { [l.aboutHeaderInfo]: l.aboutPlan, [l.aboutHeaderValue]: 'Free' },
       {

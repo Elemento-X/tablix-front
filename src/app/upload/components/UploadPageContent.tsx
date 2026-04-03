@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { LanguageSelector } from '@/components/language-selector'
 import { Badge } from '@/components/badge'
 import { GridBackground } from '@/components/grid-background'
@@ -39,6 +40,17 @@ export function UploadPageContent() {
     handleSelectAll,
     handleDeselectAll,
   } = useUploadFlow()
+
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const isInitialMount = useRef(true)
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
+    headingRef.current?.focus()
+  }, [step])
 
   const quotaExhausted =
     !isLoadingUsage && usage !== null && usage.unifications.remaining <= 0
@@ -83,13 +95,20 @@ export function UploadPageContent() {
         </div>
       </header>
 
-      <main className="relative mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-16">
+      <main
+        id="main-content"
+        className="relative mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-16"
+      >
         <GridBackground />
 
         <StepIndicator currentStep={step} />
 
         <div className="mb-8 text-center sm:mb-12">
-          <h1 className="text-foreground text-2xl font-bold sm:text-3xl md:text-4xl">
+          <h1
+            ref={headingRef}
+            tabIndex={-1}
+            className="text-foreground text-2xl font-bold outline-none sm:text-3xl md:text-4xl"
+          >
             {getStepTitle()}
           </h1>
 

@@ -9,6 +9,7 @@ import { getServerLocale, getMessages } from '@/lib/i18n/server'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from 'sonner'
 import { CookieConsent } from '@/components/cookie-consent'
+import { SkipLink } from '@/components/skip-link'
 import { SITE_URL } from '@/lib/constants'
 import './globals.css'
 
@@ -96,6 +97,7 @@ export default async function RootLayout({
           nonce={nonce}
         >
           <LocaleProvider>
+            <SkipLink />
             {children}
             <Analytics />
             <Toaster position="top-right" richColors />

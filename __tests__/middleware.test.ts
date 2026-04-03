@@ -410,6 +410,93 @@ describe('middleware', () => {
     })
   })
 
+  describe('X-Robots-Tag (preview/development environments)', () => {
+    const originalVercelEnv = process.env.VERCEL_ENV
+
+    afterEach(() => {
+      if (originalVercelEnv === undefined) {
+        delete process.env.VERCEL_ENV
+      } else {
+        process.env.VERCEL_ENV = originalVercelEnv
+      }
+    })
+
+    it('should set X-Robots-Tag noindex when VERCEL_ENV is preview', () => {
+      process.env.VERCEL_ENV = 'preview'
+
+      const request = createRequest()
+      const response = middleware(request)
+
+      expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow')
+    })
+
+    it('should set X-Robots-Tag noindex when VERCEL_ENV is development', () => {
+      process.env.VERCEL_ENV = 'development'
+
+      const request = createRequest()
+      const response = middleware(request)
+
+      expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow')
+    })
+
+    it('should NOT set X-Robots-Tag when VERCEL_ENV is production', () => {
+      process.env.VERCEL_ENV = 'production'
+
+      const request = createRequest()
+      const response = middleware(request)
+
+      expect(response.headers.get('X-Robots-Tag')).toBeNull()
+    })
+
+    it('should NOT set X-Robots-Tag when VERCEL_ENV is undefined', () => {
+      delete process.env.VERCEL_ENV
+
+      const request = createRequest()
+      const response = middleware(request)
+
+      expect(response.headers.get('X-Robots-Tag')).toBeNull()
+    })
+
+    it('should apply X-Robots-Tag to all paths in preview', () => {
+      process.env.VERCEL_ENV = 'preview'
+
+      const paths = [
+        'http://localhost:3000/',
+        'http://localhost:3000/upload',
+        'http://localhost:3000/api/usage',
+      ]
+
+      for (const path of paths) {
+        const request = createRequest(path)
+        const response = middleware(request)
+        expect(response.headers.get('X-Robots-Tag')).toBe('noindex, nofollow')
+      }
+    })
+  })
+
+  describe('CSP connect-src includes Sentry ingest', () => {
+    it('should include Sentry ingest domain in connect-src', () => {
+      const request = createRequest()
+      const response = middleware(request)
+      const csp = response.headers.get('Content-Security-Policy')
+
+      expect(csp).toContain('https://*.ingest.sentry.io')
+    })
+
+    it('should include Sentry ingest in connect-src in development mode', () => {
+      const originalEnv = process.env.NODE_ENV
+      process.env.NODE_ENV = 'development'
+
+      const request = createRequest()
+      const response = middleware(request)
+      const csp = response.headers.get('Content-Security-Policy')
+
+      expect(csp).toContain('https://*.ingest.sentry.io')
+
+      process.env.NODE_ENV = originalEnv
+    })
+  })
+
   describe('security best practices', () => {
     it('should prevent clickjacking with X-Frame-Options', () => {
       const request = createRequest()

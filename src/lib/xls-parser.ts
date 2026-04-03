@@ -29,6 +29,10 @@ export function parseXls(buffer: ArrayBuffer): Promise<XlsParseResult> {
     let settled = false
 
     const timeoutId = setTimeout(() => {
+      // istanbul ignore next — the false-branch (already settled when timeout fires)
+      // is tested functionally in "settled guard — line 32 branch" but Istanbul cannot
+      // track it because the closure executes outside the async instrumentation context
+      // when using jest fake timers + Promise microtasks.
       if (!settled) {
         settled = true
         worker.terminate()

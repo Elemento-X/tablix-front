@@ -62,7 +62,7 @@ export function FileDropzone({
           ? 'border-teal-500 bg-teal-50 dark:bg-teal-950/20'
           : flashActive
             ? 'border-teal-400 bg-teal-50/50 dark:bg-teal-950/10'
-            : 'bg-background border-stone-300 hover:border-stone-400 hover:bg-stone-50 dark:border-stone-700 dark:hover:border-stone-600 dark:hover:bg-stone-900',
+            : 'bg-background border-border hover:border-muted-foreground/40 hover:bg-muted',
         disabled && 'pointer-events-none opacity-50',
         className,
       )}

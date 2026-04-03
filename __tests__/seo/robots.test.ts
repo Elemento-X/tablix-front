@@ -52,8 +52,8 @@ describe('robots()', () => {
     expect(result.sitemap).toContain('sitemap.xml')
   })
 
-  it('sitemap URL points to tablix.com.br', () => {
-    expect(result.sitemap).toContain('tablix.com.br')
+  it('sitemap URL points to tablix.me', () => {
+    expect(result.sitemap).toContain('tablix.me')
   })
 
   it('sitemap URL uses HTTPS', () => {
