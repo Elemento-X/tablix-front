@@ -20,11 +20,7 @@ describe('file-validator.ts', () => {
     })
 
     it('should have correct allowed extensions', () => {
-      expect(FILE_VALIDATOR.ALLOWED_EXTENSIONS).toEqual([
-        '.csv',
-        '.xls',
-        '.xlsx',
-      ])
+      expect(FILE_VALIDATOR.ALLOWED_EXTENSIONS).toEqual(['.csv', '.xls', '.xlsx'])
     })
   })
 
@@ -75,11 +71,7 @@ describe('file-validator.ts', () => {
       })
 
       it('should accept .xls files', () => {
-        const file = createMockFile(
-          'data.xls',
-          1000,
-          'application/vnd.ms-excel',
-        )
+        const file = createMockFile('data.xls', 1000, 'application/vnd.ms-excel')
         const result = validateFile(file)
         expect(result.valid).toBe(true)
       })
@@ -146,14 +138,7 @@ describe('file-validator.ts', () => {
       })
 
       it('should reject Windows reserved names', () => {
-        const reservedNames = [
-          'CON.csv',
-          'PRN.csv',
-          'AUX.csv',
-          'NUL.csv',
-          'COM1.csv',
-          'LPT1.csv',
-        ]
+        const reservedNames = ['CON.csv', 'PRN.csv', 'AUX.csv', 'NUL.csv', 'COM1.csv', 'LPT1.csv']
 
         reservedNames.forEach((filename) => {
           const file = createMockFile(filename, 1000, 'text/csv')
@@ -164,12 +149,7 @@ describe('file-validator.ts', () => {
       })
 
       it('should accept valid filenames', () => {
-        const validNames = [
-          'data.csv',
-          'my-file_123.xlsx',
-          'Report 2024.csv',
-          'sales_data.xlsx',
-        ]
+        const validNames = ['data.csv', 'my-file_123.xlsx', 'Report 2024.csv', 'sales_data.xlsx']
 
         validNames.forEach((filename) => {
           const file = createMockFile(filename, 1000, 'text/csv')
@@ -206,20 +186,20 @@ describe('file-validator.ts', () => {
     })
 
     it('should handle multiple path traversal attempts', () => {
-      expect(sanitizeFileName('../../folder/../file.csv')).toBe(
-        '__folder__file.csv',
-      )
+      expect(sanitizeFileName('../../folder/../file.csv')).toBe('__folder__file.csv')
     })
   })
 
   describe('validateFileContent', () => {
-    const createFileWithBytes = (
-      bytes: number[],
-      name: string = 'test.csv',
-    ): File => {
+    const createFileWithBytes = (bytes: number[], name: string = 'test.csv'): File => {
       const buffer = new Uint8Array(bytes)
       const blob = new Blob([buffer])
       const file = new File([blob], name)
+
+      // Mock arrayBuffer on the file itself (used by checkZipCompressionRatio)
+      file.arrayBuffer = jest.fn(async () => {
+        return buffer.buffer as ArrayBuffer
+      })
 
       // Mock slice and arrayBuffer methods
       file.slice = jest.fn((start?: number, end?: number) => {
@@ -277,10 +257,7 @@ describe('file-validator.ts', () => {
     })
 
     it('should reject XLSX files with invalid signature', async () => {
-      const file = createFileWithBytes(
-        [0x00, 0x00, 0x00, 0x00, 0, 0, 0, 0],
-        'test.xlsx',
-      )
+      const file = createFileWithBytes([0x00, 0x00, 0x00, 0x00, 0, 0, 0, 0], 'test.xlsx')
 
       const result = await validateFileContent(file)
       expect(result.valid).toBe(false)
@@ -339,10 +316,7 @@ describe('file-validator.ts', () => {
 
     it('should reject ZIP without EOCD (fail-closed)', async () => {
       // ZIP magic bytes but no EOCD — should be rejected
-      const file = createFileWithBytes(
-        [0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0],
-        'large.xlsx',
-      )
+      const file = createFileWithBytes([0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0], 'large.xlsx')
 
       const result = await validateFileContent(file)
       expect(result.valid).toBe(false)
@@ -472,10 +446,7 @@ describe('file-validator.ts', () => {
     })
 
     describe('zip bomb ratio check (card 3.X)', () => {
-      function createXlsxWithRatio(
-        compressedSize: number,
-        uncompressedSize: number,
-      ): File {
+      function createXlsxWithRatio(compressedSize: number, uncompressedSize: number): File {
         // Build a minimal ZIP with one entry that has specific compressed/uncompressed sizes
         // Local file header (30 bytes) + Central directory entry (46 bytes) + EOCD (22 bytes)
         const fileName = 'xl/worksheets/sheet1.xml'
@@ -523,9 +494,7 @@ describe('file-validator.ts', () => {
         eocdView.setUint32(16, cdOffset, true) // CD offset
 
         // Combine all parts
-        const fullBuffer = new Uint8Array(
-          localHeader.length + cdEntry.length + eocd.length,
-        )
+        const fullBuffer = new Uint8Array(localHeader.length + cdEntry.length + eocd.length)
         fullBuffer.set(localHeader, 0)
         fullBuffer.set(cdEntry, localHeader.length)
         fullBuffer.set(eocd, localHeader.length + cdEntry.length)
@@ -541,8 +510,7 @@ describe('file-validator.ts', () => {
           value: (start?: number, end?: number) => {
             const slicedBlob = originalSlice(start, end)
             Object.defineProperty(slicedBlob, 'arrayBuffer', {
-              value: async () =>
-                fullBuffer.slice(start || 0, end || fullBuffer.length).buffer,
+              value: async () => fullBuffer.slice(start || 0, end || fullBuffer.length).buffer,
             })
             return slicedBlob
           },
@@ -597,9 +565,7 @@ describe('file-validator.ts', () => {
         eocdView.setUint32(12, 9999, true) // cdSize = 9999 (way beyond buffer)
         eocdView.setUint32(16, 0, true) // cdOffset = 0
 
-        const magic = new Uint8Array([
-          0x50, 0x4b, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00,
-        ])
+        const magic = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00])
         const full = new Uint8Array(magic.length + eocd.length)
         full.set(magic, 0)
         full.set(eocd, magic.length)
@@ -623,16 +589,12 @@ describe('file-validator.ts', () => {
 
         const result = await validateFileContent(file)
         expect(result.valid).toBe(false)
-        expect(result.error).toBe(
-          'Invalid ZIP structure: corrupted central directory',
-        )
+        expect(result.error).toBe('Invalid ZIP structure: corrupted central directory')
       })
 
       it('should reject XLSX when arrayBuffer throws (catch branch — fail-closed)', async () => {
         // Build a file with valid ZIP magic bytes but whose arrayBuffer() throws
-        const magic = new Uint8Array([
-          0x50, 0x4b, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00,
-        ])
+        const magic = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00])
 
         const file = new File([magic], 'throw.xlsx', {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
