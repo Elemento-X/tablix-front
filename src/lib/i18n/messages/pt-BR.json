@@ -4,12 +4,19 @@
     "description": "Envie sua planilha, selecione as colunas que você precisa e gere um novo arquivo em segundos. Ferramenta web para processamento e geração de planilhas personalizadas."
   },
   "header": {
-    "brand": "Tablix"
+    "brand": "Tablix",
+    "cta": "Começar grátis",
+    "nav": {
+      "howItWorks": "Como funciona",
+      "audience": "Para quem",
+      "pricing": "Preços"
+    }
   },
   "hero": {
-    "title": "Transforme planilhas complexas em arquivos prontos para uso",
-    "subtitle": "Envie sua planilha, selecione as colunas que você precisa e gere um novo arquivo em segundos.",
-    "cta": "Gerar minha planilha"
+    "title": "Recupere horas perdidas em planilhas",
+    "subtitle": "Unifique arquivos, selecione só o que importa e tenha tudo pronto em segundos. Sem fórmulas, sem retrabalho.",
+    "cta": "Simplificar minhas planilhas",
+    "earlyAccess": "Early Access"
   },
   "howItWorks": {
     "title": "Como funciona",
@@ -35,11 +42,19 @@
   "audience": {
     "title": "Para quem é",
     "roles": {
-      "analysts": "Analistas",
-      "admins": "Times administrativos",
-      "recurring": "Pessoas que lidam com planilhas recorrentes"
-    },
-    "description": "O Tablix foi criado para reduzir tarefas repetitivas e ganhar tempo em atividades operacionais com planilhas."
+      "analysts": {
+        "title": "Analistas",
+        "description": "Consolide relatórios de múltiplas fontes sem copiar e colar entre abas."
+      },
+      "admins": {
+        "title": "Times administrativos",
+        "description": "Unifique cadastros, controles e listagens com poucos cliques."
+      },
+      "recurring": {
+        "title": "Planilhas recorrentes",
+        "description": "Automatize o merge que você faz toda semana — sempre igual, sempre tedioso."
+      }
+    }
   },
   "pricing": {
     "title": "Planos",
@@ -65,7 +80,7 @@
       },
       "pro": {
         "name": "Pro",
-        "badge": "Mais popular",
+        "badge": "Recomendado",
         "oldPrice": "R$ 47",
         "period": "mês",
         "launchPrice": "Preço de lançamento garantido enquanto a assinatura estiver ativa",
@@ -95,8 +110,24 @@
     }
   },
   "footer": {
-    "security": "Seus arquivos são processados de forma temporária e segura.",
-    "privacy": "O Tablix não armazena seus arquivos. Eles são descartados após o processamento.",
+    "tagline": "Seus arquivos são processados de forma segura e descartados após o uso.",
+    "product": {
+      "title": "Produto",
+      "howItWorks": "Como funciona",
+      "audience": "Para quem",
+      "pricing": "Preços",
+      "cta": "Começar grátis"
+    },
+    "legal": {
+      "title": "Legal & Contato"
+    },
+    "contact": {
+      "email": "contato@tablix.me"
+    },
+    "nav": {
+      "product": "Navegação do produto",
+      "legal": "Legal e contato"
+    },
     "privacyPolicy": "Política de Privacidade",
     "terms": "Termos de Uso",
     "copyright": "© {year} Tablix Tecnologia. Todos os direitos reservados."
@@ -166,7 +197,7 @@
   "export": {
     "sheetName": "Dados Unificados",
     "watermarkColumn": "Gerado por Tablix",
-    "watermarkValue": "tablix.com.br",
+    "watermarkValue": "tablix.me",
     "aboutSheetName": "Sobre",
     "aboutHeaderInfo": "Info",
     "aboutHeaderValue": "Valor",
@@ -232,12 +263,17 @@
     "switchToDark": "Mudar para tema escuro"
   },
   "a11y": {
+    "skipToContent": "Pular para conteúdo principal",
     "selectLanguage": "Selecionar idioma",
     "themeToggle": "Alternar tema",
     "usageProgress": "Progresso de uso do plano",
     "columnToggle": "Selecionar ou desmarcar coluna",
     "removeFile": "Remover",
-    "stepIndicator": "Progresso do fluxo"
+    "stepIndicator": "Progresso do fluxo",
+    "mainNavigation": "Navegação principal",
+    "openMenu": "Abrir menu de navegação",
+    "closeMenu": "Fechar menu de navegação",
+    "navigationMenu": "Menu de navegação"
   },
   "billingPeriods": {
     "month": "mês",
@@ -421,6 +457,29 @@
         "address": "Endereço: São Paulo - SP, Brasil"
       }
     }
+  },
+  "securityBadges": {
+    "title": "Segurança que você pode verificar",
+    "local": {
+      "title": "Processamento local",
+      "subtitle": "Seus dados nunca saem do navegador"
+    },
+    "noStorage": {
+      "title": "Sem armazenamento",
+      "subtitle": "Arquivos não ficam em nossos servidores"
+    },
+    "tls": {
+      "title": "Criptografia TLS",
+      "subtitle": "Toda comunicação protegida por HTTPS"
+    },
+    "validation": {
+      "title": "Validação rigorosa",
+      "subtitle": "Cada arquivo verificado antes do processamento"
+    }
+  },
+  "pricingPage": {
+    "ctaText": "Pronto para simplificar suas planilhas?",
+    "cta": "Começar grátis"
   },
   "cookieConsent": {
     "title": "Cookies",

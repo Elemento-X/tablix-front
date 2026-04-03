@@ -8,11 +8,7 @@
  * 4. Column selection injection (SQL, control characters, non-string values, oversized arrays)
  */
 
-import {
-  sanitizeFileName,
-  validateFile,
-  validateFileContent,
-} from '@/lib/security/file-validator'
+import { sanitizeFileName, validateFile, validateFileContent } from '@/lib/security/file-validator'
 import { validateColumnSelection } from '@/lib/security/validation-schemas'
 
 // ---------------------------------------------------------------------------
@@ -56,9 +52,7 @@ function createFileWithMagicBytes(
     const sliced = bytes.slice(start, end)
     const slicedBuffer = new Uint8Array(sliced)
     const slicedBlob = new Blob([slicedBuffer])
-    slicedBlob.arrayBuffer = jest.fn(
-      async () => slicedBuffer.buffer as ArrayBuffer,
-    )
+    slicedBlob.arrayBuffer = jest.fn(async () => slicedBuffer.buffer as ArrayBuffer)
     return slicedBlob as Blob
   })
 
@@ -74,10 +68,7 @@ function createFileWithMagicBytes(
  * Used for "accept" assertions on XLSX files after Fase 4 added zip-bomb
  * protection that requires a parseable EOCD.
  */
-function createXlsxWithMagicAndEocd(
-  magicBytes: number[],
-  name = 'valid.xlsx',
-): File {
+function createXlsxWithMagicAndEocd(magicBytes: number[], name = 'valid.xlsx'): File {
   // Build a minimal ZIP: local-file-header stub + empty central directory + EOCD
   // EOCD (22 bytes, no entries) placed right after the magic bytes stub.
   // Central directory offset points past the magic bytes, size = 0.
@@ -130,27 +121,19 @@ function createXlsxWithMagicAndEocd(
 describe('XSS and formula injection — sanitizeCellValue', () => {
   describe('CSV/DDE formula injection prefixes', () => {
     it('should prefix = (Excel formula) with a single quote', () => {
-      expect(sanitizeCellValue('=CMD|" /C calc"!A0')).toBe(
-        '\'=CMD|" /C calc"!A0',
-      )
+      expect(sanitizeCellValue('=CMD|" /C calc"!A0')).toBe('\'=CMD|" /C calc"!A0')
     })
 
     it('should prefix + (formula trigger) with a single quote', () => {
-      expect(sanitizeCellValue('+cmd|" /C calc"!A0')).toBe(
-        '\'+cmd|" /C calc"!A0',
-      )
+      expect(sanitizeCellValue('+cmd|" /C calc"!A0')).toBe('\'+cmd|" /C calc"!A0')
     })
 
     it('should prefix - (formula trigger) with a single quote', () => {
-      expect(sanitizeCellValue('-2+3+cmd|" /C calc"!A0')).toBe(
-        '\'-2+3+cmd|" /C calc"!A0',
-      )
+      expect(sanitizeCellValue('-2+3+cmd|" /C calc"!A0')).toBe('\'-2+3+cmd|" /C calc"!A0')
     })
 
     it('should prefix @ (DDE/SUM trigger) with a single quote', () => {
-      expect(sanitizeCellValue('@SUM(1+1)*cmd|"/C calc"!A0')).toBe(
-        '\'@SUM(1+1)*cmd|"/C calc"!A0',
-      )
+      expect(sanitizeCellValue('@SUM(1+1)*cmd|"/C calc"!A0')).toBe('\'@SUM(1+1)*cmd|"/C calc"!A0')
     })
 
     it('should prefix tab character (formula evasion) with a single quote', () => {
@@ -210,9 +193,9 @@ describe('XSS and formula injection — sanitizeCellValue', () => {
 
   describe('watermark value is not manipulable through sanitizeCellValue', () => {
     it('watermark string does not start with a dangerous prefix — passes through unmodified', () => {
-      // The watermark 'tablix.com.br' is set directly by code, not user input.
+      // The watermark 'tablix.me' is set directly by code, not user input.
       // This test documents that the value is safe and sanitizeCellValue would not alter it.
-      const watermark = 'tablix.com.br'
+      const watermark = 'tablix.me'
       expect(sanitizeCellValue(watermark)).toBe(watermark)
     })
 
@@ -384,9 +367,7 @@ describe('File name injection — sanitizeFileName', () => {
     })
 
     it('should preserve names with uppercase letters', () => {
-      expect(sanitizeFileName('Report_Q1_2024.xlsx')).toBe(
-        'Report_Q1_2024.xlsx',
-      )
+      expect(sanitizeFileName('Report_Q1_2024.xlsx')).toBe('Report_Q1_2024.xlsx')
     })
   })
 })
@@ -665,9 +646,7 @@ describe('validateColumnSelection — injection and boundary attacks', () => {
       // SQL keywords are not individually blocked at the schema level; the column
       // names are used only as keys to filter rows client-side, never interpolated
       // into SQL queries. This is the expected behavior.
-      const result = validateColumnSelection([
-        'Name UNION SELECT password FROM users',
-      ])
+      const result = validateColumnSelection(['Name UNION SELECT password FROM users'])
       expect(result.valid).toBe(true)
     })
 
@@ -761,18 +740,12 @@ describe('validateColumnSelection — injection and boundary attacks', () => {
     })
 
     it('should reject array containing null', () => {
-      const result = validateColumnSelection([
-        'Name',
-        null as unknown as string,
-      ])
+      const result = validateColumnSelection(['Name', null as unknown as string])
       expect(result.valid).toBe(false)
     })
 
     it('should reject array containing undefined', () => {
-      const result = validateColumnSelection([
-        'Name',
-        undefined as unknown as string,
-      ])
+      const result = validateColumnSelection(['Name', undefined as unknown as string])
       expect(result.valid).toBe(false)
     })
 
@@ -782,10 +755,7 @@ describe('validateColumnSelection — injection and boundary attacks', () => {
     })
 
     it('should reject array containing a boolean', () => {
-      const result = validateColumnSelection([
-        'Name',
-        true as unknown as string,
-      ])
+      const result = validateColumnSelection(['Name', true as unknown as string])
       expect(result.valid).toBe(false)
     })
 

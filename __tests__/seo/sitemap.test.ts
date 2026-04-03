@@ -12,8 +12,8 @@ describe('sitemap()', () => {
     expect(Array.isArray(result)).toBe(true)
   })
 
-  it('returns exactly 3 entries', () => {
-    expect(result).toHaveLength(3)
+  it('returns exactly 4 entries', () => {
+    expect(result).toHaveLength(4)
   })
 
   it('every entry has a url property', () => {
@@ -29,16 +29,14 @@ describe('sitemap()', () => {
     })
   })
 
-  it('every URL is on tablix.com.br', () => {
+  it('every URL is on tablix.me', () => {
     result.forEach((entry) => {
-      expect(entry.url).toContain('tablix.com.br')
+      expect(entry.url).toContain('tablix.me')
     })
   })
 
   it('contains home page entry at root URL', () => {
-    const home = result.find(
-      (e) => e.url === 'https://tablix.com.br',
-    )
+    const home = result.find((e) => e.url === 'https://tablix.me')
     expect(home).toBeDefined()
   })
 
@@ -52,8 +50,13 @@ describe('sitemap()', () => {
     expect(terms).toBeDefined()
   })
 
+  it('contains /pricing entry', () => {
+    const pricing = result.find((e) => e.url.endsWith('/pricing'))
+    expect(pricing).toBeDefined()
+  })
+
   it('home page has priority 1', () => {
-    const home = result.find((e) => e.url === 'https://tablix.com.br')
+    const home = result.find((e) => e.url === 'https://tablix.me')
     expect(home?.priority).toBe(1)
   })
 
@@ -67,8 +70,13 @@ describe('sitemap()', () => {
     expect(terms?.priority).toBe(0.3)
   })
 
+  it('/pricing has priority 0.8', () => {
+    const pricing = result.find((e) => e.url.endsWith('/pricing'))
+    expect(pricing?.priority).toBe(0.8)
+  })
+
   it('home page has changeFrequency "weekly"', () => {
-    const home = result.find((e) => e.url === 'https://tablix.com.br')
+    const home = result.find((e) => e.url === 'https://tablix.me')
     expect(home?.changeFrequency).toBe('weekly')
   })
 
@@ -80,6 +88,11 @@ describe('sitemap()', () => {
   it('/terms has changeFrequency "monthly"', () => {
     const terms = result.find((e) => e.url.endsWith('/terms'))
     expect(terms?.changeFrequency).toBe('monthly')
+  })
+
+  it('/pricing has changeFrequency "weekly"', () => {
+    const pricing = result.find((e) => e.url.endsWith('/pricing'))
+    expect(pricing?.changeFrequency).toBe('weekly')
   })
 
   it('every entry has lastModified as a Date', () => {

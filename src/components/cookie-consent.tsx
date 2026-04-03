@@ -22,7 +22,10 @@ export function CookieConsent() {
     const consent = localStorage.getItem(STORAGE_KEY)
     if (consent) return
 
-    const timer = setTimeout(() => setVisible(true), reducedMotion ? 0 : APPEAR_DELAY_MS)
+    const timer = setTimeout(
+      () => setVisible(true),
+      reducedMotion ? 0 : APPEAR_DELAY_MS,
+    )
     return () => clearTimeout(timer)
   }, [reducedMotion])
 
@@ -67,7 +70,10 @@ export function CookieConsent() {
               </span>
             </div>
 
-            <p id={descriptionId} className="text-muted-foreground mb-4 text-xs leading-relaxed">
+            <p
+              id={descriptionId}
+              className="text-muted-foreground mb-4 text-xs leading-relaxed"
+            >
               {t('cookieConsent.message')}
             </p>
 
@@ -78,7 +84,12 @@ export function CookieConsent() {
               >
                 {t('cookieConsent.learnMore')}
               </Link>
-              <Button ref={buttonRef} variant="brand" size="sm" onClick={handleAccept}>
+              <Button
+                ref={buttonRef}
+                variant="brand"
+                size="sm"
+                onClick={handleAccept}
+              >
                 {t('cookieConsent.accept')}
               </Button>
             </div>
