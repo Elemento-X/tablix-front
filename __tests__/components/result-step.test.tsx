@@ -55,7 +55,7 @@ jest.mock('@/components/card', () => ({
 }))
 
 jest.mock('lucide-react', () => ({
-  CheckCircle2: () => <svg data-testid="check-circle2" />,
+  CircleCheckBig: () => <svg data-testid="check-circle2" />,
   FileSpreadsheet: () => <svg data-testid="file-spreadsheet" />,
   Rows3: () => <svg data-testid="rows3" />,
   Columns3: () => <svg data-testid="columns3" />,

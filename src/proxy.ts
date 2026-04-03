@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // CSRF protection: validate Origin header on state-changing API requests
   if (
     request.nextUrl.pathname.startsWith('/api/') &&

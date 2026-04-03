@@ -8,7 +8,7 @@ import { FileDropzone } from '@/components/file-dropzone'
 import { formatFileSize } from '@/hooks/use-usage'
 import { useLocale } from '@/lib/i18n'
 import { sanitizeFileName } from '@/lib/security'
-import { FileSpreadsheet, Loader2, X, Lightbulb } from 'lucide-react'
+import { FileSpreadsheet, LoaderCircle, X, Lightbulb } from 'lucide-react'
 
 const ONBOARDING_KEY = 'tablix-onboarding-upload-seen'
 
@@ -147,7 +147,7 @@ export function UploadStep({
           >
             {isUploading ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
                 {t('upload.processing')}
               </>
             ) : (

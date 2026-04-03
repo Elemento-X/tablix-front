@@ -14,7 +14,7 @@ import { motion } from 'framer-motion'
 import {
   ArrowRight,
   BarChart3,
-  CheckCircle,
+  CircleCheck,
   Download,
   Eye,
   FileSpreadsheet,
@@ -88,7 +88,7 @@ export function LandingPageContent() {
                 description: t('howItWorks.steps.visualize.description'),
               },
               {
-                icon: <CheckCircle className="text-muted-foreground h-6 w-6" />,
+                icon: <CircleCheck className="text-muted-foreground h-6 w-6" />,
                 title: t('howItWorks.steps.choose.title'),
                 description: t('howItWorks.steps.choose.description'),
               },

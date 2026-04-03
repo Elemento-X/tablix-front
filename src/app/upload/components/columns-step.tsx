@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/card'
 import { useLocale } from '@/lib/i18n'
 import type { UsageInfo } from '@/hooks/use-usage'
 import type { ProcessingPhase } from '@/hooks/use-upload-flow'
-import { ArrowLeft, Loader2, Lightbulb } from 'lucide-react'
+import { ArrowLeft, LoaderCircle, Lightbulb } from 'lucide-react'
 
 const ONBOARDING_KEY = 'tablix-onboarding-columns-seen'
 
@@ -170,7 +170,7 @@ export function ColumnsStep({
           >
             {isProcessing ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
                 {processingLabel}
               </>
             ) : (
