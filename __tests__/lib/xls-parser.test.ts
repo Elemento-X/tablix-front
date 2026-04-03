@@ -211,12 +211,15 @@ describe('xls-parser.ts', () => {
         }),
       )
 
-      // Flush microtasks so the promise resolves
+      // Flush microtasks so the Promise executor callback runs and settled=true
+      await Promise.resolve()
       await Promise.resolve()
 
-      // Advance past timeout — settled is already true, so the timeout
-      // callback hits the `if (!settled)` false-branch and does nothing
-      jest.advanceTimersByTime(30_000)
+      // Run all pending timers synchronously — settled is already true, so the
+      // timeout callback hits the `if (!settled)` false-branch and does nothing.
+      // runAllTimers() guarantees the callback body executes and Istanbul records
+      // the branch miss (false-branch of `if (!settled)`).
+      jest.runAllTimers()
 
       const result = await promise
       expect(result.columns).toEqual(['A'])
