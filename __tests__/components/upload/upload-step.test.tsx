@@ -18,6 +18,9 @@ jest.mock('@/lib/i18n', () => ({
         'upload.maxSize': 'CSV or XLSX',
         'dropzone.dragActive': 'Drop!',
         'upload.dropzoneWithFiles': 'files selected',
+        'onboarding.tipUpload': 'onboarding.tipUpload',
+        'onboarding.gotIt': 'onboarding.gotIt',
+        'a11y.removeFile': 'a11y.removeFile',
       }
       return map[key] ?? key
     },
@@ -43,6 +46,7 @@ describe('UploadStep', () => {
     maxInputFiles: 5,
     maxTotalSize: 10485760,
     currentTotalSize: 0,
+    quotaExhausted: false,
     onFilesAccepted: jest.fn(),
     onRemoveFile: jest.fn(),
     onUpload: jest.fn(),
@@ -130,5 +134,54 @@ describe('UploadStep', () => {
     expect(
       screen.getByText('Your files are processed securely'),
     ).toBeInTheDocument()
+  })
+
+  describe('quotaExhausted prop', () => {
+    it('disables continue button when quotaExhausted=true', () => {
+      const files = [createFile('test.csv', 100)]
+      render(<UploadStep {...defaultProps} files={files} quotaExhausted />)
+      const btn = screen.getByRole('button', { name: 'Continue' })
+      expect(btn).toBeDisabled()
+    })
+
+    it('disables dropzone visually when quotaExhausted=true', () => {
+      render(<UploadStep {...defaultProps} quotaExhausted />)
+      // FileDropzone uses pointer-events-none and opacity-50 when disabled
+      // react-dropzone does not add HTML disabled attr to the hidden input
+      const dropzone = screen.getByTestId('dropzone')
+      expect(dropzone.className).toContain('pointer-events-none')
+      expect(dropzone.className).toContain('opacity-50')
+    })
+
+    it('enables continue button when quotaExhausted=false and files present', () => {
+      const files = [createFile('test.csv', 100)]
+      render(<UploadStep {...defaultProps} files={files} quotaExhausted={false} />)
+      const btn = screen.getByRole('button', { name: 'Continue' })
+      expect(btn).not.toBeDisabled()
+    })
+  })
+
+  describe('onboarding tip', () => {
+    beforeEach(() => {
+      localStorage.clear()
+    })
+
+    it('shows onboarding tip when not seen before', () => {
+      render(<UploadStep {...defaultProps} />)
+      expect(screen.getByText('onboarding.tipUpload')).toBeInTheDocument()
+    })
+
+    it('does not show onboarding tip when already seen', () => {
+      localStorage.setItem('tablix-onboarding-upload-seen', '1')
+      render(<UploadStep {...defaultProps} />)
+      expect(screen.queryByText('onboarding.tipUpload')).toBeNull()
+    })
+
+    it('hides tip and sets localStorage when dismissed', () => {
+      render(<UploadStep {...defaultProps} />)
+      fireEvent.click(screen.getByText('onboarding.gotIt'))
+      expect(screen.queryByText('onboarding.tipUpload')).toBeNull()
+      expect(localStorage.getItem('tablix-onboarding-upload-seen')).toBe('1')
+    })
   })
 })

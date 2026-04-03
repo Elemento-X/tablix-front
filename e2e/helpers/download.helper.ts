@@ -1,5 +1,5 @@
 import { type Download } from '@playwright/test'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 interface ParsedSheet {
   headers: string[]
@@ -22,20 +22,40 @@ export async function parseDownloadedXlsx(
   const filePath = await download.path()
   if (!filePath) throw new Error('Download path not available')
 
-  const wb = XLSX.readFile(filePath)
+  const wb = new ExcelJS.Workbook()
+  await wb.xlsx.readFile(filePath)
+
   const sheets: Record<string, ParsedSheet> = {}
+  const sheetNames: string[] = []
 
-  for (const name of wb.SheetNames) {
-    const ws = wb.Sheets[name]
-    const data = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws)
-    const headers = data.length > 0 ? Object.keys(data[0]) : []
+  for (const ws of wb.worksheets) {
+    sheetNames.push(ws.name)
+    const headers: string[] = []
+    const data: Record<string, unknown>[] = []
 
-    sheets[name] = { headers, rowCount: data.length, data }
+    ws.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) {
+        row.eachCell((cell, colNumber) => {
+          headers[colNumber - 1] = cell.value != null ? String(cell.value) : ''
+        })
+        return
+      }
+
+      const obj: Record<string, unknown> = {}
+      headers.forEach((header, index) => {
+        if (!header) return
+        const cell = row.getCell(index + 1)
+        obj[header] = cell.value
+      })
+      data.push(obj)
+    })
+
+    sheets[ws.name] = { headers, rowCount: data.length, data }
   }
 
   return {
     filename: download.suggestedFilename(),
-    sheetNames: wb.SheetNames,
+    sheetNames,
     sheets,
   }
 }

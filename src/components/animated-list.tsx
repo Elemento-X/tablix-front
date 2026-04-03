@@ -4,8 +4,9 @@ import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import type { ReactNode } from 'react'
 
-interface AnimatedListProps extends React.HTMLAttributes<HTMLDivElement> {
+interface AnimatedListProps {
   children: ReactNode
+  className?: string
   staggerDelay?: number
 }
 
@@ -18,16 +19,11 @@ export function AnimatedList({
   children,
   className,
   staggerDelay = 0.05,
-  ...rest
 }: AnimatedListProps) {
   const prefersReducedMotion = useReducedMotion()
 
   if (prefersReducedMotion) {
-    return (
-      <div className={className} {...rest}>
-        {children}
-      </div>
-    )
+    return <div className={className}>{children}</div>
   }
 
   return (
@@ -42,30 +38,25 @@ export function AnimatedList({
           },
         },
       }}
-      {...rest}
     >
       {children}
     </motion.div>
   )
 }
 
-interface AnimatedListItemProps extends React.HTMLAttributes<HTMLDivElement> {
+interface AnimatedListItemProps {
   children: ReactNode
+  className?: string
 }
 
 export function AnimatedListItem({
   children,
   className,
-  ...rest
 }: AnimatedListItemProps) {
   const prefersReducedMotion = useReducedMotion()
 
   if (prefersReducedMotion) {
-    return (
-      <div className={className} {...rest}>
-        {children}
-      </div>
-    )
+    return <div className={className}>{children}</div>
   }
 
   return (
@@ -73,7 +64,6 @@ export function AnimatedListItem({
       className={className}
       variants={itemVariants}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      {...rest}
     >
       {children}
     </motion.div>

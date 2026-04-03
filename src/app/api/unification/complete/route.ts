@@ -4,7 +4,7 @@ import { setFingerprintCookie, getUserFingerprint } from '@/lib/fingerprint'
 import { consumeUnificationToken } from '@/lib/security/unification-token'
 import {
   validateContentType,
-  validateBodySize,
+  readBodyWithLimit,
 } from '@/lib/security/validation-schemas'
 import { rateLimiters } from '@/lib/security/rate-limit'
 import { audit } from '@/lib/audit-logger'
@@ -43,10 +43,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Reject oversized bodies before parsing
-    const bodySizeCheck = validateBodySize(request, 'json')
-    if (!bodySizeCheck.valid) {
-      return NextResponse.json({ error: bodySizeCheck.error }, { status: 413 })
+    // Read body with streaming byte limit (Content-Length is untrusted)
+    const bodyResult = await readBodyWithLimit(request, 'json')
+    if ('error' in bodyResult) {
+      return NextResponse.json({ error: bodyResult.error }, { status: 413 })
     }
 
     // Get user fingerprint
@@ -55,7 +55,8 @@ export async function POST(request: NextRequest) {
     // Parse and validate request body
     let body: { token?: string }
     try {
-      body = await request.json()
+      const text = new TextDecoder().decode(bodyResult.body)
+      body = JSON.parse(text)
     } catch {
       return NextResponse.json(
         { error: 'Invalid request body' },

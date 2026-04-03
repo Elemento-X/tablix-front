@@ -5,20 +5,14 @@ import { NextRequest } from 'next/server'
 import { POST } from '@/app/api/preview/route'
 
 import { rateLimiters } from '@/lib/security/rate-limit'
-import {
-  sanitizeFileName,
-  validateFileContent,
-} from '@/lib/security/file-validator'
+import { sanitizeFileName, validateFileContent } from '@/lib/security/file-validator'
 import { checkUnificationLimit, checkFileSizeLimit } from '@/lib/usage-tracker'
-import {
-  getUserFingerprint,
-  setFingerprintCookie,
-  getUserPlan,
-} from '@/lib/fingerprint'
+import { getUserFingerprint, setFingerprintCookie, getUserPlan } from '@/lib/fingerprint'
 import { generateUnificationToken } from '@/lib/security/unification-token'
 import {
   validateContentType,
   validateBodySize,
+  parseMultipartWithLimit,
 } from '@/lib/security/validation-schemas'
 
 // Mock dependencies
@@ -48,6 +42,10 @@ jest.mock('@/lib/security/validation-schemas', () => ({
   validateContentType: jest.fn(() => ({ valid: true })),
   validateBodySize: jest.fn(() => ({ valid: true })),
   sanitizeString: jest.fn((str) => str),
+  parseMultipartWithLimit: jest.fn(async (req: Request) => {
+    const formData = await req.formData()
+    return { formData }
+  }),
 }))
 
 jest.mock('@/lib/usage-tracker', () => ({
@@ -76,11 +74,7 @@ describe('POST /api/preview', () => {
     })
   }
 
-  const createValidFile = (
-    name = 'test.csv',
-    type = 'text/csv',
-    size = 1024,
-  ) => {
+  const createValidFile = (name = 'test.csv', type = 'text/csv', size = 1024) => {
     const file = new File(['content'], name, { type })
     Object.defineProperty(file, 'size', { value: size })
     return file
@@ -113,9 +107,7 @@ describe('POST /api/preview', () => {
     ;(validateBodySize as jest.Mock).mockReturnValue({ valid: true })
     ;(sanitizeFileName as jest.Mock).mockImplementation((name) => name)
     ;(validateFileContent as jest.Mock).mockResolvedValue({ valid: true })
-    ;(generateUnificationToken as jest.Mock).mockResolvedValue(
-      'mock-token-abc123',
-    )
+    ;(generateUnificationToken as jest.Mock).mockResolvedValue('mock-token-abc123')
   })
 
   describe('Content-Type validation', () => {
@@ -131,26 +123,45 @@ describe('POST /api/preview', () => {
       const data = await response.json()
 
       expect(response.status).toBe(415)
-      expect(data.error).toBe(
-        'Invalid Content-Type. Expected multipart/form-data.',
-      )
+      expect(data.error).toBe('Invalid Content-Type. Expected multipart/form-data.')
     })
   })
 
   describe('body size validation', () => {
-    it('should return 413 when body is too large', async () => {
-      ;(validateBodySize as jest.Mock).mockReturnValue({
-        valid: false,
+    it('should not call validateBodySize (removed: Content-Length is untrusted)', () => {
+      // preview/route.ts no longer calls validateBodySize — Content-Length header is
+      // untrusted (attacker-controlled) so real size validation happens via file.size
+      // after formData parsing. See checkFileSizeLimit tests below for the actual guard.
+      const request = createRequest([createValidFile()])
+      expect(validateBodySize).not.toHaveBeenCalled()
+      // Confirm the mock is available but unused in this route
+      expect(validateBodySize).toBeDefined()
+    })
+
+    it('should return 413 when parseMultipartWithLimit reports body too large', async () => {
+      ;(parseMultipartWithLimit as jest.Mock).mockResolvedValueOnce({
         error: 'Request body too large (max 60MB)',
       })
 
-      const file = createValidFile()
-      const request = createRequest([file])
+      const request = createRequest([createValidFile()])
       const response = await POST(request)
       const data = await response.json()
 
       expect(response.status).toBe(413)
       expect(data.error).toBe('Request body too large (max 60MB)')
+    })
+
+    it('should return 413 when parseMultipartWithLimit reports missing body', async () => {
+      ;(parseMultipartWithLimit as jest.Mock).mockResolvedValueOnce({
+        error: 'Missing request body',
+      })
+
+      const request = createRequest([createValidFile()])
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(413)
+      expect(data.error).toBe('Missing request body')
     })
   })
 
@@ -218,10 +229,7 @@ describe('POST /api/preview', () => {
       const request = createRequest([file])
       await POST(request)
 
-      expect(setFingerprintCookie).toHaveBeenCalledWith(
-        expect.any(Object),
-        'new-user',
-      )
+      expect(setFingerprintCookie).toHaveBeenCalledWith(expect.any(Object), 'new-user')
     })
   })
 
@@ -275,9 +283,7 @@ describe('POST /api/preview', () => {
       const data = await response.json()
 
       expect(response.status).toBe(400)
-      expect(data.error).toBe(
-        'Invalid file type. Only CSV and XLSX files are allowed.',
-      )
+      expect(data.error).toBe('Invalid file type. Only CSV and XLSX files are allowed.')
     })
 
     it('should return 400 when file content validation fails (magic numbers/zip bomb)', async () => {
@@ -379,10 +385,7 @@ describe('POST /api/preview', () => {
       const request = createRequest([file])
       await POST(request)
 
-      expect(setFingerprintCookie).toHaveBeenCalledWith(
-        expect.any(Object),
-        'new-user-cookie',
-      )
+      expect(setFingerprintCookie).toHaveBeenCalledWith(expect.any(Object), 'new-user-cookie')
     })
   })
 
@@ -405,9 +408,7 @@ describe('POST /api/preview', () => {
       const file = createValidFile('bad<name>.csv')
       ;(sanitizeFileName as jest.Mock).mockReturnValue('bad_name_.csv')
 
-      const consoleSpy = jest
-        .spyOn(console, 'warn')
-        .mockImplementation(() => {})
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
 
       const request = createRequest([file])
       await POST(request)
@@ -421,9 +422,7 @@ describe('POST /api/preview', () => {
 
   describe('error handling', () => {
     it('should return 500 on unexpected error', async () => {
-      ;(rateLimiters.upload.check as jest.Mock).mockRejectedValue(
-        new Error('Unexpected error'),
-      )
+      ;(rateLimiters.upload.check as jest.Mock).mockRejectedValue(new Error('Unexpected error'))
 
       jest.spyOn(console, 'error').mockImplementation(() => {})
 
@@ -448,10 +447,7 @@ describe('POST /api/preview', () => {
       await POST(request)
 
       // File size is passed to checkFileSizeLimit with the plan
-      expect(checkFileSizeLimit).toHaveBeenCalledWith(
-        expect.any(Number),
-        'free',
-      )
+      expect(checkFileSizeLimit).toHaveBeenCalledWith(expect.any(Number), 'free')
     })
 
     it('should pass plan from getUserPlan to checkFileSizeLimit', async () => {

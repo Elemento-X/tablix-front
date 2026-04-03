@@ -44,16 +44,14 @@ describe('middleware', () => {
       const request = createRequest()
       const response = middleware(request)
 
-      expect(response.headers.get('Referrer-Policy')).toBe(
-        'strict-origin-when-cross-origin',
-      )
+      expect(response.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin')
     })
 
-    it('should set X-XSS-Protection header', () => {
+    it('should not set deprecated X-XSS-Protection header', () => {
       const request = createRequest()
       const response = middleware(request)
 
-      expect(response.headers.get('X-XSS-Protection')).toBe('1; mode=block')
+      expect(response.headers.get('X-XSS-Protection')).toBeNull()
     })
   })
 
@@ -113,9 +111,7 @@ describe('middleware', () => {
       expect(csp).toContain('https://vercel.live')
 
       // Extract script-src directive and verify no unsafe-inline
-      const scriptSrc = csp!
-        .split(';')
-        .find((d) => d.trim().startsWith('script-src'))
+      const scriptSrc = csp!.split(';').find((d) => d.trim().startsWith('script-src'))
       expect(scriptSrc).not.toContain('unsafe-inline')
       expect(scriptSrc).not.toContain('unsafe-eval')
     })
@@ -152,6 +148,14 @@ describe('middleware', () => {
       expect(csp).toContain('connect-src')
       expect(csp).toContain('https://vercel.live')
       expect(csp).toContain('https://*.vercel-insights.com')
+    })
+
+    it('should have worker-src self directive', () => {
+      const request = createRequest()
+      const response = middleware(request)
+
+      const csp = response.headers.get('Content-Security-Policy')
+      expect(csp).toContain("worker-src 'self'")
     })
 
     it('should have frame-ancestors directive', () => {
@@ -236,11 +240,7 @@ describe('middleware', () => {
   })
 
   describe('CSRF protection', () => {
-    const createPostRequest = (
-      url: string,
-      origin?: string | null,
-      host?: string,
-    ) => {
+    const createPostRequest = (url: string, origin?: string | null, host?: string) => {
       const headers: Record<string, string> = {}
       if (origin !== null && origin !== undefined) {
         headers.origin = origin
@@ -359,9 +359,7 @@ describe('middleware', () => {
       const response = middleware(request)
       const csp = response.headers.get('Content-Security-Policy')
 
-      const scriptSrc = csp!
-        .split(';')
-        .find((d) => d.trim().startsWith('script-src'))
+      const scriptSrc = csp!.split(';').find((d) => d.trim().startsWith('script-src'))
       expect(scriptSrc).toContain('unsafe-eval')
       expect(scriptSrc).toContain('unsafe-inline')
     })
@@ -390,9 +388,7 @@ describe('middleware', () => {
       const response = middleware(request)
       const csp = response.headers.get('Content-Security-Policy')
 
-      const scriptSrc = csp!
-        .split(';')
-        .find((d) => d.trim().startsWith('script-src'))
+      const scriptSrc = csp!.split(';').find((d) => d.trim().startsWith('script-src'))
       expect(scriptSrc).toContain('strict-dynamic')
       expect(scriptSrc).toMatch(/nonce-/)
     })
@@ -439,11 +435,11 @@ describe('middleware', () => {
       expect(hsts).toContain('preload')
     })
 
-    it('should enable XSS protection', () => {
+    it('should not set deprecated X-XSS-Protection header (CSP is sufficient)', () => {
       const request = createRequest()
       const response = middleware(request)
 
-      expect(response.headers.get('X-XSS-Protection')).toBe('1; mode=block')
+      expect(response.headers.get('X-XSS-Protection')).toBeNull()
     })
 
     it('should restrict form submissions to same origin', () => {

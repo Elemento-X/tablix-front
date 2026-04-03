@@ -163,6 +163,58 @@
     "parsedSuccessSingle": "¡Analizado exitosamente! Se encontraron {columns} columnas y {rows} filas.",
     "parsedSuccessMultiple": "¡Se analizaron {files} archivos! Se encontraron {columns} columnas en común y {rows} filas en total."
   },
+  "export": {
+    "sheetName": "Datos Unificados",
+    "watermarkColumn": "Generado por Tablix",
+    "watermarkValue": "tablix.com.br",
+    "aboutSheetName": "Acerca de",
+    "aboutHeaderInfo": "Info",
+    "aboutHeaderValue": "Valor",
+    "aboutGeneratedBy": "Generado por",
+    "aboutWebsite": "Sitio web",
+    "aboutPlan": "Plan",
+    "aboutGeneratedAt": "Fecha de generación",
+    "aboutTotalRows": "Total de filas",
+    "aboutFilesUnified": "Archivos unificados",
+    "aboutUpgradeToPro": "Upgrade a Pro",
+    "aboutUpgradeMessage": "¡Elimina la marca de agua y aumenta tus límites!"
+  },
+  "steps": {
+    "upload": "Carga",
+    "columns": "Columnas",
+    "result": "Resultado"
+  },
+  "result": {
+    "title": "Listo!",
+    "subtitle": "Tu hoja de cálculo fue generada exitosamente",
+    "filesUnified": "{count} archivo(s) unificado(s)",
+    "rowsProcessed": "{count} filas procesadas",
+    "columnsSelected": "{count} columna(s) seleccionada(s)",
+    "newUnification": "Nueva unificación",
+    "upgradePro": "Actualizar a Pro",
+    "upgradeMessage": "Elimina la marca de agua, procesa hasta 5.000 filas y 10 columnas.",
+    "remainingQuota": "{remaining} de {max} unificación(es) restante(s)"
+  },
+  "onboarding": {
+    "tipUpload": "Carga tus archivos CSV o XLSX. Detectaremos las columnas automáticamente.",
+    "tipColumns": "Selecciona las columnas que deseas mantener en el archivo final.",
+    "gotIt": "Entendido"
+  },
+  "quotaGate": {
+    "title": "Límite alcanzado",
+    "description": "Has usado todas tus unificaciones este mes."
+  },
+  "processing": {
+    "consumingQuota": "Reservando tu unificación...",
+    "mergingFiles": "Unificando archivos...",
+    "generatingFile": "Generando hoja de cálculo...",
+    "downloading": "Iniciando descarga..."
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "description": "La página que buscas no existe o fue movida.",
+    "goHome": "Volver al inicio"
+  },
   "errorBoundary": {
     "title": "Algo salió mal",
     "description": "Ocurrió un error inesperado. Intenta de nuevo o vuelve a la página principal.",
@@ -184,7 +236,8 @@
     "themeToggle": "Alternar tema",
     "usageProgress": "Progreso de uso del plan",
     "columnToggle": "Seleccionar o deseleccionar columna",
-    "removeFile": "Eliminar"
+    "removeFile": "Eliminar",
+    "stepIndicator": "Progreso del flujo"
   },
   "billingPeriods": {
     "month": "mes",
@@ -368,5 +421,12 @@
         "address": "Dirección: São Paulo - SP, Brasil"
       }
     }
+  },
+  "cookieConsent": {
+    "title": "Cookies",
+    "message": "Utilizamos cookies esenciales para el funcionamiento del servicio, como control de uso y preferencias. No usamos cookies de rastreo ni publicidad.",
+    "accept": "Entendido",
+    "learnMore": "Más información",
+    "ariaLabel": "Aviso de cookies"
   }
 }

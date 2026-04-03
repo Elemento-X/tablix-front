@@ -16,7 +16,19 @@ import {
   downloadBlob,
 } from '@/lib/spreadsheet-merge'
 
-export type UploadStep = 'upload' | 'columns'
+export type UploadStep = 'upload' | 'columns' | 'result'
+
+export type ProcessingPhase =
+  | 'consuming-quota'
+  | 'merging'
+  | 'generating'
+  | 'downloading'
+
+export interface ResultData {
+  fileCount: number
+  rowCount: number
+  columnCount: number
+}
 
 export interface UploadFlowState {
   files: File[]
@@ -24,11 +36,13 @@ export interface UploadFlowState {
   detectedColumns: string[]
   selectedColumns: string[]
   isProcessing: boolean
+  processingPhase: ProcessingPhase | null
   step: UploadStep
   unificationToken: string | null
   maxInputFiles: number
   maxTotalSize: number
   currentTotalSize: number
+  resultData: ResultData | null
 }
 
 export interface UploadFlowActions {
@@ -51,8 +65,11 @@ export function useUploadFlow() {
   const [detectedColumns, setDetectedColumns] = useState<string[]>([])
   const [selectedColumns, setSelectedColumns] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
+  const [processingPhase, setProcessingPhase] =
+    useState<ProcessingPhase | null>(null)
   const [step, setStep] = useState<UploadStep>('upload')
   const [unificationToken, setUnificationToken] = useState<string | null>(null)
+  const [resultData, setResultData] = useState<ResultData | null>(null)
 
   const maxInputFiles = usage?.limits.maxInputFiles ?? 3
   const maxTotalSize = usage?.limits.maxTotalSize ?? 1 * 1024 * 1024
@@ -162,6 +179,8 @@ export function useUploadFlow() {
     setSelectedColumns([])
     setFiles([])
     setUnificationToken(null)
+    setResultData(null)
+    setProcessingPhase(null)
   }
 
   const handleProcess = async () => {
@@ -186,6 +205,7 @@ export function useUploadFlow() {
     }
 
     setIsProcessing(true)
+    setProcessingPhase('consuming-quota')
 
     try {
       const useClientSide = canProcessClientSide(files, usage?.plan ?? 'free')
@@ -210,27 +230,43 @@ export function useUploadFlow() {
       if (useClientSide) {
         if (!(await consumeQuota())) return
 
-        toast.info(t('messages.processingFiles'))
+        setProcessingPhase('merging')
 
         const result = await mergeSpreadsheets({
           files,
           selectedColumns,
           addWatermark,
+          labels: {
+            sheetName: t('export.sheetName'),
+            watermarkColumn: t('export.watermarkColumn'),
+            watermarkValue: t('export.watermarkValue'),
+            aboutSheetName: t('export.aboutSheetName'),
+            aboutHeaderInfo: t('export.aboutHeaderInfo'),
+            aboutHeaderValue: t('export.aboutHeaderValue'),
+            aboutGeneratedBy: t('export.aboutGeneratedBy'),
+            aboutWebsite: t('export.aboutWebsite'),
+            aboutPlan: t('export.aboutPlan'),
+            aboutGeneratedAt: t('export.aboutGeneratedAt'),
+            aboutTotalRows: t('export.aboutTotalRows'),
+            aboutFilesUnified: t('export.aboutFilesUnified'),
+            aboutUpgradeToPro: t('export.aboutUpgradeToPro'),
+            aboutUpgradeMessage: t('export.aboutUpgradeMessage'),
+          },
         })
 
+        setProcessingPhase('downloading')
         downloadBlob(result.blob, result.filename)
 
-        toast.success(
-          t('messages.unifiedSuccess', {
-            count: files.length,
-            rows: result.rowCount,
-          }),
-        )
+        setResultData({
+          fileCount: files.length,
+          rowCount: result.rowCount,
+          columnCount: selectedColumns.length,
+        })
 
         refetchUsage()
-        handleStartOver()
+        setStep('result')
       } else {
-        toast.info(t('messages.processingOnServer'))
+        setProcessingPhase('merging')
 
         const formData = new FormData()
         files.forEach((file) => formData.append('files', file))
@@ -248,14 +284,19 @@ export function useUploadFlow() {
           return
         }
 
+        setProcessingPhase('downloading')
         const blob = await response.blob()
         const timestamp = new Date().toISOString().split('T')[0]
         downloadBlob(blob, `tablix-unificado-${timestamp}.xlsx`)
 
-        toast.success(t('messages.processSuccess'))
+        setResultData({
+          fileCount: files.length,
+          rowCount: 0,
+          columnCount: selectedColumns.length,
+        })
 
         refetchUsage()
-        handleStartOver()
+        setStep('result')
       }
     } catch (err) {
       if (process.env.NODE_ENV !== 'production') {
@@ -264,6 +305,7 @@ export function useUploadFlow() {
       toast.error(t('messages.processFailed'))
     } finally {
       setIsProcessing(false)
+      setProcessingPhase(null)
     }
   }
 
@@ -394,12 +436,14 @@ export function useUploadFlow() {
     detectedColumns,
     selectedColumns,
     isProcessing,
+    processingPhase,
     step,
     usage,
     isLoadingUsage,
     maxInputFiles,
     maxTotalSize,
     currentTotalSize,
+    resultData,
 
     // Actions
     handleFilesAccepted,

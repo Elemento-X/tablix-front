@@ -11,6 +11,8 @@ import {
   validateContentType,
   validateBodySize,
   validateFileLimits,
+  readBodyWithLimit,
+  parseMultipartWithLimit,
 } from '@/lib/security/validation-schemas'
 
 describe('validation-schemas.ts', () => {
@@ -20,22 +22,16 @@ describe('validation-schemas.ts', () => {
       expect(() => columnNameSchema.parse('Column_1')).not.toThrow()
       expect(() => columnNameSchema.parse('Data-2024')).not.toThrow()
       expect(() => columnNameSchema.parse('Número')).not.toThrow()
-      expect(() =>
-        columnNameSchema.parse('Column Name With Spaces'),
-      ).not.toThrow()
+      expect(() => columnNameSchema.parse('Column Name With Spaces')).not.toThrow()
     })
 
     it('should reject empty column names', () => {
-      expect(() => columnNameSchema.parse('')).toThrow(
-        'Column name cannot be empty',
-      )
+      expect(() => columnNameSchema.parse('')).toThrow('Column name cannot be empty')
     })
 
     it('should reject column names over 255 characters', () => {
       const longName = 'a'.repeat(256)
-      expect(() => columnNameSchema.parse(longName)).toThrow(
-        'Column name too long',
-      )
+      expect(() => columnNameSchema.parse(longName)).toThrow('Column name too long')
     })
 
     it('should accept column names exactly 255 characters', () => {
@@ -67,15 +63,11 @@ describe('validation-schemas.ts', () => {
 
   describe('columnsArraySchema', () => {
     it('should accept array with valid columns', () => {
-      expect(() =>
-        columnsArraySchema.parse(['Name', 'Age', 'Email']),
-      ).not.toThrow()
+      expect(() => columnsArraySchema.parse(['Name', 'Age', 'Email'])).not.toThrow()
     })
 
     it('should reject empty array', () => {
-      expect(() => columnsArraySchema.parse([])).toThrow(
-        'At least one column must be selected',
-      )
+      expect(() => columnsArraySchema.parse([])).toThrow('At least one column must be selected')
     })
 
     it('should accept exactly 1 column', () => {
@@ -100,9 +92,9 @@ describe('validation-schemas.ts', () => {
       expect(() => columnsArraySchema.parse(['Name', 'Age', ''])).toThrow(
         'Column name cannot be empty',
       )
-      expect(() =>
-        columnsArraySchema.parse(['Name', 'Column<script>']),
-      ).toThrow('Column name contains invalid characters')
+      expect(() => columnsArraySchema.parse(['Name', 'Column<script>'])).toThrow(
+        'Column name contains invalid characters',
+      )
     })
   })
 
@@ -140,9 +132,7 @@ describe('validation-schemas.ts', () => {
 
     it('should reject empty file name', () => {
       const metadata = { name: '', size: 1000, type: 'text/csv' as const }
-      expect(() => fileMetadataSchema.parse(metadata)).toThrow(
-        'File name is required',
-      )
+      expect(() => fileMetadataSchema.parse(metadata)).toThrow('File name is required')
     })
 
     it('should reject file name over 255 characters', () => {
@@ -151,9 +141,7 @@ describe('validation-schemas.ts', () => {
         size: 1000,
         type: 'text/csv' as const,
       }
-      expect(() => fileMetadataSchema.parse(metadata)).toThrow(
-        'File name too long',
-      )
+      expect(() => fileMetadataSchema.parse(metadata)).toThrow('File name too long')
     })
 
     it('should reject file names with invalid characters', () => {
@@ -186,12 +174,8 @@ describe('validation-schemas.ts', () => {
         type: 'text/csv' as const,
       }
 
-      expect(() => fileMetadataSchema.parse(zeroMetadata)).toThrow(
-        'File size must be positive',
-      )
-      expect(() => fileMetadataSchema.parse(negativeMetadata)).toThrow(
-        'File size must be positive',
-      )
+      expect(() => fileMetadataSchema.parse(zeroMetadata)).toThrow('File size must be positive')
+      expect(() => fileMetadataSchema.parse(negativeMetadata)).toThrow('File size must be positive')
     })
 
     it('should accept large files (plan limit enforced in route)', () => {
@@ -309,9 +293,7 @@ describe('validation-schemas.ts', () => {
       expect(sanitizeString('Hello<script>alert("xss")</script>World')).toBe(
         'Helloscriptalert("xss")/scriptWorld',
       )
-      expect(sanitizeString('Test<div>content</div>')).toBe(
-        'Testdivcontent/div',
-      )
+      expect(sanitizeString('Test<div>content</div>')).toBe('Testdivcontent/div')
       expect(sanitizeString('Name<>Email')).toBe('NameEmail')
     })
 
@@ -487,10 +469,7 @@ describe('validation-schemas.ts', () => {
     })
 
     it('should reject when exceeding max files', () => {
-      const files = [
-        createMockFile('file1.csv', 1000),
-        createMockFile('file2.csv', 1000),
-      ]
+      const files = [createMockFile('file1.csv', 1000), createMockFile('file2.csv', 1000)]
       const result = validateFileLimits(files, 1, 10 * 1024 * 1024)
 
       expect(result.valid).toBe(false)
@@ -553,10 +532,7 @@ describe('validation-schemas.ts', () => {
     })
 
     it('should require explicit maxFiles and maxSize params', () => {
-      const files = [
-        createMockFile('file1.csv', 1000),
-        createMockFile('file2.csv', 1000),
-      ]
+      const files = [createMockFile('file1.csv', 1000), createMockFile('file2.csv', 1000)]
       const result = validateFileLimits(files, 1, 10 * 1024 * 1024)
 
       expect(result.valid).toBe(false)
@@ -573,9 +549,7 @@ describe('validation-schemas.ts', () => {
 
     describe('multipart validation', () => {
       it('should return valid for multipart/form-data content type', () => {
-        const request = createMockRequest(
-          'multipart/form-data; boundary=----FormBoundary',
-        )
+        const request = createMockRequest('multipart/form-data; boundary=----FormBoundary')
         const result = validateContentType(request, 'multipart')
 
         expect(result.valid).toBe(true)
@@ -760,8 +734,7 @@ describe('validation-schemas.ts', () => {
     it('should reject invalid Content-Length values', () => {
       const request = {
         headers: {
-          get: (name: string) =>
-            name === 'content-length' ? 'not-a-number' : null,
+          get: (name: string) => (name === 'content-length' ? 'not-a-number' : null),
         },
       }
       const result = validateBodySize(request, 'json')
@@ -784,8 +757,7 @@ describe('validation-schemas.ts', () => {
       const exactLimit = String(60 * 1024 * 1024)
       const request = {
         headers: {
-          get: (name: string) =>
-            name === 'content-length' ? exactLimit : null,
+          get: (name: string) => (name === 'content-length' ? exactLimit : null),
         },
       }
       expect(validateBodySize(request, 'multipart').valid).toBe(true)
@@ -795,11 +767,415 @@ describe('validation-schemas.ts', () => {
       const exactLimit = String(1 * 1024 * 1024)
       const request = {
         headers: {
-          get: (name: string) =>
-            name === 'content-length' ? exactLimit : null,
+          get: (name: string) => (name === 'content-length' ? exactLimit : null),
         },
       }
       expect(validateBodySize(request, 'json').valid).toBe(true)
+    })
+  })
+
+  describe('readBodyWithLimit', () => {
+    // Helpers to build a streaming Request with a real body
+    const makeRequest = (bodyBytes: Uint8Array, headers: Record<string, string> = {}): Request => {
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(bodyBytes)
+          controller.close()
+        },
+      })
+      return new Request('http://localhost/test', {
+        method: 'POST',
+        body: stream,
+        headers,
+        // @ts-expect-error — duplex needed for streaming in Node fetch
+        duplex: 'half',
+      })
+    }
+
+    it('should read body within multipart limit and return ArrayBuffer', async () => {
+      const data = new Uint8Array([1, 2, 3, 4, 5])
+      const request = makeRequest(data)
+
+      const result = await readBodyWithLimit(request, 'multipart')
+
+      expect('body' in result).toBe(true)
+      if ('body' in result) {
+        expect(result.body.byteLength).toBe(5)
+      }
+    })
+
+    it('should read body within JSON limit and return ArrayBuffer', async () => {
+      const json = new TextEncoder().encode('{"token":"abc"}')
+      const request = makeRequest(json)
+
+      const result = await readBodyWithLimit(request, 'json')
+
+      expect('body' in result).toBe(true)
+      if ('body' in result) {
+        expect(result.body.byteLength).toBe(json.byteLength)
+      }
+    })
+
+    it('should return error when body is absent (null)', async () => {
+      // Request without body — body property will be null
+      const request = new Request('http://localhost/test', { method: 'POST' })
+
+      const result = await readBodyWithLimit(request, 'json')
+
+      expect('error' in result).toBe(true)
+      if ('error' in result) {
+        expect(result.error).toBe('Missing request body')
+      }
+    })
+
+    it('should reject body exceeding multipart limit via streaming count', async () => {
+      // 60MB + 1 byte > MAX_MULTIPART_BODY (60MB)
+      // We use a synthetic large stream to avoid allocating 60MB in test memory
+      const MAX_MULTIPART_BODY = 60 * 1024 * 1024
+      const overLimit = MAX_MULTIPART_BODY + 1
+
+      // Build stream that sends data in chunks totaling overLimit bytes
+      const chunkSize = 1 * 1024 * 1024 // 1MB chunks
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          let sent = 0
+          while (sent < overLimit) {
+            const toSend = Math.min(chunkSize, overLimit - sent)
+            controller.enqueue(new Uint8Array(toSend))
+            sent += toSend
+          }
+          controller.close()
+        },
+      })
+
+      const request = new Request('http://localhost/test', {
+        method: 'POST',
+        body: stream,
+        // @ts-expect-error — duplex needed for streaming in Node fetch
+        duplex: 'half',
+      })
+
+      const result = await readBodyWithLimit(request, 'multipart')
+
+      expect('error' in result).toBe(true)
+      if ('error' in result) {
+        expect(result.error).toContain('too large')
+        expect(result.error).toContain('60MB')
+      }
+    })
+
+    it('should reject body exceeding JSON limit via streaming count', async () => {
+      // 1MB + 1 byte > MAX_JSON_BODY (1MB)
+      const MAX_JSON_BODY = 1 * 1024 * 1024
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new Uint8Array(MAX_JSON_BODY + 1))
+          controller.close()
+        },
+      })
+
+      const request = new Request('http://localhost/test', {
+        method: 'POST',
+        body: stream,
+        // @ts-expect-error — duplex needed for streaming in Node fetch
+        duplex: 'half',
+      })
+
+      const result = await readBodyWithLimit(request, 'json')
+
+      expect('error' in result).toBe(true)
+      if ('error' in result) {
+        expect(result.error).toContain('too large')
+        expect(result.error).toContain('1MB')
+      }
+    })
+
+    it('should fast-reject when Content-Length header exceeds multipart limit', async () => {
+      const oversized = String(61 * 1024 * 1024)
+      const data = new Uint8Array([1, 2, 3])
+      const request = makeRequest(data, { 'content-length': oversized })
+
+      const result = await readBodyWithLimit(request, 'multipart')
+
+      expect('error' in result).toBe(true)
+      if ('error' in result) {
+        expect(result.error).toContain('too large')
+        expect(result.error).toContain('60MB')
+      }
+    })
+
+    it('should fast-reject when Content-Length header exceeds JSON limit', async () => {
+      const oversized = String(2 * 1024 * 1024)
+      const data = new Uint8Array([1, 2, 3])
+      const request = makeRequest(data, { 'content-length': oversized })
+
+      const result = await readBodyWithLimit(request, 'json')
+
+      expect('error' in result).toBe(true)
+      if ('error' in result) {
+        expect(result.error).toContain('too large')
+        expect(result.error).toContain('1MB')
+      }
+    })
+
+    it('should NOT fast-reject when Content-Length is present but within limit', async () => {
+      const data = new TextEncoder().encode('{"ok":true}')
+      const request = makeRequest(data, {
+        'content-length': String(data.byteLength),
+      })
+
+      const result = await readBodyWithLimit(request, 'json')
+
+      expect('body' in result).toBe(true)
+    })
+
+    it('should ignore non-numeric Content-Length and proceed with streaming', async () => {
+      // NaN Content-Length should not trigger fast reject — falls through to stream
+      const data = new TextEncoder().encode('hello')
+      const request = makeRequest(data, { 'content-length': 'not-a-number' })
+
+      const result = await readBodyWithLimit(request, 'json')
+
+      // Stream is within limit, should succeed
+      expect('body' in result).toBe(true)
+    })
+
+    it('should correctly concatenate multiple chunks into a single buffer', async () => {
+      // Emit 3 chunks of known bytes and verify they are joined correctly
+      const chunk1 = new Uint8Array([10, 20, 30])
+      const chunk2 = new Uint8Array([40, 50])
+      const chunk3 = new Uint8Array([60])
+
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(chunk1)
+          controller.enqueue(chunk2)
+          controller.enqueue(chunk3)
+          controller.close()
+        },
+      })
+
+      const request = new Request('http://localhost/test', {
+        method: 'POST',
+        body: stream,
+        // @ts-expect-error — duplex needed for streaming in Node fetch
+        duplex: 'half',
+      })
+
+      const result = await readBodyWithLimit(request, 'json')
+
+      expect('body' in result).toBe(true)
+      if ('body' in result) {
+        expect(result.body.byteLength).toBe(6)
+        const view = new Uint8Array(result.body)
+        expect(Array.from(view)).toEqual([10, 20, 30, 40, 50, 60])
+      }
+    })
+
+    it('should handle empty body stream (0 bytes, returns empty ArrayBuffer)', async () => {
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.close()
+        },
+      })
+
+      const request = new Request('http://localhost/test', {
+        method: 'POST',
+        body: stream,
+        // @ts-expect-error — duplex needed for streaming in Node fetch
+        duplex: 'half',
+      })
+
+      const result = await readBodyWithLimit(request, 'json')
+
+      expect('body' in result).toBe(true)
+      if ('body' in result) {
+        expect(result.body.byteLength).toBe(0)
+      }
+    })
+
+    it('should accept body exactly at multipart limit (60MB)', async () => {
+      const MAX_MULTIPART_BODY = 60 * 1024 * 1024
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new Uint8Array(MAX_MULTIPART_BODY))
+          controller.close()
+        },
+      })
+
+      const request = new Request('http://localhost/test', {
+        method: 'POST',
+        body: stream,
+        // @ts-expect-error — duplex needed for streaming in Node fetch
+        duplex: 'half',
+      })
+
+      const result = await readBodyWithLimit(request, 'multipart')
+
+      expect('body' in result).toBe(true)
+    })
+
+    it('should accept body exactly at JSON limit (1MB)', async () => {
+      const MAX_JSON_BODY = 1 * 1024 * 1024
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new Uint8Array(MAX_JSON_BODY))
+          controller.close()
+        },
+      })
+
+      const request = new Request('http://localhost/test', {
+        method: 'POST',
+        body: stream,
+        // @ts-expect-error — duplex needed for streaming in Node fetch
+        duplex: 'half',
+      })
+
+      const result = await readBodyWithLimit(request, 'json')
+
+      expect('body' in result).toBe(true)
+    })
+  })
+
+  describe('parseMultipartWithLimit', () => {
+    const buildMultipartRequest = (
+      fields: Record<string, string>,
+      boundary = 'test-boundary',
+    ): Request => {
+      const lines: string[] = []
+      for (const [name, value] of Object.entries(fields)) {
+        lines.push(`--${boundary}`)
+        lines.push(`Content-Disposition: form-data; name="${name}"`)
+        lines.push('')
+        lines.push(value)
+      }
+      lines.push(`--${boundary}--`)
+
+      const bodyText = lines.join('\r\n')
+      const bodyBytes = new TextEncoder().encode(bodyText)
+
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(bodyBytes)
+          controller.close()
+        },
+      })
+
+      return new Request('http://localhost/test', {
+        method: 'POST',
+        headers: { 'content-type': `multipart/form-data; boundary=${boundary}` },
+        body: stream,
+        // @ts-expect-error — duplex needed for streaming in Node fetch
+        duplex: 'half',
+      })
+    }
+
+    it('should parse valid multipart form data and return FormData', async () => {
+      const request = buildMultipartRequest({ token: 'abc-123', name: 'test' })
+
+      const result = await parseMultipartWithLimit(request)
+
+      expect('formData' in result).toBe(true)
+      if ('formData' in result) {
+        expect(result.formData.get('token')).toBe('abc-123')
+        expect(result.formData.get('name')).toBe('test')
+      }
+    })
+
+    it('should propagate readBodyWithLimit error when body is absent', async () => {
+      // Request without body — readBodyWithLimit returns { error: 'Missing request body' }
+      const request = new Request('http://localhost/test', {
+        method: 'POST',
+        headers: { 'content-type': 'multipart/form-data; boundary=test' },
+      })
+
+      const result = await parseMultipartWithLimit(request)
+
+      expect('error' in result).toBe(true)
+      if ('error' in result) {
+        expect(result.error).toBe('Missing request body')
+      }
+    })
+
+    it('should propagate readBodyWithLimit error when body exceeds limit', async () => {
+      const MAX_MULTIPART_BODY = 60 * 1024 * 1024
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new Uint8Array(MAX_MULTIPART_BODY + 1))
+          controller.close()
+        },
+      })
+
+      const request = new Request('http://localhost/test', {
+        method: 'POST',
+        headers: { 'content-type': 'multipart/form-data; boundary=test' },
+        body: stream,
+        // @ts-expect-error — duplex needed for streaming in Node fetch
+        duplex: 'half',
+      })
+
+      const result = await parseMultipartWithLimit(request)
+
+      expect('error' in result).toBe(true)
+      if ('error' in result) {
+        expect(result.error).toContain('too large')
+      }
+    })
+
+    it('should return error when body bytes are not valid multipart form data', async () => {
+      // Body is valid bytes but NOT valid multipart — formData() will throw
+      const junk = new TextEncoder().encode('this is not valid multipart data at all')
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(junk)
+          controller.close()
+        },
+      })
+
+      const request = new Request('http://localhost/test', {
+        method: 'POST',
+        headers: { 'content-type': 'multipart/form-data; boundary=nonexistent' },
+        body: stream,
+        // @ts-expect-error — duplex needed for streaming in Node fetch
+        duplex: 'half',
+      })
+
+      const result = await parseMultipartWithLimit(request)
+
+      // formData() throws → catch block → error string
+      expect('error' in result).toBe(true)
+      if ('error' in result) {
+        expect(result.error).toBe('Invalid multipart form data')
+      }
+    })
+
+    it('should fall back to empty string when content-type header is absent (null)', async () => {
+      // Covers the `|| ''` branch on line: const contentType = request.headers.get('content-type') || ''
+      // When content-type is null, syntheticRequest gets an empty string — formData() will throw
+      // because empty string is not a valid multipart content-type with boundary
+      const data = new TextEncoder().encode('irrelevant body')
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(data)
+          controller.close()
+        },
+      })
+
+      // Build request WITHOUT content-type header
+      const request = new Request('http://localhost/test', {
+        method: 'POST',
+        body: stream,
+        // @ts-expect-error — duplex needed for streaming in Node fetch
+        duplex: 'half',
+      })
+
+      const result = await parseMultipartWithLimit(request)
+
+      // No content-type → synthetic request has empty content-type → formData() throws
+      expect('error' in result).toBe(true)
+      if ('error' in result) {
+        expect(result.error).toBe('Invalid multipart form data')
+      }
     })
   })
 })
