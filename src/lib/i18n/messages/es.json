@@ -268,7 +268,13 @@
     "serverError": "Error en el servidor. Intenta de nuevo en unos instantes.",
     "rateLimited": "Demasiados intentos. Espera un momento antes de intentar de nuevo.",
     "networkGeneric": "Error de conexión. Verifica tu internet.",
-    "retryingConnection": "Reconectando..."
+    "retryingConnection": "Reconectando...",
+    "parseRowLimit": "El archivo excede el límite de {total} filas (máximo {max} en el plan {plan}).",
+    "parseNoColumns": "No se encontraron columnas en la primera fila del archivo.",
+    "parseNoSheets": "No se encontraron hojas en el libro.",
+    "parseEmpty": "La hoja de cálculo está vacía.",
+    "parseFailed": "Error al leer el archivo. Verifica que el formato sea válido.",
+    "parseGeneric": "Error al analizar el archivo: {detail}"
   },
   "dropzone": {
     "dragActive": "Suelta los archivos aqui...",

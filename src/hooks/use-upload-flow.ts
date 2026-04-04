@@ -215,9 +215,43 @@ export function useUploadFlow() {
         'rate-limit': 'errors.rateLimited',
       }
       toast.error(t(errorKeyMap[err.type] ?? fallbackKey))
-    } else {
-      toast.error(t(fallbackKey))
+      return
     }
+
+    // Parse errors from use-file-parser have specific messages
+    const msg =
+      err instanceof Error
+        ? err.message
+        : (err as { message?: string })?.message
+    if (msg) {
+      const rowLimitMatch = msg.match(
+        /exceeds row limit: (\d+) rows \(max (\d+) for (\w+) plan\)/,
+      )
+      if (rowLimitMatch) {
+        toast.error(
+          t('errors.parseRowLimit', {
+            total: rowLimitMatch[1],
+            max: rowLimitMatch[2],
+            plan: rowLimitMatch[3].toUpperCase(),
+          }),
+        )
+        return
+      }
+      if (msg.includes('No columns found')) {
+        toast.error(t('errors.parseNoColumns'))
+        return
+      }
+      if (msg.includes('No sheets found')) {
+        toast.error(t('errors.parseNoSheets'))
+        return
+      }
+      if (msg.includes('Empty spreadsheet')) {
+        toast.error(t('errors.parseEmpty'))
+        return
+      }
+    }
+
+    toast.error(t(fallbackKey))
   }
 
   const handleProcess = async () => {

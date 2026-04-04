@@ -268,7 +268,13 @@
     "serverError": "Erro no servidor. Tente novamente em alguns instantes.",
     "rateLimited": "Muitas tentativas. Aguarde um momento antes de tentar novamente.",
     "networkGeneric": "Erro de conexão. Verifique sua internet.",
-    "retryingConnection": "Reconectando..."
+    "retryingConnection": "Reconectando...",
+    "parseRowLimit": "O arquivo excede o limite de {total} linhas (máximo {max} no plano {plan}).",
+    "parseNoColumns": "Nenhuma coluna encontrada na primeira linha do arquivo.",
+    "parseNoSheets": "Nenhuma aba encontrada na planilha.",
+    "parseEmpty": "A planilha está vazia.",
+    "parseFailed": "Erro ao ler o arquivo. Verifique se o formato é válido.",
+    "parseGeneric": "Erro ao analisar o arquivo: {detail}"
   },
   "dropzone": {
     "dragActive": "Solte os arquivos aqui...",
