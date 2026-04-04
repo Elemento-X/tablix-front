@@ -8,7 +8,13 @@ import { FileDropzone } from '@/components/file-dropzone'
 import { formatFileSize } from '@/hooks/use-usage'
 import { useLocale } from '@/lib/i18n'
 import { sanitizeFileName } from '@/lib/security'
-import { FileSpreadsheet, LoaderCircle, X, Lightbulb } from 'lucide-react'
+import {
+  FileSpreadsheet,
+  LoaderCircle,
+  X,
+  Lightbulb,
+  AlertCircle,
+} from 'lucide-react'
 
 const ONBOARDING_KEY = 'tablix-onboarding-upload-seen'
 
@@ -83,6 +89,18 @@ export function UploadStep({
             />
           </div>
 
+          {quotaExhausted && files.length === 0 && (
+            <div className="flex w-full flex-col items-center gap-2 rounded-lg border border-dashed border-stone-300 p-6 text-center dark:border-stone-700">
+              <AlertCircle className="text-muted-foreground h-8 w-8" />
+              <p className="text-foreground text-sm font-medium">
+                {t('status.quotaExhausted')}
+              </p>
+              <p className="text-muted-foreground text-xs">
+                {t('status.quotaExhaustedHint')}
+              </p>
+            </div>
+          )}
+
           {files.length > 0 && (
             <div
               data-testid="file-list"
@@ -106,7 +124,7 @@ export function UploadStep({
                     className="border-border bg-card flex items-center gap-3 rounded-md border p-2 text-sm"
                   >
                     <FileSpreadsheet className="text-muted-foreground h-4 w-4 flex-shrink-0" />
-                    <span className="text-foreground flex-1 truncate">
+                    <span className="text-foreground flex-1 truncate font-mono text-xs">
                       {sanitizeFileName(file.name)}
                     </span>
                     <span className="text-muted-foreground flex-shrink-0 text-xs">
@@ -115,10 +133,10 @@ export function UploadStep({
                     <button
                       type="button"
                       onClick={() => onRemoveFile(index)}
-                      className="hover:bg-muted flex min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-md transition-colors sm:min-h-0 sm:min-w-0 sm:p-1"
+                      className="group hover:bg-destructive/10 flex min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-md transition-colors sm:min-h-0 sm:min-w-0 sm:p-1"
                       aria-label={`${t('a11y.removeFile')} ${sanitizeFileName(file.name)}`}
                     >
-                      <X className="text-muted-foreground h-4 w-4 hover:text-red-500" />
+                      <X className="text-muted-foreground h-4 w-4 transition-colors group-hover:text-red-500" />
                     </button>
                   </AnimatedListItem>
                 ))}
