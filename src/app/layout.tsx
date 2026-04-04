@@ -5,10 +5,15 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { headers } from 'next/headers'
 import { Analytics } from '@vercel/analytics/next'
 import { LocaleProvider } from '@/lib/i18n'
-import { getServerLocale, getMessages } from '@/lib/i18n/server'
+import {
+  getServerLocale,
+  getMessages,
+  toOpenGraphLocale,
+} from '@/lib/i18n/server'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from 'sonner'
 import { CookieConsent } from '@/components/cookie-consent'
+import { OfflineIndicator } from '@/components/offline-indicator'
 import { SkipLink } from '@/components/skip-link'
 import { SITE_URL } from '@/lib/constants'
 import './globals.css'
@@ -38,7 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description: messages.meta.description,
       url: SITE_URL,
       siteName: 'Tablix',
-      locale: locale === 'pt-BR' ? 'pt_BR' : locale,
+      locale: toOpenGraphLocale(locale),
       type: 'website',
     },
     twitter: {
@@ -98,6 +103,7 @@ export default async function RootLayout({
         >
           <LocaleProvider>
             <SkipLink />
+            <OfflineIndicator />
             {children}
             <Analytics />
             <Toaster position="top-right" richColors />

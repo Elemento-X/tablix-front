@@ -31,3 +31,10 @@ export async function getServerLocale(): Promise<Locale> {
 export function getMessages(locale: Locale): typeof ptBR {
   return messages[locale]
 }
+
+/**
+ * Convert a Locale to OpenGraph locale format (e.g., 'pt-BR' → 'pt_BR').
+ */
+export function toOpenGraphLocale(locale: Locale): string {
+  return locale.replace('-', '_')
+}

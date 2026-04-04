@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Check } from 'lucide-react'
 import { useLocale } from '@/lib/i18n'
+import { CONTACT_EMAIL } from '@/lib/constants'
 import { Badge } from '@/components/badge'
 import { Button } from '@/components/button'
 import { Card, CardContent } from '@/components/card'
@@ -298,7 +299,7 @@ export function PricingSection({
               {t('pricing.plans.enterprise.description')}
             </p>
 
-            <a href="mailto:contato@tablix.me">
+            <a href={`mailto:${CONTACT_EMAIL}`}>
               <Button
                 variant="outline"
                 className="mt-8 w-full bg-transparent"

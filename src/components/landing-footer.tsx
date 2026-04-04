@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useLocale } from '@/lib/i18n'
+import { CONTACT_EMAIL } from '@/lib/constants'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import { scrollToSection } from '@/components/landing-header-nav'
 
@@ -81,7 +82,7 @@ export function LandingFooter() {
               </li>
               <li>
                 <a
-                  href="mailto:contato@tablix.me"
+                  href={`mailto:${CONTACT_EMAIL}`}
                   className="text-muted-foreground hover:text-foreground text-sm transition-colors"
                 >
                   {t('footer.contact.email')}

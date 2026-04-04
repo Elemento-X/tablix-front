@@ -4,8 +4,21 @@
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { useUsage, formatFileSize, type UsageInfo } from '@/hooks/use-usage'
 
-// Mock fetch
+// Mock fetch — fetchWithResilience calls global.fetch internally
 global.fetch = jest.fn()
+
+// Disable retry for tests (1 attempt = no retry)
+jest.mock('@/lib/fetch-client', () => {
+  const actual = jest.requireActual('@/lib/fetch-client')
+  return {
+    ...actual,
+    fetchWithResilience: (url: string, options: Record<string, unknown> = {}) =>
+      actual.fetchWithResilience(url, {
+        ...options,
+        retry: { maxAttempts: 1 },
+      }),
+  }
+})
 
 describe('use-usage.ts', () => {
   beforeEach(() => {
@@ -50,13 +63,17 @@ describe('use-usage.ts', () => {
         // After fetch completes
         expect(result.current.usage).toEqual(mockUsageData)
         expect(result.current.error).toBeNull()
-        expect(global.fetch).toHaveBeenCalledWith('/api/usage')
+        expect(global.fetch).toHaveBeenCalledWith(
+          '/api/usage',
+          expect.objectContaining({ signal: expect.any(AbortSignal) }),
+        )
       })
 
       it('should handle fetch error', async () => {
         ;(global.fetch as jest.Mock).mockResolvedValueOnce({
           ok: false,
           status: 500,
+          headers: new Headers(),
         })
 
         const { result } = renderHook(() => useUsage())
@@ -66,13 +83,12 @@ describe('use-usage.ts', () => {
         })
 
         expect(result.current.usage).toBeNull()
-        expect(result.current.error).toBe('Failed to fetch usage')
+        expect(result.current.error).toBe('Server error (500)')
+        expect(result.current.errorType).toBe('server')
       })
 
       it('should handle network error', async () => {
-        ;(global.fetch as jest.Mock).mockRejectedValueOnce(
-          new Error('Network error'),
-        )
+        ;(global.fetch as jest.Mock).mockRejectedValueOnce(new TypeError('Failed to fetch'))
 
         const { result } = renderHook(() => useUsage())
 
@@ -81,7 +97,8 @@ describe('use-usage.ts', () => {
         })
 
         expect(result.current.usage).toBeNull()
-        expect(result.current.error).toBe('Network error')
+        expect(result.current.error).toBe('Network request failed')
+        expect(result.current.errorType).toBe('offline')
       })
 
       it('should handle non-Error thrown', async () => {
@@ -94,6 +111,7 @@ describe('use-usage.ts', () => {
         })
 
         expect(result.current.error).toBe('Unknown error')
+        expect(result.current.errorType).toBe('unknown')
       })
     })
 
@@ -176,6 +194,7 @@ describe('use-usage.ts', () => {
           .mockResolvedValueOnce({
             ok: false,
             status: 500,
+            headers: new Headers(),
           })
           .mockResolvedValueOnce({
             ok: true,
@@ -188,7 +207,7 @@ describe('use-usage.ts', () => {
           expect(result.current.isLoading).toBe(false)
         })
 
-        expect(result.current.error).toBe('Failed to fetch usage')
+        expect(result.current.error).toBe('Server error (500)')
 
         // Successful refetch
         await act(async () => {

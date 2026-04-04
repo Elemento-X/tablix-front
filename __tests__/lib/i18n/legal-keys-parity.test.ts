@@ -2,6 +2,8 @@
  * Tests that verify i18n key parity for legal.* namespace across pt-BR, en, and es.
  * Also validates footer keys added in Card #107.
  * Also validates that limit values in legal.terms.plans match src/lib/limits.ts constants.
+ * Also validates meta.* keys added in Card 9.6 (legal pages metadata) and the
+ * email→emailLabel rename.
  */
 
 import ptBR from '@/lib/i18n/messages/pt-BR.json'
@@ -374,6 +376,185 @@ describe('i18n limit values — legal.terms.plans cross-check against limits.ts'
           `[${lang}] ${description}\n  key: ${key}\n  value: "${value}"\n  regex: ${regex}`,
         )
       }
+    })
+  })
+})
+
+// ─── Card 9.6: meta.* keys for legal pages ────────────────────────────────────
+
+describe('i18n key parity — meta.* legal page keys (Card 9.6)', () => {
+  const requiredMetaKeys = [
+    'meta.privacyTitle',
+    'meta.privacyDescription',
+    'meta.termsTitle',
+    'meta.termsDescription',
+  ]
+
+  it.each(['pt-BR', 'en', 'es'])(
+    'all four legal meta keys exist in %s',
+    (lang) => {
+      const messages = lang === 'pt-BR' ? ptBR : lang === 'en' ? en : es
+      const paths = collectLeafPaths(messages as unknown as JsonObject)
+      requiredMetaKeys.forEach((key) => {
+        expect(paths).toContain(key)
+      })
+    },
+  )
+
+  it.each(['pt-BR', 'en', 'es'])(
+    'meta.privacyTitle is a non-empty string in %s',
+    (lang) => {
+      const messages = lang === 'pt-BR' ? ptBR : lang === 'en' ? en : es
+      const value = getAtPath(
+        messages as unknown as JsonObject,
+        'meta.privacyTitle',
+      ) as string
+      expect(typeof value).toBe('string')
+      expect(value.trim().length).toBeGreaterThan(0)
+    },
+  )
+
+  it.each(['pt-BR', 'en', 'es'])(
+    'meta.privacyDescription is a non-empty string in %s',
+    (lang) => {
+      const messages = lang === 'pt-BR' ? ptBR : lang === 'en' ? en : es
+      const value = getAtPath(
+        messages as unknown as JsonObject,
+        'meta.privacyDescription',
+      ) as string
+      expect(typeof value).toBe('string')
+      expect(value.trim().length).toBeGreaterThan(0)
+    },
+  )
+
+  it.each(['pt-BR', 'en', 'es'])(
+    'meta.termsTitle is a non-empty string in %s',
+    (lang) => {
+      const messages = lang === 'pt-BR' ? ptBR : lang === 'en' ? en : es
+      const value = getAtPath(
+        messages as unknown as JsonObject,
+        'meta.termsTitle',
+      ) as string
+      expect(typeof value).toBe('string')
+      expect(value.trim().length).toBeGreaterThan(0)
+    },
+  )
+
+  it.each(['pt-BR', 'en', 'es'])(
+    'meta.termsDescription is a non-empty string in %s',
+    (lang) => {
+      const messages = lang === 'pt-BR' ? ptBR : lang === 'en' ? en : es
+      const value = getAtPath(
+        messages as unknown as JsonObject,
+        'meta.termsDescription',
+      ) as string
+      expect(typeof value).toBe('string')
+      expect(value.trim().length).toBeGreaterThan(0)
+    },
+  )
+
+  it('meta.privacyTitle contains "Tablix" in all languages', () => {
+    ;[ptBR, en, es].forEach((messages) => {
+      const value = getAtPath(
+        messages as unknown as JsonObject,
+        'meta.privacyTitle',
+      ) as string
+      expect(value).toContain('Tablix')
+    })
+  })
+
+  it('meta.termsTitle contains "Tablix" in all languages', () => {
+    ;[ptBR, en, es].forEach((messages) => {
+      const value = getAtPath(
+        messages as unknown as JsonObject,
+        'meta.termsTitle',
+      ) as string
+      expect(value).toContain('Tablix')
+    })
+  })
+
+  it('meta.privacyTitle differs across languages (real translations, not copy-paste)', () => {
+    const ptVal = getAtPath(ptBR as unknown as JsonObject, 'meta.privacyTitle')
+    const enVal = getAtPath(en as unknown as JsonObject, 'meta.privacyTitle')
+    const esVal = getAtPath(es as unknown as JsonObject, 'meta.privacyTitle')
+    // At least two of the three must differ (en/es could share format)
+    expect([ptVal, enVal, esVal]).not.toEqual([ptVal, ptVal, ptVal])
+  })
+
+  it('meta.termsTitle differs across languages', () => {
+    const ptVal = getAtPath(ptBR as unknown as JsonObject, 'meta.termsTitle')
+    const enVal = getAtPath(en as unknown as JsonObject, 'meta.termsTitle')
+    const esVal = getAtPath(es as unknown as JsonObject, 'meta.termsTitle')
+    expect([ptVal, enVal, esVal]).not.toEqual([ptVal, ptVal, ptVal])
+  })
+
+  it('all four meta keys are identical in count across languages', () => {
+    const ptMetaPaths = filterNamespace(ptBRPaths, 'meta')
+    const enMetaPaths = filterNamespace(enPaths, 'meta')
+    const esMetaPaths = filterNamespace(esPaths, 'meta')
+    expect(enMetaPaths.length).toBe(ptMetaPaths.length)
+    expect(esMetaPaths.length).toBe(ptMetaPaths.length)
+  })
+})
+
+// ─── Card 9.6: email → emailLabel rename ─────────────────────────────────────
+
+describe('i18n rename — email → emailLabel in legal contact sections (Card 9.6)', () => {
+  it('old key legal.privacy.contact.email does NOT exist in pt-BR', () => {
+    expect(ptBRPaths).not.toContain('legal.privacy.contact.email')
+  })
+
+  it('old key legal.privacy.contact.email does NOT exist in en', () => {
+    expect(enPaths).not.toContain('legal.privacy.contact.email')
+  })
+
+  it('old key legal.privacy.contact.email does NOT exist in es', () => {
+    expect(esPaths).not.toContain('legal.privacy.contact.email')
+  })
+
+  it('old key legal.terms.contact.email does NOT exist in pt-BR', () => {
+    expect(ptBRPaths).not.toContain('legal.terms.contact.email')
+  })
+
+  it('old key legal.terms.contact.email does NOT exist in en', () => {
+    expect(enPaths).not.toContain('legal.terms.contact.email')
+  })
+
+  it('old key legal.terms.contact.email does NOT exist in es', () => {
+    expect(esPaths).not.toContain('legal.terms.contact.email')
+  })
+
+  it('new key legal.privacy.contact.emailLabel exists in all three languages', () => {
+    ;[ptBRPaths, enPaths, esPaths].forEach((paths) => {
+      expect(paths).toContain('legal.privacy.contact.emailLabel')
+    })
+  })
+
+  it('new key legal.terms.contact.emailLabel exists in all three languages', () => {
+    ;[ptBRPaths, enPaths, esPaths].forEach((paths) => {
+      expect(paths).toContain('legal.terms.contact.emailLabel')
+    })
+  })
+
+  it('legal.privacy.contact.emailLabel is a non-empty string in all languages', () => {
+    ;[ptBR, en, es].forEach((messages) => {
+      const value = getAtPath(
+        messages as unknown as JsonObject,
+        'legal.privacy.contact.emailLabel',
+      ) as string
+      expect(typeof value).toBe('string')
+      expect(value.trim().length).toBeGreaterThan(0)
+    })
+  })
+
+  it('legal.terms.contact.emailLabel is a non-empty string in all languages', () => {
+    ;[ptBR, en, es].forEach((messages) => {
+      const value = getAtPath(
+        messages as unknown as JsonObject,
+        'legal.terms.contact.emailLabel',
+      ) as string
+      expect(typeof value).toBe('string')
+      expect(value.trim().length).toBeGreaterThan(0)
     })
   })
 })

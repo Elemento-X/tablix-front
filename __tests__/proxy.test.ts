@@ -53,6 +53,27 @@ describe('proxy', () => {
 
       expect(response.headers.get('X-XSS-Protection')).toBeNull()
     })
+
+    it('should set __csrf cookie on GET requests when not present', () => {
+      const request = createRequest()
+      const response = proxy(request)
+
+      const setCookie = response.headers.get('set-cookie')
+      expect(setCookie).toContain('__csrf=')
+      expect(setCookie?.toLowerCase()).toContain('samesite=strict')
+      expect(setCookie).toContain('Path=/')
+    })
+
+    it('should not overwrite __csrf cookie when already present', () => {
+      const request = new NextRequest('http://localhost:3000/', {
+        headers: { cookie: '__csrf=existing-token' },
+      })
+      const response = proxy(request)
+
+      const setCookie = response.headers.get('set-cookie')
+      // Should not set a new __csrf cookie (null means no Set-Cookie header)
+      expect(setCookie === null || !setCookie.includes('__csrf=')).toBe(true)
+    })
   })
 
   describe('Permissions-Policy header', () => {
@@ -240,13 +261,22 @@ describe('proxy', () => {
   })
 
   describe('CSRF protection', () => {
-    const createPostRequest = (url: string, origin?: string | null, host?: string) => {
+    const createPostRequest = (
+      url: string,
+      origin?: string | null,
+      host?: string,
+      options?: { csrfToken?: string },
+    ) => {
       const headers: Record<string, string> = {}
       if (origin !== null && origin !== undefined) {
         headers.origin = origin
       }
       if (host) {
         headers.host = host
+      }
+      if (options?.csrfToken) {
+        headers['X-CSRF-Token'] = options.csrfToken
+        headers.cookie = `__csrf=${options.csrfToken}`
       }
       return new NextRequest(url, { method: 'POST', headers })
     }
@@ -271,7 +301,19 @@ describe('proxy', () => {
       expect(response.status).toBe(403)
     })
 
-    it('should allow POST to /api/ with same-origin Origin header', () => {
+    it('should allow POST to /api/ with same-origin Origin header and CSRF token', () => {
+      const request = createPostRequest(
+        'http://localhost:3000/api/preview',
+        'http://localhost:3000',
+        'localhost:3000',
+        { csrfToken: 'test-csrf-token' },
+      )
+      const response = proxy(request)
+
+      expect(response.status).not.toBe(403)
+    })
+
+    it('should block POST with valid origin but missing CSRF token', () => {
       const request = createPostRequest(
         'http://localhost:3000/api/preview',
         'http://localhost:3000',
@@ -279,7 +321,23 @@ describe('proxy', () => {
       )
       const response = proxy(request)
 
-      expect(response.status).not.toBe(403)
+      expect(response.status).toBe(403)
+    })
+
+    it('should block POST with mismatched CSRF cookie and header', () => {
+      const headers: Record<string, string> = {
+        origin: 'http://localhost:3000',
+        host: 'localhost:3000',
+        'X-CSRF-Token': 'token-a',
+        cookie: '__csrf=token-b',
+      }
+      const request = new NextRequest('http://localhost:3000/api/preview', {
+        method: 'POST',
+        headers,
+      })
+      const response = proxy(request)
+
+      expect(response.status).toBe(403)
     })
 
     it('should block POST with malformed Origin', () => {

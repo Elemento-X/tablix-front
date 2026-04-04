@@ -2,6 +2,7 @@
  * Tests for src/lib/i18n/server.ts
  * getServerLocale() — reads cookie, falls back to defaultLocale, rejects invalid locales
  * getMessages() — returns correct message bundle for a given locale
+ * toOpenGraphLocale() — converts Locale to OpenGraph locale format
  */
 
 import { defaultLocale, locales } from '@/lib/i18n/config'
@@ -135,5 +136,45 @@ describe('getMessages()', () => {
       expect(typeof messages.meta.description).toBe('string')
       expect(messages.meta.description.length).toBeGreaterThan(0)
     }
+  })
+})
+
+describe('toOpenGraphLocale()', () => {
+  it('converts pt-BR to pt_BR (hyphen to underscore)', async () => {
+    const { toOpenGraphLocale } = await import('@/lib/i18n/server')
+    expect(toOpenGraphLocale('pt-BR')).toBe('pt_BR')
+  })
+
+  it('returns "en" unchanged (no hyphen)', async () => {
+    const { toOpenGraphLocale } = await import('@/lib/i18n/server')
+    expect(toOpenGraphLocale('en')).toBe('en')
+  })
+
+  it('returns "es" unchanged (no hyphen)', async () => {
+    const { toOpenGraphLocale } = await import('@/lib/i18n/server')
+    expect(toOpenGraphLocale('es')).toBe('es')
+  })
+
+  it('returns a string for every supported locale', async () => {
+    const { toOpenGraphLocale } = await import('@/lib/i18n/server')
+    for (const locale of locales) {
+      const result = toOpenGraphLocale(locale)
+      expect(typeof result).toBe('string')
+      expect(result.length).toBeGreaterThan(0)
+    }
+  })
+
+  it('output never contains a hyphen (always underscore-separated)', async () => {
+    const { toOpenGraphLocale } = await import('@/lib/i18n/server')
+    for (const locale of locales) {
+      const result = toOpenGraphLocale(locale)
+      expect(result).not.toContain('-')
+    }
+  })
+
+  it('is idempotent on locales that are already underscore-free', async () => {
+    const { toOpenGraphLocale } = await import('@/lib/i18n/server')
+    expect(toOpenGraphLocale('en')).toBe(toOpenGraphLocale('en'))
+    expect(toOpenGraphLocale('es')).toBe(toOpenGraphLocale('es'))
   })
 })
