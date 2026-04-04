@@ -18,7 +18,11 @@ const envSchema = z.object({
     .default('development'),
 
   // Sentry — public (inlined by Next.js at build time), optional (disabled when missing)
-  NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
+  // Preprocess: empty string → undefined (CI/build may have empty value)
+  NEXT_PUBLIC_SENTRY_DSN: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.string().url().optional(),
+  ),
 })
 
 export type Env = z.infer<typeof envSchema>
@@ -46,11 +50,15 @@ function parseRawEnv(): Env {
 
 /**
  * Production/Development: parsed eagerly at startup (fail-fast).
- * Test: Proxy that re-reads process.env on every access, so tests
- * that manipulate process.env work without mocking this module.
+ * Test / Build phase: Proxy that re-reads process.env on every access.
+ *
+ * During `next build`, NEXT_PUBLIC_* vars may not be available yet
+ * (they're inlined at build time but prerender runs before that).
  */
+const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build'
+
 export const env: Env =
-  process.env.NODE_ENV === 'test'
+  process.env.NODE_ENV === 'test' || isBuildPhase
     ? new Proxy({} as Env, {
         get(_, prop: string) {
           return parseRawEnv()[prop as keyof Env]
