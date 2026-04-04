@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server'
+import { serverEnv } from '@/config/env.server'
 
 // In-memory fallback implementation
 // WARNING: This fallback is for DEVELOPMENT ONLY.
@@ -94,7 +95,7 @@ if (typeof cleanupInterval.unref === 'function') {
  * Guarded: no-op in production to prevent abuse.
  */
 export function __resetRateLimitStore() {
-  if (process.env.NODE_ENV !== 'test') return
+  if (serverEnv.NODE_ENV !== 'test') return
   inMemoryStore.clear()
 }
 
@@ -104,7 +105,10 @@ interface RateLimitOptions {
   namespace?: string // Optional namespace to avoid collisions between different limiters
 }
 
-// Lazy load Redis and Ratelimit to avoid ESM issues in tests
+// Lazy load Redis and Ratelimit to avoid ESM issues in tests.
+// Note: serverEnv is imported eagerly (top-level) while Redis is lazy (require).
+// This asymmetry is intentional — serverEnv uses a Proxy in test mode that handles
+// dynamic process.env reads, but Redis SDK requires lazy loading to avoid ESM errors.
 let redisClient: ReturnType<
   typeof import('@/lib/redis').getRedisClient
 > | null = null
@@ -187,7 +191,7 @@ export function rateLimit(options: RateLimitOptions) {
 
           // If circuit is not open yet, fail-closed in production
           if (
-            process.env.NODE_ENV === 'production' &&
+            serverEnv.NODE_ENV === 'production' &&
             circuitBreaker.state !== 'open'
           ) {
             return { success: false, remaining: 0 }

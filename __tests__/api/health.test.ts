@@ -4,6 +4,7 @@
 import { NextRequest } from 'next/server'
 import { GET } from '@/app/api/health/route'
 import { rateLimiters } from '@/lib/security/rate-limit'
+import { getRedisClient } from '@/lib/redis'
 
 jest.mock('@/lib/security/rate-limit', () => ({
   rateLimiters: {
@@ -13,16 +14,11 @@ jest.mock('@/lib/security/rate-limit', () => ({
   },
 }))
 
-// Mock dynamic import of @upstash/redis used in deep health check
-jest.mock(
-  '@upstash/redis',
-  () => ({
-    Redis: jest.fn().mockImplementation(() => ({
-      ping: jest.fn().mockResolvedValue('PONG'),
-    })),
-  }),
-  { virtual: true },
-)
+// Mock @/lib/redis — route uses getRedisClient() singleton
+const mockPing = jest.fn().mockResolvedValue('PONG')
+jest.mock('@/lib/redis', () => ({
+  getRedisClient: jest.fn(() => ({ ping: mockPing })),
+}))
 
 describe('GET /api/health', () => {
   const createRequest = (
@@ -48,6 +44,10 @@ describe('GET /api/health', () => {
       success: true,
       remaining: 99,
     })
+
+    // Default: getRedisClient returns a working client
+    mockPing.mockResolvedValue('PONG')
+    ;(getRedisClient as jest.Mock).mockReturnValue({ ping: mockPing })
 
     // Default: no HEALTH_SECRET configured
     delete process.env.HEALTH_SECRET
@@ -147,7 +147,7 @@ describe('GET /api/health', () => {
     })
 
     it('should return shallow response when header is absent but deep=true', async () => {
-      process.env.HEALTH_SECRET = 'secret-value'
+      process.env.HEALTH_SECRET = 'test-secret-value-with-32-chars!!'
 
       const request = createRequest('http://localhost:3000/api/health?deep=true')
       const response = await GET(request)
@@ -159,7 +159,7 @@ describe('GET /api/health', () => {
     })
 
     it('should return shallow response when wrong secret is provided', async () => {
-      process.env.HEALTH_SECRET = 'correct-secret'
+      process.env.HEALTH_SECRET = 'correct-secret-for-health-check!'
 
       const request = createDeepRequest('wrong-secret')
       const response = await GET(request)
@@ -171,25 +171,25 @@ describe('GET /api/health', () => {
     })
 
     it('should NOT leak secret via response body on auth failure', async () => {
-      process.env.HEALTH_SECRET = 'super-secret-token'
+      process.env.HEALTH_SECRET = 'super-secret-token-long-enough-32'
 
       const request = createDeepRequest('wrong')
       const response = await GET(request)
       const body = await response.json()
       const bodyStr = JSON.stringify(body)
 
-      expect(bodyStr).not.toContain('super-secret-token')
+      expect(bodyStr).not.toContain('super-secret-token-long-enough-32')
       expect(bodyStr).not.toContain('wrong')
     })
   })
 
   describe('deep health check — authenticated', () => {
     beforeEach(() => {
-      process.env.HEALTH_SECRET = 'correct-secret'
+      process.env.HEALTH_SECRET = 'correct-secret-for-health-check!'
     })
 
     it('should return checks object with redis when authenticated', async () => {
-      const request = createDeepRequest('correct-secret')
+      const request = createDeepRequest('correct-secret-for-health-check!')
       const response = await GET(request)
       const data = await response.json()
 
@@ -199,7 +199,7 @@ describe('GET /api/health', () => {
     })
 
     it('should return status ok when Redis ping succeeds', async () => {
-      const request = createDeepRequest('correct-secret')
+      const request = createDeepRequest('correct-secret-for-health-check!')
       const response = await GET(request)
       const data = await response.json()
 
@@ -208,12 +208,9 @@ describe('GET /api/health', () => {
     })
 
     it('should return status degraded when Redis ping fails', async () => {
-      const { Redis } = await import('@upstash/redis')
-      ;(Redis as jest.Mock).mockImplementationOnce(() => ({
-        ping: jest.fn().mockRejectedValue(new Error('Connection refused')),
-      }))
+      mockPing.mockRejectedValueOnce(new Error('Connection refused'))
 
-      const request = createDeepRequest('correct-secret')
+      const request = createDeepRequest('correct-secret-for-health-check!')
       const response = await GET(request)
       const data = await response.json()
 
@@ -223,7 +220,7 @@ describe('GET /api/health', () => {
     })
 
     it('should include timestamp in deep response', async () => {
-      const request = createDeepRequest('correct-secret')
+      const request = createDeepRequest('correct-secret-for-health-check!')
       const response = await GET(request)
       const data = await response.json()
 
@@ -234,9 +231,7 @@ describe('GET /api/health', () => {
 
   describe('security — information disclosure', () => {
     it('should not expose stack traces in any response', async () => {
-      ;(rateLimiters.api.check as jest.Mock).mockRejectedValue(
-        new Error('Internal limiter crash'),
-      )
+      ;(rateLimiters.api.check as jest.Mock).mockRejectedValue(new Error('Internal limiter crash'))
 
       // Route has no try/catch around the rate limiter — if it throws, Next.js handles it.
       // This test validates that 429 response body is minimal.
@@ -254,7 +249,7 @@ describe('GET /api/health', () => {
     })
 
     it('should return 200 (not 401/403) when deep requested without auth — graceful degradation', async () => {
-      process.env.HEALTH_SECRET = 'configured-secret'
+      process.env.HEALTH_SECRET = 'configured-secret-for-testing-32!'
 
       const request = createDeepRequest()
       const response = await GET(request)
@@ -279,7 +274,7 @@ describe('GET /api/health', () => {
     })
 
     it('should handle deep=true with empty string secret gracefully', async () => {
-      process.env.HEALTH_SECRET = 'expected-secret'
+      process.env.HEALTH_SECRET = 'expected-secret-long-enough-32ch'
 
       const request = createDeepRequest('')
       const response = await GET(request)

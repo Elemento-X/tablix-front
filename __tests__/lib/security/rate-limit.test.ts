@@ -1,9 +1,5 @@
 import { NextRequest } from 'next/server'
-import {
-  rateLimit,
-  rateLimiters,
-  __resetRateLimitStore,
-} from '@/lib/security/rate-limit'
+import { rateLimit, rateLimiters, __resetRateLimitStore } from '@/lib/security/rate-limit'
 
 describe('rate-limit.ts', () => {
   // Contador para gerar IPs únicos em cada teste
@@ -11,14 +7,9 @@ describe('rate-limit.ts', () => {
 
   const createRequest = (headers: Record<string, string> = {}): NextRequest => {
     // Se não houver nenhum header de IP especificado, gerar um único para este teste
-    if (
-      !headers['x-forwarded-for'] &&
-      !headers['x-real-ip'] &&
-      !headers['cf-connecting-ip']
-    ) {
+    if (!headers['x-forwarded-for'] && !headers['x-real-ip'] && !headers['cf-connecting-ip']) {
       testCounter++
-      headers['x-forwarded-for'] =
-        `192.168.${Math.floor(testCounter / 256)}.${testCounter % 256}`
+      headers['x-forwarded-for'] = `192.168.${Math.floor(testCounter / 256)}.${testCounter % 256}`
     }
     return new NextRequest('http://localhost:3000/test', {
       headers: new Headers(headers),
@@ -586,9 +577,7 @@ describe('rate-limit.ts', () => {
     it('should use Upstash when available, then fall back on error', async () => {
       jest.resetModules()
 
-      const mockLimitFn = jest
-        .fn()
-        .mockResolvedValue({ success: true, remaining: 7 })
+      const mockLimitFn = jest.fn().mockResolvedValue({ success: true, remaining: 7 })
 
       jest.doMock('@/lib/redis', () => ({
         getRedisClient: () => ({}),
@@ -619,17 +608,12 @@ describe('rate-limit.ts', () => {
 
       // Failure path — Upstash throws, falls back to in-memory
       mockLimitFn.mockRejectedValueOnce(new Error('Redis connection lost'))
-      const consoleSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {})
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
 
       const fallbackResult = await limiter.check(request)
       expect(fallbackResult.success).toBe(true)
       expect(fallbackResult.remaining).toBe(9) // in-memory fresh count
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '[Rate Limit] Redis failed:',
-        'Redis connection lost',
-      )
+      expect(consoleSpy).toHaveBeenCalledWith('[Rate Limit] Redis failed:', 'Redis connection lost')
     })
 
     it('should fall back to in-memory when @upstash/ratelimit or Redis is unavailable', async () => {
@@ -723,9 +707,7 @@ describe('rate-limit.ts', () => {
     it('should reject request (fail-closed) when Redis throws in NODE_ENV=production', async () => {
       jest.resetModules()
 
-      const mockLimitFn = jest
-        .fn()
-        .mockRejectedValue(new Error('Redis unavailable'))
+      const mockLimitFn = jest.fn().mockRejectedValue(new Error('Redis unavailable'))
 
       jest.doMock('@/lib/redis', () => ({
         getRedisClient: () => ({}),
@@ -741,12 +723,13 @@ describe('rate-limit.ts', () => {
         },
       }))
 
-      // Set NODE_ENV to production — the branch checks process.env.NODE_ENV at call time
+      // Set NODE_ENV to production — the branch checks serverEnv.NODE_ENV at call time
+      // Redis vars required in production by env.server.ts refine()
       process.env.NODE_ENV = 'production'
+      process.env.UPSTASH_REDIS_REST_URL = 'https://test.upstash.io'
+      process.env.UPSTASH_REDIS_REST_TOKEN = 'test-token'
 
-      const consoleSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {})
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
 
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { rateLimit: rl } = require('@/lib/security/rate-limit')
@@ -759,10 +742,7 @@ describe('rate-limit.ts', () => {
       // In production, Redis failure must reject — never fall back to in-memory
       expect(result.success).toBe(false)
       expect(result.remaining).toBe(0)
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '[Rate Limit] Redis failed:',
-        'Redis unavailable',
-      )
+      expect(consoleSpy).toHaveBeenCalledWith('[Rate Limit] Redis failed:', 'Redis unavailable')
     })
   })
 
@@ -775,9 +755,7 @@ describe('rate-limit.ts', () => {
     it('should open circuit after CIRCUIT_BREAKER_THRESHOLD consecutive Redis failures', async () => {
       jest.resetModules()
 
-      const mockLimitFn = jest
-        .fn()
-        .mockRejectedValue(new Error('Redis down'))
+      const mockLimitFn = jest.fn().mockRejectedValue(new Error('Redis down'))
 
       jest.doMock('@/lib/redis', () => ({
         getRedisClient: () => ({}),
@@ -785,7 +763,9 @@ describe('rate-limit.ts', () => {
 
       jest.doMock('@upstash/ratelimit', () => ({
         Ratelimit: class {
-          static slidingWindow() { return {} }
+          static slidingWindow() {
+            return {}
+          }
           limit = mockLimitFn
         },
       }))
@@ -807,8 +787,8 @@ describe('rate-limit.ts', () => {
       await limiter.check(request)
 
       // After threshold, circuit breaker open log should appear
-      const circuitOpenLog = consoleSpy.mock.calls.find((args) =>
-        typeof args[0] === 'string' && args[0].includes('Circuit breaker OPEN'),
+      const circuitOpenLog = consoleSpy.mock.calls.find(
+        (args) => typeof args[0] === 'string' && args[0].includes('Circuit breaker OPEN'),
       )
       expect(circuitOpenLog).toBeDefined()
     })
@@ -828,7 +808,9 @@ describe('rate-limit.ts', () => {
 
       jest.doMock('@upstash/ratelimit', () => ({
         Ratelimit: class {
-          static slidingWindow() { return {} }
+          static slidingWindow() {
+            return {}
+          }
           limit = mockLimitFn
         },
       }))
@@ -875,7 +857,9 @@ describe('rate-limit.ts', () => {
 
       jest.doMock('@upstash/ratelimit', () => ({
         Ratelimit: class {
-          static slidingWindow() { return {} }
+          static slidingWindow() {
+            return {}
+          }
           limit = mockLimitFn
         },
       }))
@@ -924,7 +908,9 @@ describe('rate-limit.ts', () => {
 
       jest.doMock('@upstash/ratelimit', () => ({
         Ratelimit: class {
-          static slidingWindow() { return {} }
+          static slidingWindow() {
+            return {}
+          }
           limit = mockLimitFn
         },
       }))
@@ -981,7 +967,9 @@ describe('rate-limit.ts', () => {
 
       jest.doMock('@upstash/ratelimit', () => ({
         Ratelimit: class {
-          static slidingWindow() { return {} }
+          static slidingWindow() {
+            return {}
+          }
           limit = mockLimitFn
         },
       }))
@@ -1043,7 +1031,10 @@ describe('rate-limit.ts', () => {
       await limiter.check(request)
 
       // Simulate production — guard should prevent the clear
+      // Redis vars required in production by env.server.ts refine()
       process.env.NODE_ENV = 'production'
+      process.env.UPSTASH_REDIS_REST_URL = 'https://test.upstash.io'
+      process.env.UPSTASH_REDIS_REST_TOKEN = 'test-token'
       __resetRateLimitStore()
 
       // Store was NOT cleared: same IP on same limiter should still be blocked

@@ -12,6 +12,7 @@
  */
 
 import { useEffect } from 'react'
+import { env } from '@/config/env'
 
 export default function RootError({
   error,
@@ -21,7 +22,7 @@ export default function RootError({
   reset: () => void
 }) {
   useEffect(() => {
-    if (process.env.NODE_ENV === 'production') {
+    if (env.NODE_ENV === 'production') {
       console.error('[RootErrorBoundary]', error.digest ?? 'unknown')
     } else {
       console.error('[RootErrorBoundary]', error.message)
