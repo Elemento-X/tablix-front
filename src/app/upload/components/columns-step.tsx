@@ -6,7 +6,7 @@ import { Button } from '@/components/button'
 import { Card, CardContent } from '@/components/card'
 import { useLocale } from '@/lib/i18n'
 import type { UsageInfo } from '@/hooks/use-usage'
-import type { ProcessingPhase } from '@/hooks/use-upload-flow'
+import type { ProcessingPhase, PreviewRow } from '@/hooks/use-upload-flow'
 import { ArrowLeft, LoaderCircle, Lightbulb } from 'lucide-react'
 
 const ONBOARDING_KEY = 'tablix-onboarding-columns-seen'
@@ -24,6 +24,7 @@ interface ColumnsStepProps {
   isProcessing: boolean
   processingPhase: ProcessingPhase | null
   usage: UsageInfo | null
+  previewRows: PreviewRow[]
   onToggleColumn: (column: string) => void
   onSelectAll: () => void
   onDeselectAll: () => void
@@ -37,6 +38,7 @@ export function ColumnsStep({
   isProcessing,
   processingPhase,
   usage,
+  previewRows,
   onToggleColumn,
   onSelectAll,
   onDeselectAll,
@@ -112,31 +114,72 @@ export function ColumnsStep({
             {detectedColumns.map((column) => (
               <AnimatedListItem key={column}>
                 <button
+                  type="button"
                   onClick={() => onToggleColumn(column)}
                   disabled={isProcessing}
                   aria-pressed={selectedColumns.includes(column)}
-                  className={`flex w-full items-center gap-2 rounded-lg border-2 p-3 text-left transition-all ${
+                  className={`flex w-full items-center gap-2 rounded-lg border-2 p-3 text-left transition-all duration-150 ${
                     selectedColumns.includes(column)
-                      ? 'border-teal-700 bg-teal-700 text-white'
+                      ? 'border-teal-700 bg-teal-700 text-white shadow-sm'
                       : 'border-border bg-card text-foreground hover:border-stone-400 dark:hover:border-stone-500'
                   }`}
                 >
                   <div
-                    className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border-2 ${
+                    className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border-2 transition-all duration-150 ${
                       selectedColumns.includes(column)
-                        ? 'border-white bg-white'
-                        : 'border-stone-300 dark:border-stone-600'
+                        ? 'scale-110 border-white bg-white'
+                        : 'scale-100 border-stone-300 dark:border-stone-600'
                     }`}
                   >
                     {selectedColumns.includes(column) && (
                       <div className="h-2 w-2 rounded-sm bg-teal-700" />
                     )}
                   </div>
-                  <span className="truncate text-sm font-medium">{column}</span>
+                  <span className="truncate font-mono text-sm">{column}</span>
                 </button>
               </AnimatedListItem>
             ))}
           </AnimatedList>
+
+          {previewRows.length > 0 && selectedColumns.length > 0 && (
+            <div className="overflow-x-auto rounded-lg border">
+              <table
+                className="w-full text-left text-xs"
+                aria-label={t('columns.previewHint')}
+              >
+                <thead>
+                  <tr className="bg-muted">
+                    {selectedColumns.map((col) => (
+                      <th
+                        key={col}
+                        scope="col"
+                        className="text-muted-foreground px-3 py-2 font-mono font-medium whitespace-nowrap"
+                      >
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {previewRows.map((row, i) => (
+                    <tr key={i} className="border-border border-t">
+                      {selectedColumns.map((col) => (
+                        <td
+                          key={col}
+                          className="text-foreground/70 max-w-[150px] truncate px-3 py-1.5 font-mono whitespace-nowrap"
+                        >
+                          {row[col] != null ? String(row[col]) : '—'}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="text-muted-foreground bg-muted/50 border-border border-t px-3 py-1.5 text-center text-[10px]">
+                {t('columns.previewHint')}
+              </p>
+            </div>
+          )}
 
           <div className="flex gap-3 pt-4">
             <Button
@@ -152,8 +195,11 @@ export function ColumnsStep({
               onClick={onSelectAll}
               className="flex-1"
               disabled={
-                selectedColumns.length === detectedColumns.length ||
-                isProcessing
+                selectedColumns.length >=
+                  Math.min(
+                    detectedColumns.length,
+                    usage?.limits.maxColumns ?? 3,
+                  ) || isProcessing
               }
             >
               {t('columns.selectAll')}

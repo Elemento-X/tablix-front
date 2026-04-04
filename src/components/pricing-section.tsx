@@ -119,7 +119,7 @@ export function PricingSection({
       </div>
 
       <div className="mx-auto grid max-w-5xl gap-6 sm:gap-8 md:grid-cols-3">
-        <Card className="border-border">
+        <Card className="border-border transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
           <CardContent className="p-5 sm:p-8">
             <h3 className="text-foreground text-2xl font-bold">
               {t('pricing.plans.free.name')}
@@ -170,7 +170,7 @@ export function PricingSection({
           </CardContent>
         </Card>
 
-        <Card className="border-foreground relative shadow-xl">
+        <Card className="border-foreground relative shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl">
           <div className="absolute -top-4 left-1/2 -translate-x-1/2">
             <Badge className="bg-foreground text-background hover:bg-foreground">
               {t('pricing.plans.pro.badge')}
@@ -254,7 +254,7 @@ export function PricingSection({
           </CardContent>
         </Card>
 
-        <Card className="border-border">
+        <Card className="border-border transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
           <CardContent className="p-5 sm:p-8">
             <h3 className="text-foreground text-2xl font-bold">
               {t('pricing.plans.enterprise.name')}

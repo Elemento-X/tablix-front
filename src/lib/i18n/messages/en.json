@@ -161,7 +161,8 @@
     "startOver": "Start Over",
     "deselectAll": "Deselect All",
     "selectAll": "Select All",
-    "processAndDownload": "Process & Download"
+    "processAndDownload": "Process & Download",
+    "previewHint": "Preview of the first rows from your first file"
   },
   "status": {
     "plan": "Plan",
@@ -174,7 +175,9 @@
     "maxRowsLabel": "Max",
     "maxColumnsLabel": "Max",
     "clickToAddMore": "Click above to add more files",
-    "loading": "Loading plan information..."
+    "loading": "Loading plan information...",
+    "quotaExhausted": "Monthly quota exhausted",
+    "quotaExhaustedHint": "Your unification quota for this month has been used. Wait for the next cycle or upgrade your plan."
   },
   "messages": {
     "tooManyFiles": "Too many files. Maximum {max} files for {plan} plan.",
@@ -491,8 +494,93 @@
     }
   },
   "pricingPage": {
+    "metaTitle": "Plans & Pricing | Tablix",
+    "metaDescription": "Compare Tablix Free, Pro, and Enterprise plans. Start free, no signup needed.",
     "ctaText": "Ready to simplify your spreadsheets?",
-    "cta": "Start free"
+    "ctaSubtext": "Start in seconds. No signup, no credit card required.",
+    "cta": "Start free",
+    "comparison": {
+      "title": "Compare plans",
+      "features": {
+        "sheetsPerMonth": "Spreadsheets per month",
+        "maxRows": "Rows per spreadsheet",
+        "maxColumns": "Columns",
+        "maxFileSize": "Max file size",
+        "processing": "Processing",
+        "watermark": "Watermark",
+        "fileHistory": "File history",
+        "support": "Support",
+        "infrastructure": "Infrastructure"
+      },
+      "values": {
+        "free": {
+          "sheetsPerMonth": "1",
+          "maxRows": "500",
+          "maxColumns": "3",
+          "maxFileSize": "1 MB",
+          "processing": "Local (browser)",
+          "watermark": "Yes",
+          "fileHistory": "No",
+          "support": "Community",
+          "infrastructure": "Shared"
+        },
+        "pro": {
+          "sheetsPerMonth": "40",
+          "maxRows": "5,000",
+          "maxColumns": "10",
+          "maxFileSize": "2 MB",
+          "processing": "Priority server",
+          "watermark": "No",
+          "fileHistory": "30 days",
+          "support": "Priority email support",
+          "infrastructure": "Shared"
+        },
+        "enterprise": {
+          "sheetsPerMonth": "Custom",
+          "maxRows": "Custom",
+          "maxColumns": "Custom",
+          "maxFileSize": "Custom",
+          "processing": "Dedicated",
+          "watermark": "No",
+          "fileHistory": "Custom",
+          "support": "Dedicated + SLA",
+          "infrastructure": "Dedicated"
+        }
+      }
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "items": {
+        "q1": {
+          "question": "Can I try before subscribing?",
+          "answer": "Yes! The Free plan is free and requires no signup. You can process up to 1 spreadsheet per month with up to 500 rows and 3 columns, no commitment."
+        },
+        "q2": {
+          "question": "How does local processing work?",
+          "answer": "On the Free plan, your spreadsheets are processed directly in your browser. No data leaves your computer — it's 100% local and private."
+        },
+        "q3": {
+          "question": "Can I cancel anytime?",
+          "answer": "Yes. There's no lock-in or cancellation fee. You keep the launch price as long as your subscription is active."
+        },
+        "q4": {
+          "question": "Is my data secure?",
+          "answer": "Your files are processed temporarily and discarded immediately after download. We do not store the content of your spreadsheets."
+        },
+        "q5": {
+          "question": "What's the difference between Free and Pro?",
+          "answer": "The Free plan is ideal for quick tests with smaller limits. Pro offers up to 40 spreadsheets/month, 5,000 rows, 10 columns, server processing, no watermark, and 30-day file history."
+        },
+        "q6": {
+          "question": "How does the Enterprise plan work?",
+          "answer": "Enterprise is for companies with high volume or specific needs. We offer custom limits, guaranteed SLA, dedicated support, and exclusive infrastructure. Contact us for a proposal."
+        },
+        "q7": {
+          "question": "What file formats are accepted?",
+          "answer": "Tablix accepts CSV and XLSX (Excel) files. You can upload up to 3 files at a time on the Free plan and up to 15 on Pro."
+        }
+      }
+    }
   },
   "cookieConsent": {
     "title": "Cookies",

@@ -23,6 +23,7 @@ jest.mock('@/lib/i18n', () => ({
         'processing.downloading': 'processing.downloading',
         'onboarding.tipColumns': 'onboarding.tipColumns',
         'onboarding.gotIt': 'onboarding.gotIt',
+        'columns.previewHint': 'columns.previewHint',
       }
       return map[key] ?? key
     },
@@ -39,6 +40,7 @@ const defaultProps = {
   isProcessing: false,
   processingPhase: null as import('@/hooks/use-upload-flow').ProcessingPhase | null,
   usage: null,
+  previewRows: [] as import('@/hooks/use-upload-flow').PreviewRow[],
   onToggleColumn: jest.fn(),
   onSelectAll: jest.fn(),
   onDeselectAll: jest.fn(),
@@ -110,12 +112,7 @@ describe('ColumnsStep', () => {
   })
 
   it('disables select all when all columns selected', () => {
-    render(
-      <ColumnsStep
-        {...defaultProps}
-        selectedColumns={['Name', 'Email', 'Phone']}
-      />,
-    )
+    render(<ColumnsStep {...defaultProps} selectedColumns={['Name', 'Email', 'Phone']} />)
     const btn = screen.getByText('Select all').closest('button')!
     expect(btn).toBeDisabled()
   })
@@ -164,59 +161,166 @@ describe('ColumnsStep', () => {
 
   describe('processingPhase prop', () => {
     it('shows consuming-quota label during consuming-quota phase', () => {
-      render(
-        <ColumnsStep
-          {...defaultProps}
-          isProcessing
-          processingPhase="consuming-quota"
-        />,
-      )
+      render(<ColumnsStep {...defaultProps} isProcessing processingPhase="consuming-quota" />)
       expect(screen.getByText('processing.consumingQuota')).toBeInTheDocument()
     })
 
     it('shows merging label during merging phase', () => {
-      render(
-        <ColumnsStep {...defaultProps} isProcessing processingPhase="merging" />,
-      )
+      render(<ColumnsStep {...defaultProps} isProcessing processingPhase="merging" />)
       expect(screen.getByText('processing.mergingFiles')).toBeInTheDocument()
     })
 
     it('shows generating label during generating phase', () => {
-      render(
-        <ColumnsStep
-          {...defaultProps}
-          isProcessing
-          processingPhase="generating"
-        />,
-      )
+      render(<ColumnsStep {...defaultProps} isProcessing processingPhase="generating" />)
       expect(screen.getByText('processing.generatingFile')).toBeInTheDocument()
     })
 
     it('shows downloading label during downloading phase', () => {
-      render(
-        <ColumnsStep
-          {...defaultProps}
-          isProcessing
-          processingPhase="downloading"
-        />,
-      )
+      render(<ColumnsStep {...defaultProps} isProcessing processingPhase="downloading" />)
       expect(screen.getByText('processing.downloading')).toBeInTheDocument()
     })
 
     it('falls back to upload.processing label when isProcessing but no phase', () => {
-      render(
-        <ColumnsStep
-          {...defaultProps}
-          isProcessing
-          processingPhase={null}
-        />,
-      )
+      render(<ColumnsStep {...defaultProps} isProcessing processingPhase={null} />)
       expect(screen.getByText('Processing...')).toBeInTheDocument()
     })
 
     it('shows default process button text when not processing', () => {
       render(<ColumnsStep {...defaultProps} isProcessing={false} processingPhase={null} />)
       expect(screen.getByText('Process & Download')).toBeInTheDocument()
+    })
+  })
+
+  describe('preview table', () => {
+    const previewRows = [
+      { Name: 'Alice', Email: 'alice@example.com', Phone: '111' },
+      { Name: 'Bob', Email: 'bob@example.com', Phone: '222' },
+    ]
+
+    it('renders preview table when previewRows and selectedColumns are present', () => {
+      render(
+        <ColumnsStep
+          {...defaultProps}
+          previewRows={previewRows}
+          selectedColumns={['Name', 'Email']}
+        />,
+      )
+      expect(screen.getByRole('table')).toBeInTheDocument()
+      expect(screen.getByText('Alice')).toBeInTheDocument()
+      expect(screen.getByText('bob@example.com')).toBeInTheDocument()
+    })
+
+    it('renders only selected column headers in table', () => {
+      render(
+        <ColumnsStep
+          {...defaultProps}
+          previewRows={previewRows}
+          selectedColumns={['Name']}
+        />,
+      )
+      const headers = screen.getAllByRole('columnheader')
+      expect(headers).toHaveLength(1)
+      expect(headers[0]).toHaveTextContent('Name')
+    })
+
+    it('renders dash for null/undefined cell values', () => {
+      render(
+        <ColumnsStep
+          {...defaultProps}
+          previewRows={[{ Name: null, Email: undefined as unknown as null }]}
+          selectedColumns={['Name', 'Email']}
+        />,
+      )
+      const dashes = screen.getAllByText('—')
+      expect(dashes.length).toBeGreaterThanOrEqual(2)
+    })
+
+    it('does not render preview table when previewRows is empty', () => {
+      render(
+        <ColumnsStep {...defaultProps} previewRows={[]} selectedColumns={['Name']} />,
+      )
+      expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    })
+
+    it('does not render preview table when selectedColumns is empty even with previewRows', () => {
+      render(
+        <ColumnsStep {...defaultProps} previewRows={previewRows} selectedColumns={[]} />,
+      )
+      expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    })
+
+    it('renders preview hint text when table is shown', () => {
+      render(
+        <ColumnsStep
+          {...defaultProps}
+          previewRows={previewRows}
+          selectedColumns={['Name']}
+        />,
+      )
+      expect(screen.getByText('columns.previewHint')).toBeInTheDocument()
+    })
+  })
+
+  describe('selectAll disabled at plan limit', () => {
+    it('disables select all when selectedColumns equals usage.limits.maxColumns', () => {
+      const usage = {
+        plan: 'free' as const,
+        unifications: { current: 0, remaining: 3, max: 3 },
+        limits: {
+          maxInputFiles: 5,
+          maxFileSize: 10485760,
+          maxTotalSize: 10485760,
+          maxRows: 1000,
+          maxColumns: 2,
+        },
+      }
+      render(
+        <ColumnsStep
+          {...defaultProps}
+          usage={usage}
+          detectedColumns={['Name', 'Email', 'Phone']}
+          selectedColumns={['Name', 'Email']}
+        />,
+      )
+      const btn = screen.getByText('Select all').closest('button')!
+      expect(btn).toBeDisabled()
+    })
+
+    it('enables select all when selectedColumns is below usage.limits.maxColumns', () => {
+      const usage = {
+        plan: 'free' as const,
+        unifications: { current: 0, remaining: 3, max: 3 },
+        limits: {
+          maxInputFiles: 5,
+          maxFileSize: 10485760,
+          maxTotalSize: 10485760,
+          maxRows: 1000,
+          maxColumns: 5,
+        },
+      }
+      render(
+        <ColumnsStep
+          {...defaultProps}
+          usage={usage}
+          detectedColumns={['Name', 'Email', 'Phone']}
+          selectedColumns={['Name']}
+        />,
+      )
+      const btn = screen.getByText('Select all').closest('button')!
+      expect(btn).not.toBeDisabled()
+    })
+
+    it('disables select all when selectedColumns equals detectedColumns (no usage)', () => {
+      render(
+        <ColumnsStep
+          {...defaultProps}
+          usage={null}
+          detectedColumns={['Name', 'Email', 'Phone']}
+          selectedColumns={['Name', 'Email', 'Phone']}
+        />,
+      )
+      const btn = screen.getByText('Select all').closest('button')!
+      expect(btn).toBeDisabled()
     })
   })
 

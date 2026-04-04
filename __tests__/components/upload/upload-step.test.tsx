@@ -21,6 +21,8 @@ jest.mock('@/lib/i18n', () => ({
         'onboarding.tipUpload': 'onboarding.tipUpload',
         'onboarding.gotIt': 'onboarding.gotIt',
         'a11y.removeFile': 'a11y.removeFile',
+        'status.quotaExhausted': 'status.quotaExhausted',
+        'status.quotaExhaustedHint': 'status.quotaExhaustedHint',
       }
       return map[key] ?? key
     },
@@ -158,6 +160,23 @@ describe('UploadStep', () => {
       render(<UploadStep {...defaultProps} files={files} quotaExhausted={false} />)
       const btn = screen.getByRole('button', { name: 'Continue' })
       expect(btn).not.toBeDisabled()
+    })
+
+    it('shows empty state quota block when quotaExhausted=true and no files', () => {
+      render(<UploadStep {...defaultProps} quotaExhausted files={[]} />)
+      expect(screen.getByText('status.quotaExhausted')).toBeInTheDocument()
+      expect(screen.getByText('status.quotaExhaustedHint')).toBeInTheDocument()
+    })
+
+    it('does NOT show empty state quota when quotaExhausted=true but files are present', () => {
+      const files = [createFile('data.csv', 100)]
+      render(<UploadStep {...defaultProps} quotaExhausted files={files} />)
+      expect(screen.queryByText('status.quotaExhausted')).not.toBeInTheDocument()
+    })
+
+    it('does NOT show empty state quota when quotaExhausted=false and no files', () => {
+      render(<UploadStep {...defaultProps} quotaExhausted={false} files={[]} />)
+      expect(screen.queryByText('status.quotaExhausted')).not.toBeInTheDocument()
     })
   })
 
