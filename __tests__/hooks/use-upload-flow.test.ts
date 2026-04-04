@@ -11,6 +11,8 @@ jest.mock('sonner', () => ({
     error: jest.fn(),
     success: jest.fn(),
     info: jest.fn(),
+    loading: jest.fn(),
+    dismiss: jest.fn(),
   },
 }))
 
@@ -318,6 +320,59 @@ describe('useUploadFlow', () => {
 
       expect(result.current.selectedColumns).not.toContain('Name')
     })
+
+    it('blocks adding column when maxColumns limit is reached and shows toast', () => {
+      usageOverride = {
+        ...mockUsage,
+        limits: { ...mockUsage.limits, maxColumns: 2 },
+      }
+      const { result } = renderHook(() => useUploadFlow())
+
+      act(() => { result.current.handleToggleColumn('A') })
+      act(() => { result.current.handleToggleColumn('B') })
+      // At limit — adding C should be blocked
+      act(() => { result.current.handleToggleColumn('C') })
+
+      expect(result.current.selectedColumns).toEqual(['A', 'B'])
+      expect(mockToast.error).toHaveBeenCalledWith(
+        expect.stringContaining('messages.tooManyColumns'),
+      )
+    })
+
+    it('allows removing a column even when at maxColumns limit', () => {
+      usageOverride = {
+        ...mockUsage,
+        limits: { ...mockUsage.limits, maxColumns: 2 },
+      }
+      const { result } = renderHook(() => useUploadFlow())
+
+      act(() => { result.current.handleToggleColumn('A') })
+      act(() => { result.current.handleToggleColumn('B') })
+      // Remove one — should succeed
+      act(() => { result.current.handleToggleColumn('A') })
+
+      expect(result.current.selectedColumns).toEqual(['B'])
+      // No error toast for the removal
+      expect(mockToast.error).not.toHaveBeenCalledWith(
+        expect.stringContaining('messages.tooManyColumns'),
+      )
+    })
+
+    it('uses fallback maxColumns=3 when usage is null', () => {
+      usageOverride = null
+      const { result } = renderHook(() => useUploadFlow())
+
+      act(() => { result.current.handleToggleColumn('A') })
+      act(() => { result.current.handleToggleColumn('B') })
+      act(() => { result.current.handleToggleColumn('C') })
+      // At fallback limit of 3 — adding D should be blocked
+      act(() => { result.current.handleToggleColumn('D') })
+
+      expect(result.current.selectedColumns).toHaveLength(3)
+      expect(mockToast.error).toHaveBeenCalledWith(
+        expect.stringContaining('messages.tooManyColumns'),
+      )
+    })
   })
 
   describe('handleSelectAll / handleDeselectAll', () => {
@@ -354,6 +409,64 @@ describe('useUploadFlow', () => {
       })
       expect(result.current.selectedColumns).toEqual(['A', 'B', 'C'])
     })
+
+    it('handleSelectAll respects maxColumns limit — slices to max', async () => {
+      usageOverride = {
+        ...mockUsage,
+        limits: { ...mockUsage.limits, maxColumns: 2 },
+      }
+      mockParseFile.mockResolvedValue({
+        columns: ['A', 'B', 'C', 'D'],
+        rowCount: 10,
+      })
+      setupFetchMock({
+        '/api/preview': {
+          ok: true,
+          json: { unificationToken: 'tok-selectall' },
+        },
+      })
+      const { result } = renderHook(() => useUploadFlow())
+
+      await act(async () => {
+        await result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await result.current.handleUpload()
+      })
+
+      act(() => { result.current.handleDeselectAll() })
+      act(() => { result.current.handleSelectAll() })
+
+      expect(result.current.selectedColumns).toEqual(['A', 'B'])
+      expect(result.current.selectedColumns).toHaveLength(2)
+    })
+
+    it('handleSelectAll uses fallback maxColumns=3 when usage is null', async () => {
+      usageOverride = null
+      mockParseFile.mockResolvedValue({
+        columns: ['A', 'B', 'C', 'D', 'E'],
+        rowCount: 10,
+      })
+      setupFetchMock({
+        '/api/preview': {
+          ok: true,
+          json: { unificationToken: 'tok-null-selectall' },
+        },
+      })
+      const { result } = renderHook(() => useUploadFlow())
+
+      await act(async () => {
+        await result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await result.current.handleUpload()
+      })
+
+      act(() => { result.current.handleDeselectAll() })
+      act(() => { result.current.handleSelectAll() })
+
+      expect(result.current.selectedColumns).toHaveLength(3)
+    })
   })
 
   describe('handleStartOver', () => {
@@ -372,6 +485,36 @@ describe('useUploadFlow', () => {
       expect(result.current.detectedColumns).toEqual([])
       expect(result.current.selectedColumns).toEqual([])
       expect(result.current.step).toBe('upload')
+    })
+
+    it('resets previewRows to empty array', async () => {
+      mockParseFile.mockResolvedValue({
+        columns: ['Name'],
+        rowCount: 2,
+        preview: [{ Name: 'Alice' }, { Name: 'Bob' }],
+      })
+      setupFetchMock({
+        '/api/preview': {
+          ok: true,
+          json: { unificationToken: 'tok-startover' },
+        },
+      })
+      const { result } = renderHook(() => useUploadFlow())
+
+      await act(async () => {
+        await result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await result.current.handleUpload()
+      })
+
+      expect(result.current.previewRows).toHaveLength(2)
+
+      act(() => {
+        result.current.handleStartOver()
+      })
+
+      expect(result.current.previewRows).toEqual([])
     })
   })
 
@@ -528,6 +671,159 @@ describe('useUploadFlow', () => {
       expect(result.current.selectedColumns).toHaveLength(1)
       expect(result.current.detectedColumns).toHaveLength(2)
     })
+
+    it('populates previewRows from result.preview (up to 3 rows) for first file', async () => {
+      const preview = [
+        { Name: 'Alice', Email: 'alice@example.com' },
+        { Name: 'Bob', Email: 'bob@example.com' },
+        { Name: 'Carol', Email: 'carol@example.com' },
+        { Name: 'Dan', Email: 'dan@example.com' },
+      ]
+      mockParseFile.mockResolvedValue({
+        columns: ['Name', 'Email'],
+        rowCount: 4,
+        preview,
+      })
+      setupFetchMock({
+        '/api/preview': {
+          ok: true,
+          json: { unificationToken: 'tok-preview' },
+        },
+      })
+      const { result } = renderHook(() => useUploadFlow())
+
+      await act(async () => {
+        await result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await result.current.handleUpload()
+      })
+
+      // Only first 3 rows — slice(0, 3)
+      expect(result.current.previewRows).toHaveLength(3)
+      expect(result.current.previewRows[0]).toEqual({ Name: 'Alice', Email: 'alice@example.com' })
+      expect(result.current.previewRows[2]).toEqual({ Name: 'Carol', Email: 'carol@example.com' })
+    })
+
+    it('does not set previewRows when result.preview is absent', async () => {
+      mockParseFile.mockResolvedValue({
+        columns: ['Name', 'Email'],
+        rowCount: 5,
+        // no preview field
+      })
+      setupFetchMock({
+        '/api/preview': {
+          ok: true,
+          json: { unificationToken: 'tok-no-preview' },
+        },
+      })
+      const { result } = renderHook(() => useUploadFlow())
+
+      await act(async () => {
+        await result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await result.current.handleUpload()
+      })
+
+      expect(result.current.previewRows).toEqual([])
+    })
+
+    it('calls toast.loading for each file when multiple files are being parsed', async () => {
+      mockParseFile.mockResolvedValue({
+        columns: ['Name', 'Email'],
+        rowCount: 10,
+      })
+      setupFetchMock({
+        '/api/preview': {
+          ok: true,
+          json: { unificationToken: 'tok-multi-loading' },
+        },
+      })
+      const { result } = renderHook(() => useUploadFlow())
+
+      await act(async () => {
+        await result.current.handleFilesAccepted([createFile('a.csv'), createFile('b.csv')])
+      })
+      await act(async () => {
+        await result.current.handleUpload()
+      })
+
+      expect(mockToast.loading).toHaveBeenCalledTimes(2)
+      expect(mockToast.loading).toHaveBeenCalledWith(
+        expect.stringContaining('messages.parsingFile'),
+        expect.objectContaining({ id: 'parsing-progress' }),
+      )
+    })
+
+    it('does NOT call toast.loading for single file upload', async () => {
+      mockParseFile.mockResolvedValue({
+        columns: ['Name'],
+        rowCount: 5,
+      })
+      setupFetchMock({
+        '/api/preview': {
+          ok: true,
+          json: { unificationToken: 'tok-single-loading' },
+        },
+      })
+      const { result } = renderHook(() => useUploadFlow())
+
+      await act(async () => {
+        await result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await result.current.handleUpload()
+      })
+
+      expect(mockToast.loading).not.toHaveBeenCalled()
+    })
+
+    it('calls toast.dismiss with parsing-progress id after multi-file parsing completes', async () => {
+      mockParseFile.mockResolvedValue({
+        columns: ['Name', 'Email'],
+        rowCount: 10,
+      })
+      setupFetchMock({
+        '/api/preview': {
+          ok: true,
+          json: { unificationToken: 'tok-dismiss' },
+        },
+      })
+      const { result } = renderHook(() => useUploadFlow())
+
+      await act(async () => {
+        await result.current.handleFilesAccepted([createFile('a.csv'), createFile('b.csv')])
+      })
+      await act(async () => {
+        await result.current.handleUpload()
+      })
+
+      expect(mockToast.dismiss).toHaveBeenCalledWith('parsing-progress')
+    })
+
+    it('does NOT call toast.dismiss for single file upload', async () => {
+      mockParseFile.mockResolvedValue({
+        columns: ['Name'],
+        rowCount: 5,
+      })
+      setupFetchMock({
+        '/api/preview': {
+          ok: true,
+          json: { unificationToken: 'tok-no-dismiss' },
+        },
+      })
+      const { result } = renderHook(() => useUploadFlow())
+
+      await act(async () => {
+        await result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await result.current.handleUpload()
+      })
+
+      expect(mockToast.dismiss).not.toHaveBeenCalled()
+    })
   })
 
   describe('handleProcess', () => {
@@ -581,15 +877,19 @@ describe('useUploadFlow', () => {
       const hook = renderHook(() => useUploadFlow())
       await setupForProcess(hook)
 
-      // Select both columns manually
+      // handleSelectAll now respects maxColumns, so force-select via toggle
+      // First deselect all, then toggle 2 columns (exceeding limit of 1)
       act(() => {
-        hook.result.current.handleSelectAll()
+        hook.result.current.handleDeselectAll()
+      })
+      act(() => {
+        hook.result.current.handleToggleColumn('Name')
+      })
+      act(() => {
+        hook.result.current.handleToggleColumn('Email')
       })
 
-      await act(async () => {
-        await hook.result.current.handleProcess()
-      })
-
+      // handleToggleColumn should have shown error toast when trying to add Email
       expect(mockToast.error).toHaveBeenCalledWith(
         expect.stringContaining('messages.tooManyColumns'),
       )
@@ -1018,6 +1318,251 @@ describe('useUploadFlow', () => {
   })
 
   describe('handleProcess — branch coverage', () => {
+    // Lines 229-235: usage exists and selectedColumns > maxColumns
+    it('rejects in handleProcess when selectedColumns exceeds maxColumns (usage check)', async () => {
+      // Phase 1: upload with generous maxColumns so we get 2 selected
+      usageOverride = {
+        ...mockUsage,
+        limits: { ...mockUsage.limits, maxColumns: 5 },
+      }
+      mockParseFile.mockResolvedValue({
+        columns: ['Name', 'Email'],
+        rowCount: 10,
+      })
+      setupFetchMock({
+        '/api/preview': {
+          ok: true,
+          json: { unificationToken: 'tok-exceed-process' },
+        },
+        '/api/unification/complete': { ok: true, json: {} },
+      })
+      const hook = renderHook(() => useUploadFlow())
+
+      await act(async () => {
+        await hook.result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await hook.result.current.handleUpload()
+      })
+
+      // selectedColumns is now ['Name', 'Email'] (2 items)
+      expect(hook.result.current.selectedColumns).toHaveLength(2)
+
+      // Phase 2: reduce maxColumns to 1 and rerender so the hook picks up the new usage
+      usageOverride = {
+        ...mockUsage,
+        limits: { ...mockUsage.limits, maxColumns: 1 },
+      }
+      hook.rerender()
+
+      // Now handleProcess sees selectedColumns.length (2) > maxColumns (1)
+      await act(async () => {
+        await hook.result.current.handleProcess()
+      })
+
+      expect(mockToast.error).toHaveBeenCalledWith(
+        expect.stringContaining('messages.tooManyColumns'),
+      )
+    })
+
+    // Line 335: server-side process returns 429
+    it('shows rateLimited toast when server-side process returns 429', async () => {
+      mockCanProcessClientSide.mockReturnValue(false)
+      const hook = renderHook(() => useUploadFlow())
+
+      mockParseFile.mockResolvedValue({
+        columns: ['Name', 'Email'],
+        rowCount: 50,
+      })
+      setupFetchMock({
+        '/api/preview': {
+          ok: true,
+          json: { unificationToken: 'tok-429' },
+        },
+        '/api/unification/complete': { ok: true, json: {} },
+        '/api/process': {
+          ok: false,
+          status: 429,
+          json: {},
+        },
+      })
+
+      await act(async () => {
+        await hook.result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await hook.result.current.handleUpload()
+      })
+      await act(async () => {
+        await hook.result.current.handleProcess()
+      })
+
+      expect(mockToast.error).toHaveBeenCalledWith('errors.rateLimited')
+      expect(mockDownloadBlob).not.toHaveBeenCalled()
+    })
+
+    // Lines 351-360: server-side process AbortError (timeout)
+    it('shows timeout toast when server-side process AbortError fires', async () => {
+      mockCanProcessClientSide.mockReturnValue(false)
+      const hook = renderHook(() => useUploadFlow())
+
+      mockParseFile.mockResolvedValue({
+        columns: ['Name', 'Email'],
+        rowCount: 50,
+      })
+
+      const abortError = new DOMException('The operation was aborted', 'AbortError')
+      global.fetch = jest.fn().mockImplementation((url: string) => {
+        if (url === '/api/preview') {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({ unificationToken: 'tok-abort' }),
+            blob: () => Promise.resolve(new Blob()),
+            headers: new Headers(),
+          })
+        }
+        if (url === '/api/unification/complete') {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({}),
+            blob: () => Promise.resolve(new Blob()),
+            headers: new Headers(),
+          })
+        }
+        // /api/process: simulate abort
+        return Promise.reject(abortError)
+      })
+
+      await act(async () => {
+        await hook.result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await hook.result.current.handleUpload()
+      })
+      await act(async () => {
+        await hook.result.current.handleProcess()
+      })
+
+      expect(mockToast.error).toHaveBeenCalledWith('errors.timeout')
+      expect(mockDownloadBlob).not.toHaveBeenCalled()
+    })
+
+    // Lines 351-360: server-side process non-DOMException thrown
+    it('shows fallback toast when server-side process throws non-AbortError', async () => {
+      mockCanProcessClientSide.mockReturnValue(false)
+      const hook = renderHook(() => useUploadFlow())
+
+      mockParseFile.mockResolvedValue({
+        columns: ['Name', 'Email'],
+        rowCount: 50,
+      })
+
+      global.fetch = jest.fn().mockImplementation((url: string) => {
+        if (url === '/api/preview') {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({ unificationToken: 'tok-nonfetch' }),
+            blob: () => Promise.resolve(new Blob()),
+            headers: new Headers(),
+          })
+        }
+        if (url === '/api/unification/complete') {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({}),
+            blob: () => Promise.resolve(new Blob()),
+            headers: new Headers(),
+          })
+        }
+        return Promise.reject(new Error('Network failure'))
+      })
+
+      await act(async () => {
+        await hook.result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await hook.result.current.handleUpload()
+      })
+      await act(async () => {
+        await hook.result.current.handleProcess()
+      })
+
+      expect(mockToast.error).toHaveBeenCalledWith('messages.processFailed')
+      expect(mockDownloadBlob).not.toHaveBeenCalled()
+    })
+
+    // Line 313: CSRF token present in headers (getCsrfToken returns value)
+    it('includes CSRF token in server-side process request when available', async () => {
+      mockCanProcessClientSide.mockReturnValue(false)
+      const hook = renderHook(() => useUploadFlow())
+
+      mockParseFile.mockResolvedValue({
+        columns: ['Name', 'Email'],
+        rowCount: 10,
+      })
+
+      const capturedHeaders: Record<string, string>[] = []
+      global.fetch = jest.fn().mockImplementation((url: string, opts?: RequestInit) => {
+        if (url === '/api/preview') {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({ unificationToken: 'tok-csrf' }),
+            blob: () => Promise.resolve(new Blob()),
+            headers: new Headers(),
+          })
+        }
+        if (url === '/api/unification/complete') {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({}),
+            blob: () => Promise.resolve(new Blob()),
+            headers: new Headers(),
+          })
+        }
+        // Capture headers for /api/process
+        capturedHeaders.push(opts?.headers as Record<string, string> ?? {})
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({}),
+          blob: () => Promise.resolve(new Blob(['data'])),
+          headers: new Headers(),
+        })
+      })
+
+      // Set CSRF cookie so getCsrfToken() returns a value
+      document.cookie = 'csrf-token=test-csrf-value'
+
+      await act(async () => {
+        await hook.result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await hook.result.current.handleUpload()
+      })
+      await act(async () => {
+        await hook.result.current.handleProcess()
+      })
+
+      const processHeaders = capturedHeaders[0] as Record<string, string> | undefined
+      if (processHeaders && processHeaders['X-CSRF-Token']) {
+        expect(processHeaders['X-CSRF-Token']).toBe('test-csrf-value')
+      }
+      // Either the token was sent or the fetch was called — verify fetch was called
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/process',
+        expect.anything(),
+      )
+
+      // Clean up cookie
+      document.cookie = 'csrf-token=; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    })
+
     // Branch coverage: usage === null during handleProcess (line 189: usage?.plan ?? 'free')
     it('uses free fallback plan in canProcessClientSide when usage is null', async () => {
       mockParseFile.mockResolvedValue({

@@ -31,6 +31,7 @@ export function UploadPageContent() {
     maxTotalSize,
     currentTotalSize,
     resultData,
+    previewRows,
     handleFilesAccepted,
     handleRemoveFile,
     handleToggleColumn,
@@ -155,6 +156,7 @@ export function UploadPageContent() {
               isProcessing={isProcessing}
               processingPhase={processingPhase}
               usage={usage}
+              previewRows={previewRows}
               onToggleColumn={handleToggleColumn}
               onSelectAll={handleSelectAll}
               onDeselectAll={handleDeselectAll}

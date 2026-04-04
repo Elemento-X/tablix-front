@@ -35,11 +35,14 @@ export interface ResultData {
   columnCount: number
 }
 
+export type PreviewRow = Record<string, string | number | boolean | null>
+
 export interface UploadFlowState {
   files: File[]
   isUploading: boolean
   detectedColumns: string[]
   selectedColumns: string[]
+  previewRows: PreviewRow[]
   isProcessing: boolean
   processingPhase: ProcessingPhase | null
   step: UploadStep
@@ -75,6 +78,7 @@ export function useUploadFlow() {
   const [step, setStep] = useState<UploadStep>('upload')
   const [unificationToken, setUnificationToken] = useState<string | null>(null)
   const [resultData, setResultData] = useState<ResultData | null>(null)
+  const [previewRows, setPreviewRows] = useState<PreviewRow[]>([])
 
   const maxInputFiles = usage?.limits.maxInputFiles ?? 3
   const maxTotalSize = usage?.limits.maxTotalSize ?? 1 * 1024 * 1024
@@ -163,15 +167,27 @@ export function useUploadFlow() {
   }
 
   const handleToggleColumn = (column: string) => {
-    setSelectedColumns((prev) =>
-      prev.includes(column)
-        ? prev.filter((c) => c !== column)
-        : [...prev, column],
-    )
+    setSelectedColumns((prev) => {
+      if (prev.includes(column)) {
+        return prev.filter((c) => c !== column)
+      }
+      const maxColumns = usage?.limits.maxColumns ?? 3
+      if (prev.length >= maxColumns) {
+        toast.error(
+          t('messages.tooManyColumns', {
+            max: maxColumns,
+            plan: usage?.plan.toUpperCase() ?? 'FREE',
+          }),
+        )
+        return prev
+      }
+      return [...prev, column]
+    })
   }
 
   const handleSelectAll = () => {
-    setSelectedColumns([...detectedColumns])
+    const maxColumns = usage?.limits.maxColumns ?? 3
+    setSelectedColumns(detectedColumns.slice(0, maxColumns))
   }
 
   const handleDeselectAll = () => {
@@ -186,6 +202,7 @@ export function useUploadFlow() {
     setUnificationToken(null)
     setResultData(null)
     setProcessingPhase(null)
+    setPreviewRows([])
   }
 
   const toastFetchError = (err: unknown, fallbackKey: string) => {
@@ -385,19 +402,33 @@ export function useUploadFlow() {
       const allColumns: Set<string>[] = []
       let totalRowCount = 0
 
+      const parsingToastId = files.length > 1 ? 'parsing-progress' : undefined
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
-        toast.info(
-          t('messages.parsingFile', {
-            current: i + 1,
-            total: files.length,
-            name: sanitizeFileName(file.name),
-          }),
-        )
+
+        if (files.length > 1) {
+          toast.loading(
+            t('messages.parsingFile', {
+              current: i + 1,
+              total: files.length,
+              name: sanitizeFileName(file.name),
+            }),
+            { id: parsingToastId },
+          )
+        }
 
         const result = await parseFile(file)
         allColumns.push(new Set(result.columns))
         totalRowCount += result.rowCount
+
+        if (i === 0 && result.preview) {
+          setPreviewRows(result.preview.slice(0, 3))
+        }
+      }
+
+      if (parsingToastId) {
+        toast.dismiss(parsingToastId)
       }
 
       if (usage && totalRowCount > usage.limits.maxRows) {
@@ -495,6 +526,7 @@ export function useUploadFlow() {
     maxTotalSize,
     currentTotalSize,
     resultData,
+    previewRows,
 
     // Actions
     handleFilesAccepted,
