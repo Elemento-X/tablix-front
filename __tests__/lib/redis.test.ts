@@ -49,24 +49,18 @@ describe('redis.ts', () => {
       )
     })
 
-    it('should return null when only URL is set', () => {
+    it('should throw ZodError when only URL is set (partial config)', () => {
       process.env.UPSTASH_REDIS_REST_URL = 'https://redis.upstash.io'
       delete process.env.UPSTASH_REDIS_REST_TOKEN
 
-      const client = getRedisClient()
-
-      expect(client).toBeNull()
-      expect(console.warn).toHaveBeenCalled()
+      expect(() => getRedisClient()).toThrow(/both be set or both be absent/)
     })
 
-    it('should return null when only TOKEN is set', () => {
+    it('should throw ZodError when only TOKEN is set (partial config)', () => {
       delete process.env.UPSTASH_REDIS_REST_URL
       process.env.UPSTASH_REDIS_REST_TOKEN = 'token123'
 
-      const client = getRedisClient()
-
-      expect(client).toBeNull()
-      expect(console.warn).toHaveBeenCalled()
+      expect(() => getRedisClient()).toThrow(/both be set or both be absent/)
     })
 
     it('should create Redis instance when both env vars are set', () => {
@@ -99,8 +93,7 @@ describe('redis.ts', () => {
       const constructorCall = calls[calls.length - 1]?.[0]
       if (!constructorCall) {
         // Singleton was pre-created; we can still verify backoff directly
-        const backoffFn = (retryCount: number) =>
-          Math.min(retryCount * 100, 1000)
+        const backoffFn = (retryCount: number) => Math.min(retryCount * 100, 1000)
         expect(backoffFn(0)).toBe(0)
         expect(backoffFn(1)).toBe(100)
         expect(backoffFn(5)).toBe(500)
@@ -276,9 +269,7 @@ describe('redis.ts', () => {
 
       it('should do nothing for non-existent key', async () => {
         // Should not throw
-        await expect(
-          storage.expire('non-existent', 60),
-        ).resolves.toBeUndefined()
+        await expect(storage.expire('non-existent', 60)).resolves.toBeUndefined()
       })
 
       it('should allow immediate expiration', async () => {
@@ -336,10 +327,7 @@ describe('redis.ts', () => {
         const value = await storage.get('error-key')
 
         expect(value).toBeNull()
-        expect(console.error).toHaveBeenCalledWith(
-          '[Redis] Error getting key:',
-          'Unknown error',
-        )
+        expect(console.error).toHaveBeenCalledWith('[Redis] Error getting key:', 'Unknown error')
       })
 
       it('should handle null response from Redis', async () => {
@@ -364,22 +352,15 @@ describe('redis.ts', () => {
       it('should throw error on Redis failure', async () => {
         mockRedis.incr.mockRejectedValue(new Error('Redis error'))
 
-        await expect(storage.incr('fail-counter')).rejects.toThrow(
-          'Failed to increment counter',
-        )
+        await expect(storage.incr('fail-counter')).rejects.toThrow('Failed to increment counter')
 
-        expect(console.error).toHaveBeenCalledWith(
-          '[Redis] Error incrementing key:',
-          'Redis error',
-        )
+        expect(console.error).toHaveBeenCalledWith('[Redis] Error incrementing key:', 'Redis error')
       })
 
       it('should log Unknown error when non-Error is thrown on incr', async () => {
         mockRedis.incr.mockRejectedValue(42)
 
-        await expect(storage.incr('fail-counter')).rejects.toThrow(
-          'Failed to increment counter',
-        )
+        await expect(storage.incr('fail-counter')).rejects.toThrow('Failed to increment counter')
 
         expect(console.error).toHaveBeenCalledWith(
           '[Redis] Error incrementing key:',
@@ -443,35 +424,23 @@ describe('redis.ts', () => {
       it('should throw error on Redis failure without TTL', async () => {
         mockRedis.set.mockRejectedValue(new Error('Redis error'))
 
-        await expect(storage.set('fail-key', 100)).rejects.toThrow(
-          'Failed to set value',
-        )
+        await expect(storage.set('fail-key', 100)).rejects.toThrow('Failed to set value')
 
-        expect(console.error).toHaveBeenCalledWith(
-          '[Redis] Error setting key:',
-          'Redis error',
-        )
+        expect(console.error).toHaveBeenCalledWith('[Redis] Error setting key:', 'Redis error')
       })
 
       it('should throw error on Redis failure with TTL', async () => {
         mockRedis.set.mockRejectedValue(new Error('Redis error'))
 
-        await expect(storage.set('fail-key-ttl', 100, 60)).rejects.toThrow(
-          'Failed to set value',
-        )
+        await expect(storage.set('fail-key-ttl', 100, 60)).rejects.toThrow('Failed to set value')
       })
 
       it('should log Unknown error when non-Error is thrown on set', async () => {
         mockRedis.set.mockRejectedValue(null)
 
-        await expect(storage.set('fail-key', 100)).rejects.toThrow(
-          'Failed to set value',
-        )
+        await expect(storage.set('fail-key', 100)).rejects.toThrow('Failed to set value')
 
-        expect(console.error).toHaveBeenCalledWith(
-          '[Redis] Error setting key:',
-          'Unknown error',
-        )
+        expect(console.error).toHaveBeenCalledWith('[Redis] Error setting key:', 'Unknown error')
       })
 
       it('should handle zero as value', async () => {
@@ -610,17 +579,17 @@ describe('redis.ts', () => {
       it('should throw on Redis error', async () => {
         mockRedis.eval.mockRejectedValue(new Error('Redis error'))
 
-        await expect(
-          storage.atomicCheckAndIncr('counter', 5, 3600),
-        ).rejects.toThrow('Failed to check and increment counter')
+        await expect(storage.atomicCheckAndIncr('counter', 5, 3600)).rejects.toThrow(
+          'Failed to check and increment counter',
+        )
       })
 
       it('should log Unknown error when non-Error is thrown on atomicCheckAndIncr', async () => {
         mockRedis.eval.mockRejectedValue('network failure')
 
-        await expect(
-          storage.atomicCheckAndIncr('counter', 5, 3600),
-        ).rejects.toThrow('Failed to check and increment counter')
+        await expect(storage.atomicCheckAndIncr('counter', 5, 3600)).rejects.toThrow(
+          'Failed to check and increment counter',
+        )
 
         expect(console.error).toHaveBeenCalledWith(
           '[Redis] Error in atomic check-and-increment:',
@@ -643,11 +612,7 @@ describe('redis.ts', () => {
       it('should return -1 when at limit', async () => {
         await storage.set('limit-counter', 3, 3600)
 
-        const result = await storage.atomicCheckAndIncr(
-          'limit-counter',
-          3,
-          3600,
-        )
+        const result = await storage.atomicCheckAndIncr('limit-counter', 3, 3600)
         expect(result).toBe(-1)
       })
 

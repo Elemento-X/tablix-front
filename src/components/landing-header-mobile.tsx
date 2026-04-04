@@ -26,7 +26,7 @@ export function LandingHeaderMobile({
   const navItems = [
     { key: 'how-it-works', label: t('header.nav.howItWorks') },
     { key: 'audience', label: t('header.nav.audience') },
-    { key: 'pricing', label: t('header.nav.pricing') },
+    { key: 'pricing', label: t('header.nav.pricing'), href: '/pricing' },
   ]
 
   const close = useCallback(() => {
@@ -164,19 +164,24 @@ export function LandingHeaderMobile({
                     <motion.a
                       key={item.key}
                       ref={index === 0 ? firstLinkRef : undefined}
-                      href={`/#${item.key}`}
+                      href={item.href ?? `/#${item.key}`}
                       className={`w-full rounded-lg px-4 py-3 text-left text-base font-medium transition-colors ${
                         activeSection === item.key
                           ? 'bg-muted/50 text-foreground'
                           : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                       }`}
                       onClick={(e) => {
-                        e.preventDefault()
-                        close()
-                        setTimeout(
-                          () => scrollToSection(item.key, prefersReducedMotion),
-                          150,
-                        )
+                        if (!item.href) {
+                          e.preventDefault()
+                          close()
+                          setTimeout(
+                            () =>
+                              scrollToSection(item.key, prefersReducedMotion),
+                            150,
+                          )
+                        } else {
+                          close()
+                        }
                       }}
                       {...(prefersReducedMotion
                         ? {}

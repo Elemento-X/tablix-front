@@ -1,5 +1,6 @@
 import type { NextRequest, NextResponse } from 'next/server'
 import { createHash, randomBytes } from 'crypto'
+import { serverEnv } from '@/config/env.server'
 
 const FINGERPRINT_COOKIE_NAME = 'tablix_fp'
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year in seconds
@@ -92,7 +93,7 @@ export function setFingerprintCookie(
 ): void {
   response.cookies.set(FINGERPRINT_COOKIE_NAME, cookieId, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: serverEnv.NODE_ENV === 'production',
     sameSite: 'strict',
     maxAge: COOKIE_MAX_AGE,
     path: '/',

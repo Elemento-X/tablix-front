@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { WifiOff, RotateCcw, Home } from 'lucide-react'
 import { useLocale } from '@/lib/i18n'
 import { useNetworkStatus } from '@/hooks/use-network-status'
+import { env } from '@/config/env'
 
 export default function GlobalError({
   error,
@@ -16,7 +17,7 @@ export default function GlobalError({
   const { isOnline } = useNetworkStatus()
 
   useEffect(() => {
-    if (process.env.NODE_ENV === 'production') {
+    if (env.NODE_ENV === 'production') {
       console.error('[ErrorBoundary]', error.digest ?? 'unknown')
     } else {
       console.error('[ErrorBoundary]', error.message)
