@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { serverEnv } from '@/config/env.server'
+import { env } from '@/config/env'
 
 export function proxy(request: NextRequest) {
   const isStateChanging =
@@ -40,7 +40,7 @@ export function proxy(request: NextRequest) {
 
   // Generate nonce for CSP
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
-  const isDev = serverEnv.NODE_ENV === 'development'
+  const isDev = env.NODE_ENV === 'development'
 
   const scriptSrc = isDev
     ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-scripts.com"
@@ -106,7 +106,7 @@ export function proxy(request: NextRequest) {
   // CSRF double-submit cookie: set if not present
   if (!request.cookies.get('__csrf')?.value) {
     const csrfToken = crypto.randomUUID()
-    const isProduction = serverEnv.NODE_ENV === 'production'
+    const isProduction = env.NODE_ENV === 'production'
     response.cookies.set('__csrf', csrfToken, {
       httpOnly: false, // Must be readable by JS for double-submit pattern
       sameSite: 'strict',
