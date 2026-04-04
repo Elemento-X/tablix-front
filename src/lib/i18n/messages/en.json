@@ -1,7 +1,11 @@
 {
   "meta": {
     "title": "Tablix - Transform complex spreadsheets into ready-to-use files",
-    "description": "Upload your spreadsheet, select the columns you need and generate a new file in seconds. Web tool for custom spreadsheet processing and generation."
+    "description": "Upload your spreadsheet, select the columns you need and generate a new file in seconds. Web tool for custom spreadsheet processing and generation.",
+    "privacyTitle": "Privacy Policy — Tablix",
+    "privacyDescription": "Learn how Tablix collects, uses, and protects your data. Privacy policy compliant with LGPD.",
+    "termsTitle": "Terms of Use — Tablix",
+    "termsDescription": "Read the terms and conditions for using the Tablix spreadsheet processing platform."
   },
   "header": {
     "brand": "Tablix",
@@ -122,7 +126,7 @@
       "title": "Legal & Contact"
     },
     "contact": {
-      "email": "contato@tablix.me"
+      "email": "contact@tablix.me"
     },
     "nav": {
       "product": "Product navigation",
@@ -254,6 +258,15 @@
     "uploadTitle": "Processing error",
     "uploadDescription": "An error occurred during file upload or processing. Please try again."
   },
+  "errors": {
+    "offline": "You are offline. Check your internet connection and try again.",
+    "offlineShort": "No internet connection",
+    "timeout": "The operation took too long. Please try again.",
+    "serverError": "Server error. Please try again in a moment.",
+    "rateLimited": "Too many attempts. Please wait a moment before trying again.",
+    "networkGeneric": "Connection error. Check your internet.",
+    "retryingConnection": "Reconnecting..."
+  },
   "dropzone": {
     "dragActive": "Drop the files here...",
     "disabled": "Upload disabled"
@@ -350,7 +363,7 @@
         "deletion": "Request deletion — By clearing your browser cookies, the fingerprint is removed. Redis counters expire automatically.",
         "info": "Request information — Contact us to learn what data is associated with your identifier.",
         "legalBasis": "Legal basis: we use legitimate interest (Art. 7, IX of the LGPD) as the basis for processing data necessary for the service to function.",
-        "contact": "To exercise any of these rights, contact us at: contact@tablix.me"
+        "contact": "To exercise any of these rights, contact us at:"
       },
       "thirdParty": {
         "title": "Third-party services",
@@ -368,7 +381,7 @@
         "title": "Contact",
         "p1": "For questions, requests, or complaints related to privacy:",
         "controller": "Controller: Tablix Tecnologia",
-        "email": "Email: contact@tablix.me",
+        "emailLabel": "Email:",
         "address": "Address: São Paulo - SP, Brazil"
       }
     },
@@ -453,7 +466,7 @@
       "contact": {
         "title": "Contact",
         "p1": "For questions about these Terms of Use:",
-        "email": "Email: contact@tablix.me",
+        "emailLabel": "Email:",
         "address": "Address: São Paulo - SP, Brazil"
       }
     }

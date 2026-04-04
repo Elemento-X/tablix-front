@@ -128,6 +128,46 @@ describe('PrivacyPolicyPage', () => {
     const aside = document.querySelector('aside')
     expect(aside).toBeInTheDocument()
   })
+
+  describe('mailto links', () => {
+    it('renders at least two mailto links to contact@tablix.me', () => {
+      // One in rights section, one in contact section
+      const mailtoLinks = document
+        .querySelectorAll('a[href="mailto:contact@tablix.me"]')
+      expect(mailtoLinks.length).toBeGreaterThanOrEqual(2)
+    })
+
+    it('rights section mailto link has correct href', () => {
+      const section = document.getElementById('rights')
+      expect(section).toBeInTheDocument()
+      const link = section!.querySelector('a[href="mailto:contact@tablix.me"]')
+      expect(link).toBeInTheDocument()
+    })
+
+    it('contact section mailto link has correct href', () => {
+      const section = document.getElementById('contact')
+      expect(section).toBeInTheDocument()
+      const link = section!.querySelector('a[href="mailto:contact@tablix.me"]')
+      expect(link).toBeInTheDocument()
+    })
+
+    it('mailto links display the email address as text', () => {
+      const links = screen.getAllByRole('link', { name: 'contact@tablix.me' })
+      expect(links.length).toBeGreaterThanOrEqual(2)
+      links.forEach((link) => {
+        expect(link).toHaveAttribute('href', 'mailto:contact@tablix.me')
+      })
+    })
+
+    it('mailto links have hover:underline class for UX', () => {
+      const links = document.querySelectorAll(
+        'a[href="mailto:contact@tablix.me"]',
+      )
+      links.forEach((link) => {
+        expect(link.className).toContain('hover:underline')
+      })
+    })
+  })
 })
 
 describe('TermsPage', () => {
@@ -229,5 +269,32 @@ describe('TermsPage', () => {
   it('renders aside sticky TOC on desktop', () => {
     const aside = document.querySelector('aside')
     expect(aside).toBeInTheDocument()
+  })
+
+  describe('mailto links', () => {
+    it('renders a mailto link to contact@tablix.me in contact section', () => {
+      const section = document.getElementById('contact')
+      expect(section).toBeInTheDocument()
+      const link = section!.querySelector('a[href="mailto:contact@tablix.me"]')
+      expect(link).toBeInTheDocument()
+    })
+
+    it('mailto link displays the email address as text', () => {
+      const links = screen.getAllByRole('link', { name: 'contact@tablix.me' })
+      expect(links.length).toBeGreaterThanOrEqual(1)
+      links.forEach((link) => {
+        expect(link).toHaveAttribute('href', 'mailto:contact@tablix.me')
+      })
+    })
+
+    it('mailto link has hover:underline class for UX', () => {
+      const links = document.querySelectorAll(
+        'a[href="mailto:contact@tablix.me"]',
+      )
+      expect(links.length).toBeGreaterThanOrEqual(1)
+      links.forEach((link) => {
+        expect(link.className).toContain('hover:underline')
+      })
+    })
   })
 })
