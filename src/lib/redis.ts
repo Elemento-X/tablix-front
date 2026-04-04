@@ -1,7 +1,8 @@
 import { Redis } from '@upstash/redis'
 import { serverEnv } from '@/config/env.server'
 
-const REDIS_TIMEOUT_MS = 5000 // 5 second timeout for all Redis operations
+// Upstash REST client handles per-request timeouts internally via fetch.
+// Do NOT use AbortSignal.timeout() on the singleton — see comment in getRedisClient().
 
 let redis: Redis | null = null
 
@@ -36,7 +37,10 @@ export function getRedisClient(): Redis | null {
     redis = new Redis({
       url,
       token,
-      signal: AbortSignal.timeout(REDIS_TIMEOUT_MS),
+      // NOTE: Do NOT pass AbortSignal.timeout() here — it creates a single
+      // signal that expires once and permanently aborts ALL future operations
+      // on this singleton. Upstash REST client handles per-request timeouts
+      // internally via its own fetch timeout.
       retry: {
         retries: 2,
         backoff: (retryCount) => Math.min(retryCount * 100, 1000),
