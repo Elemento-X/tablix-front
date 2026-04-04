@@ -6,6 +6,11 @@ import { useUsage, formatFileSize } from '@/hooks/use-usage'
 import { useFileParser } from '@/hooks/use-file-parser'
 import { useLocale } from '@/lib/i18n'
 import {
+  fetchWithResilience,
+  FetchError,
+  getCsrfToken,
+} from '@/lib/fetch-client'
+import {
   validateFile,
   validateFileContent,
   sanitizeFileName,
@@ -183,6 +188,20 @@ export function useUploadFlow() {
     setProcessingPhase(null)
   }
 
+  const toastFetchError = (err: unknown, fallbackKey: string) => {
+    if (err instanceof FetchError) {
+      const errorKeyMap: Record<string, string> = {
+        offline: 'errors.offline',
+        timeout: 'errors.timeout',
+        server: 'errors.serverError',
+        'rate-limit': 'errors.rateLimited',
+      }
+      toast.error(t(errorKeyMap[err.type] ?? fallbackKey))
+    } else {
+      toast.error(t(fallbackKey))
+    }
+  }
+
   const handleProcess = async () => {
     if (selectedColumns.length === 0) {
       toast.error(t('messages.selectAtLeastOneColumn'))
@@ -212,19 +231,17 @@ export function useUploadFlow() {
       const addWatermark = usage?.plan === 'free'
 
       const consumeQuota = async () => {
-        const completeResponse = await fetch('/api/unification/complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: unificationToken }),
-        })
-
-        if (!completeResponse.ok) {
-          const completeData = await completeResponse.json()
-          toast.error(completeData.error || t('messages.processFailed'))
+        try {
+          await fetchWithResilience('/api/unification/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: unificationToken }),
+          })
+          return true
+        } catch (err) {
+          toastFetchError(err, 'messages.processFailed')
           return false
         }
-
-        return true
       }
 
       if (useClientSide) {
@@ -273,21 +290,58 @@ export function useUploadFlow() {
         formData.append('columns', JSON.stringify(selectedColumns))
         formData.append('token', unificationToken)
 
-        const response = await fetch('/api/process', {
-          method: 'POST',
-          body: formData,
-        })
+        // /api/process returns a blob, not JSON — use fetch directly with timeout + CSRF
+        const processController = new AbortController()
+        const processTimeout = setTimeout(
+          () => processController.abort(),
+          60_000,
+        )
+        const csrfHeaders: Record<string, string> = {}
+        const csrfToken = getCsrfToken()
+        if (csrfToken) csrfHeaders['X-CSRF-Token'] = csrfToken
 
-        if (!response.ok) {
-          const data = await response.json()
-          toast.error(data.error || t('messages.processFailed'))
+        try {
+          const response = await fetch('/api/process', {
+            method: 'POST',
+            body: formData,
+            headers: csrfHeaders,
+            signal: processController.signal,
+          })
+
+          clearTimeout(processTimeout)
+
+          if (!response.ok) {
+            // Safe JSON parse — response might be HTML error page
+            const data = await response.json().catch(() => ({}))
+            // Never expose raw server error messages — use i18n fallback
+            if (response.status === 429) {
+              toast.error(t('errors.rateLimited'))
+            } else {
+              toast.error(
+                data.errorCode
+                  ? t(`messages.${data.errorCode}`, data)
+                  : t('messages.processFailed'),
+              )
+            }
+            return
+          }
+
+          setProcessingPhase('downloading')
+          const blob = await response.blob()
+          const timestamp = new Date().toISOString().split('T')[0]
+          downloadBlob(blob, `tablix-unificado-${timestamp}.xlsx`)
+        } catch (processErr) {
+          clearTimeout(processTimeout)
+          if (
+            processErr instanceof DOMException &&
+            processErr.name === 'AbortError'
+          ) {
+            toast.error(t('errors.timeout'))
+          } else {
+            toastFetchError(processErr, 'messages.processFailed')
+          }
           return
         }
-
-        setProcessingPhase('downloading')
-        const blob = await response.blob()
-        const timestamp = new Date().toISOString().split('T')[0]
-        downloadBlob(blob, `tablix-unificado-${timestamp}.xlsx`)
 
         setResultData({
           fileCount: files.length,
@@ -302,7 +356,7 @@ export function useUploadFlow() {
       if (process.env.NODE_ENV !== 'production') {
         console.error('[handleProcess]', err)
       }
-      toast.error(t('messages.processFailed'))
+      toastFetchError(err, 'messages.processFailed')
     } finally {
       setIsProcessing(false)
       setProcessingPhase(null)
@@ -400,19 +454,16 @@ export function useUploadFlow() {
       const previewFormData = new FormData()
       previewFormData.append('files', files[0])
 
-      const previewResponse = await fetch('/api/preview', {
+      const { data: previewData } = await fetchWithResilience<{
+        unificationToken: string
+        columns: string[]
+        usage: { current: number; max: number; remaining: number }
+      }>('/api/preview', {
         method: 'POST',
         body: previewFormData,
+        idempotent: true,
       })
 
-      if (!previewResponse.ok) {
-        const previewData = await previewResponse.json()
-        toast.error(previewData.error || t('messages.processFailed'))
-        setIsUploading(false)
-        return
-      }
-
-      const previewData = await previewResponse.json()
       setUnificationToken(previewData.unificationToken)
 
       setDetectedColumns(commonColumns)
@@ -423,7 +474,7 @@ export function useUploadFlow() {
       if (process.env.NODE_ENV !== 'production') {
         console.error('[handleUpload]', err)
       }
-      toast.error(t('upload.error'))
+      toastFetchError(err, 'upload.error')
     } finally {
       setIsUploading(false)
     }

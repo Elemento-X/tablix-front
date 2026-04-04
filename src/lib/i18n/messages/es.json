@@ -1,7 +1,11 @@
 {
   "meta": {
     "title": "Tablix - Transforma hojas de cálculo complejas en archivos listos para usar",
-    "description": "Carga tu hoja de cálculo, selecciona las columnas que necesitas y genera un nuevo archivo en segundos. Herramienta web para procesamiento y generación de hojas de cálculo personalizadas."
+    "description": "Carga tu hoja de cálculo, selecciona las columnas que necesitas y genera un nuevo archivo en segundos. Herramienta web para procesamiento y generación de hojas de cálculo personalizadas.",
+    "privacyTitle": "Política de Privacidad — Tablix",
+    "privacyDescription": "Descubre cómo Tablix recopila, utiliza y protege tus datos. Política de privacidad conforme a la LGPD.",
+    "termsTitle": "Términos de Uso — Tablix",
+    "termsDescription": "Lee los términos y condiciones de uso de la plataforma Tablix para procesamiento de hojas de cálculo."
   },
   "header": {
     "brand": "Tablix",
@@ -122,7 +126,7 @@
       "title": "Legal & Contacto"
     },
     "contact": {
-      "email": "contato@tablix.me"
+      "email": "contact@tablix.me"
     },
     "nav": {
       "product": "Navegación del producto",
@@ -254,6 +258,15 @@
     "uploadTitle": "Error en el procesamiento",
     "uploadDescription": "Ocurrió un error durante la carga o procesamiento del archivo. Intenta de nuevo."
   },
+  "errors": {
+    "offline": "Estás sin conexión. Verifica tu internet e intenta de nuevo.",
+    "offlineShort": "Sin conexión a internet",
+    "timeout": "La operación tardó demasiado. Intenta de nuevo.",
+    "serverError": "Error en el servidor. Intenta de nuevo en unos instantes.",
+    "rateLimited": "Demasiados intentos. Espera un momento antes de intentar de nuevo.",
+    "networkGeneric": "Error de conexión. Verifica tu internet.",
+    "retryingConnection": "Reconectando..."
+  },
   "dropzone": {
     "dragActive": "Suelta los archivos aqui...",
     "disabled": "Carga deshabilitada"
@@ -350,7 +363,7 @@
         "deletion": "Solicitar eliminación — Al limpiar las cookies de su navegador, el fingerprint se elimina. Los contadores en Redis expiran automáticamente.",
         "info": "Solicitar información — Contáctenos para saber qué datos están asociados a su identificador.",
         "legalBasis": "Base legal: utilizamos interés legítimo (Art. 7, IX de la LGPD) como base para el tratamiento de los datos necesarios para el funcionamiento del servicio.",
-        "contact": "Para ejercer cualquiera de estos derechos, contáctenos al correo: contact@tablix.me"
+        "contact": "Para ejercer cualquiera de estos derechos, contáctenos al correo:"
       },
       "thirdParty": {
         "title": "Servicios de terceros",
@@ -368,7 +381,7 @@
         "title": "Contacto",
         "p1": "Para preguntas, solicitudes o reclamos relacionados con la privacidad:",
         "controller": "Responsable: Tablix Tecnología",
-        "email": "Correo: contact@tablix.me",
+        "emailLabel": "Correo:",
         "address": "Dirección: São Paulo - SP, Brasil"
       }
     },
@@ -453,7 +466,7 @@
       "contact": {
         "title": "Contacto",
         "p1": "Para preguntas sobre estos Términos de Uso:",
-        "email": "Correo: contact@tablix.me",
+        "emailLabel": "Correo:",
         "address": "Dirección: São Paulo - SP, Brasil"
       }
     }

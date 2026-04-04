@@ -1,6 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import {
+  fetchWithResilience,
+  FetchError,
+  type FetchErrorType,
+} from '@/lib/fetch-client'
 
 export interface UsageInfo {
   plan: 'free' | 'pro' | 'enterprise'
@@ -22,21 +27,23 @@ export function useUsage() {
   const [usage, setUsage] = useState<UsageInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [errorType, setErrorType] = useState<FetchErrorType | null>(null)
 
   const fetchUsage = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/usage')
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch usage')
-      }
-
-      const data = await response.json()
+      const { data } = await fetchWithResilience<UsageInfo>('/api/usage')
       setUsage(data)
       setError(null)
+      setErrorType(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      if (err instanceof FetchError) {
+        setError(err.message)
+        setErrorType(err.type)
+      } else {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+        setErrorType('unknown')
+      }
       setUsage(null)
     } finally {
       setIsLoading(false)
@@ -51,6 +58,7 @@ export function useUsage() {
     usage,
     isLoading,
     error,
+    errorType,
     refetch: fetchUsage,
   }
 }

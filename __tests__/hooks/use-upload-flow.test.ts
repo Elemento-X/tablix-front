@@ -81,17 +81,34 @@ function createFile(name: string, size = 100): File {
   return new File(['x'.repeat(size)], name, { type: 'text/csv' })
 }
 
-function setupFetchMock(responses: Record<string, { ok: boolean; json?: unknown; blob?: Blob }>) {
+function setupFetchMock(
+  responses: Record<string, { ok: boolean; json?: unknown; blob?: Blob; status?: number }>,
+) {
   global.fetch = jest.fn().mockImplementation((url: string) => {
     const resp = responses[url]
-    if (!resp) return Promise.reject(new Error(`Unmocked URL: ${url}`))
+    if (!resp) return Promise.reject(new TypeError(`Unmocked URL: ${url}`))
     return Promise.resolve({
       ok: resp.ok,
+      status: resp.status ?? (resp.ok ? 200 : 500),
       json: () => Promise.resolve(resp.json ?? {}),
       blob: () => Promise.resolve(resp.blob ?? new Blob()),
+      headers: new Headers(),
     })
   })
 }
+
+// Disable retry for tests
+jest.mock('@/lib/fetch-client', () => {
+  const actual = jest.requireActual('@/lib/fetch-client')
+  return {
+    ...actual,
+    fetchWithResilience: (url: string, options: Record<string, unknown> = {}) =>
+      actual.fetchWithResilience(url, {
+        ...options,
+        retry: { maxAttempts: 1 },
+      }),
+  }
+})
 
 // --- Tests ---
 
@@ -459,6 +476,7 @@ describe('useUploadFlow', () => {
       setupFetchMock({
         '/api/preview': {
           ok: false,
+          status: 500,
           json: { error: 'Preview failed' },
         },
       })
@@ -472,7 +490,7 @@ describe('useUploadFlow', () => {
         await result.current.handleUpload()
       })
 
-      expect(mockToast.error).toHaveBeenCalledWith('Preview failed')
+      expect(mockToast.error).toHaveBeenCalledWith('errors.serverError')
       expect(result.current.step).toBe('upload')
     })
 
@@ -649,6 +667,7 @@ describe('useUploadFlow', () => {
         },
         '/api/unification/complete': {
           ok: false,
+          status: 500,
           json: { error: 'Quota exceeded' },
         },
       })
@@ -664,7 +683,7 @@ describe('useUploadFlow', () => {
         await hook.result.current.handleProcess()
       })
 
-      expect(mockToast.error).toHaveBeenCalledWith('Quota exceeded')
+      expect(mockToast.error).toHaveBeenCalledWith('errors.serverError')
       expect(mockDownloadBlob).not.toHaveBeenCalled()
     })
 
@@ -699,7 +718,7 @@ describe('useUploadFlow', () => {
         await hook.result.current.handleProcess()
       })
 
-      expect(mockToast.error).toHaveBeenCalledWith('Server error')
+      expect(mockToast.error).toHaveBeenCalledWith('messages.processFailed')
       expect(mockDownloadBlob).not.toHaveBeenCalled()
     })
 
@@ -741,6 +760,7 @@ describe('useUploadFlow', () => {
         },
         '/api/unification/complete': {
           ok: false,
+          status: 500,
           json: {},
         },
       })
@@ -755,7 +775,7 @@ describe('useUploadFlow', () => {
         await hook.result.current.handleProcess()
       })
 
-      expect(mockToast.error).toHaveBeenCalledWith('messages.processFailed')
+      expect(mockToast.error).toHaveBeenCalledWith('errors.serverError')
     })
 
     it('uses fallback error when server-side process returns no error field', async () => {
@@ -859,7 +879,7 @@ describe('useUploadFlow', () => {
         rowCount: 10,
       })
       setupFetchMock({
-        '/api/preview': { ok: false, json: {} },
+        '/api/preview': { ok: false, status: 500, json: {} },
       })
       const { result } = renderHook(() => useUploadFlow())
 
@@ -870,7 +890,7 @@ describe('useUploadFlow', () => {
         await result.current.handleUpload()
       })
 
-      expect(mockToast.error).toHaveBeenCalledWith('messages.processFailed')
+      expect(mockToast.error).toHaveBeenCalledWith('errors.serverError')
     })
 
     it('handles non-Error thrown in upload', async () => {
