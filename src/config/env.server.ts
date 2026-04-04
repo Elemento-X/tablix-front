@@ -73,11 +73,16 @@ function parseRawServerEnv(): ServerEnv {
 
 /**
  * Production/Development: parsed eagerly at startup (fail-fast).
- * Test: Proxy that re-reads process.env on every access, so tests
- * that manipulate process.env work without mocking this module.
+ * Test / Build phase: Proxy that re-reads process.env on every access.
+ *
+ * During `next build`, NODE_ENV is "production" but env vars like
+ * UPSTASH_REDIS_REST_URL may not be available (they're injected at runtime).
+ * NEXT_PHASE is set by Next.js to "phase-production-build" during build.
  */
+const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build'
+
 export const serverEnv: ServerEnv =
-  process.env.NODE_ENV === 'test'
+  process.env.NODE_ENV === 'test' || isBuildPhase
     ? new Proxy({} as ServerEnv, {
         get(_, prop: string) {
           return parseRawServerEnv()[prop as keyof ServerEnv]
