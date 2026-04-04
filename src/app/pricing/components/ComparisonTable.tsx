@@ -62,8 +62,14 @@ export function ComparisonTable() {
           </thead>
           <tbody>
             {FEATURE_KEYS.map((feature) => (
-              <tr key={feature} className="border-border border-b last:border-0">
-                <th scope="row" className="text-foreground py-3.5 pr-4 text-left font-medium">
+              <tr
+                key={feature}
+                className="border-border border-b last:border-0"
+              >
+                <th
+                  scope="row"
+                  className="text-foreground py-3.5 pr-4 text-left font-medium"
+                >
                   {t(`pricingPage.comparison.features.${feature}`)}
                 </th>
                 {PLANS.map((plan) => (
@@ -73,7 +79,13 @@ export function ComparisonTable() {
                       plan === 'pro' ? 'bg-muted/30 font-medium' : ''
                     }`}
                   >
-                    <span className={plan === 'pro' ? 'text-foreground' : 'text-muted-foreground'}>
+                    <span
+                      className={
+                        plan === 'pro'
+                          ? 'text-foreground'
+                          : 'text-muted-foreground'
+                      }
+                    >
                       {t(`pricingPage.comparison.values.${plan}.${feature}`)}
                     </span>
                   </td>
@@ -88,7 +100,10 @@ export function ComparisonTable() {
         {PLANS.map((plan) => {
           const isExpanded = expandedPlan === plan
           return (
-            <div key={plan} className="border-border overflow-hidden rounded-lg border">
+            <div
+              key={plan}
+              className="border-border overflow-hidden rounded-lg border"
+            >
               <button
                 type="button"
                 onClick={() => togglePlan(plan)}
@@ -109,19 +124,36 @@ export function ComparisonTable() {
                   <motion.div
                     id={`comparison-panel-${plan}`}
                     role="region"
-                    initial={prefersReducedMotion ? { opacity: 1 } : { height: 0, opacity: 0 }}
-                    animate={prefersReducedMotion ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
-                    exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                    initial={
+                      prefersReducedMotion
+                        ? { opacity: 1 }
+                        : { height: 0, opacity: 0 }
+                    }
+                    animate={
+                      prefersReducedMotion
+                        ? { opacity: 1 }
+                        : { height: 'auto', opacity: 1 }
+                    }
+                    exit={
+                      prefersReducedMotion
+                        ? { opacity: 0 }
+                        : { height: 0, opacity: 0 }
+                    }
                     transition={{ duration: 0.2, ease: 'easeInOut' }}
                   >
                     <div className="border-border space-y-2 border-t px-4 pt-3 pb-4">
                       {FEATURE_KEYS.map((feature) => (
-                        <div key={feature} className="flex items-center justify-between text-sm">
+                        <div
+                          key={feature}
+                          className="flex items-center justify-between text-sm"
+                        >
                           <span className="text-muted-foreground">
                             {t(`pricingPage.comparison.features.${feature}`)}
                           </span>
                           <span className="text-foreground font-medium">
-                            {t(`pricingPage.comparison.values.${plan}.${feature}`)}
+                            {t(
+                              `pricingPage.comparison.values.${plan}.${feature}`,
+                            )}
                           </span>
                         </div>
                       ))}

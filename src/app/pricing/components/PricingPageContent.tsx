@@ -12,7 +12,9 @@ import { Button } from '@/components/button'
 const ComparisonTable = dynamic(() =>
   import('./ComparisonTable').then((mod) => mod.ComparisonTable),
 )
-const PricingFAQ = dynamic(() => import('./PricingFAQ').then((mod) => mod.PricingFAQ))
+const PricingFAQ = dynamic(() =>
+  import('./PricingFAQ').then((mod) => mod.PricingFAQ),
+)
 
 export function PricingPageContent() {
   const { t } = useLocale()
@@ -22,7 +24,11 @@ export function PricingPageContent() {
       <LandingHeader />
 
       <main id="main-content">
-        <PricingSection id="pricing" headingLevel="h1" className="scroll-mt-20" />
+        <PricingSection
+          id="pricing"
+          headingLevel="h1"
+          className="scroll-mt-20"
+        />
 
         <ComparisonTable />
 
@@ -32,7 +38,9 @@ export function PricingPageContent() {
           <h2 className="text-foreground text-2xl font-bold sm:text-3xl">
             {t('pricingPage.ctaText')}
           </h2>
-          <p className="text-muted-foreground mt-3 text-base">{t('pricingPage.ctaSubtext')}</p>
+          <p className="text-muted-foreground mt-3 text-base">
+            {t('pricingPage.ctaSubtext')}
+          </p>
           <Link href="/upload" className="mt-6 inline-block">
             <Button variant="brand" size="lg" className="h-12 px-8 text-base">
               {t('pricingPage.cta')}

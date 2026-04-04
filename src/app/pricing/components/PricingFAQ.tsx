@@ -34,7 +34,9 @@ export function PricingFAQ() {
                 aria-controls={`faq-panel-${key}`}
                 className="text-foreground flex w-full items-center justify-between py-5 text-left font-medium"
               >
-                <span className="pr-4">{t(`pricingPage.faq.items.${key}.question`)}</span>
+                <span className="pr-4">
+                  {t(`pricingPage.faq.items.${key}.question`)}
+                </span>
                 <ChevronDown
                   aria-hidden="true"
                   className={`text-muted-foreground h-5 w-5 flex-shrink-0 transition-transform duration-200 ${
@@ -47,9 +49,21 @@ export function PricingFAQ() {
                   <motion.div
                     id={`faq-panel-${key}`}
                     role="region"
-                    initial={prefersReducedMotion ? { opacity: 1 } : { height: 0, opacity: 0 }}
-                    animate={prefersReducedMotion ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
-                    exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                    initial={
+                      prefersReducedMotion
+                        ? { opacity: 1 }
+                        : { height: 0, opacity: 0 }
+                    }
+                    animate={
+                      prefersReducedMotion
+                        ? { opacity: 1 }
+                        : { height: 'auto', opacity: 1 }
+                    }
+                    exit={
+                      prefersReducedMotion
+                        ? { opacity: 0 }
+                        : { height: 0, opacity: 0 }
+                    }
                     transition={{ duration: 0.2, ease: 'easeInOut' }}
                   >
                     <p className="text-muted-foreground pb-5 text-sm leading-relaxed">
