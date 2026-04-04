@@ -42,10 +42,7 @@ function shouldSkipRedis(): boolean {
 
   if (circuitBreaker.state === 'open') {
     // Check if enough time has passed to try half-open
-    if (
-      Date.now() - circuitBreaker.openedAt >=
-      CIRCUIT_BREAKER_OPEN_DURATION_MS
-    ) {
+    if (Date.now() - circuitBreaker.openedAt >= CIRCUIT_BREAKER_OPEN_DURATION_MS) {
       circuitBreaker.state = 'half-open'
       return false // allow one request through
     }
@@ -109,16 +106,13 @@ interface RateLimitOptions {
 // Note: serverEnv is imported eagerly (top-level) while Redis is lazy (require).
 // This asymmetry is intentional — serverEnv uses a Proxy in test mode that handles
 // dynamic process.env reads, but Redis SDK requires lazy loading to avoid ESM errors.
-let redisClient: ReturnType<
-  typeof import('@/lib/redis').getRedisClient
-> | null = null
+let redisClient: ReturnType<typeof import('@/lib/redis').getRedisClient> | null = null
 let redisChecked = false
 
 function getRedis() {
   if (!redisChecked) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { getRedisClient } = require('@/lib/redis')
+      const { getRedisClient } = require('@/lib/redis') // eslint-disable-line @typescript-eslint/no-require-imports
       redisClient = getRedisClient()
     } catch {
       // Redis not available in test environment
@@ -144,14 +138,10 @@ export function rateLimit(options: RateLimitOptions) {
       const redis = getRedis()
       if (redis) {
         try {
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
-          const { Ratelimit } = require('@upstash/ratelimit')
+          const { Ratelimit } = require('@upstash/ratelimit') // eslint-disable-line @typescript-eslint/no-require-imports
           upstashLimiter = new Ratelimit({
             redis,
-            limiter: Ratelimit.slidingWindow(
-              options.maxRequests,
-              `${options.interval}ms`,
-            ),
+            limiter: Ratelimit.slidingWindow(options.maxRequests, `${options.interval}ms`),
             analytics: true,
             prefix: `ratelimit:${namespace}`,
           })
@@ -166,9 +156,7 @@ export function rateLimit(options: RateLimitOptions) {
   }
 
   return {
-    check: async (
-      request: NextRequest,
-    ): Promise<{ success: boolean; remaining: number }> => {
+    check: async (request: NextRequest): Promise<{ success: boolean; remaining: number }> => {
       const baseIdentifier = getIdentifier(request)
       const identifier = `${namespace}:${baseIdentifier}`
 
@@ -190,10 +178,7 @@ export function rateLimit(options: RateLimitOptions) {
           )
 
           // If circuit is not open yet, fail-closed in production
-          if (
-            serverEnv.NODE_ENV === 'production' &&
-            circuitBreaker.state !== 'open'
-          ) {
+          if (serverEnv.NODE_ENV === 'production' && circuitBreaker.state !== 'open') {
             return { success: false, remaining: 0 }
           }
 

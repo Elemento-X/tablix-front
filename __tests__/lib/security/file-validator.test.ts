@@ -301,6 +301,16 @@ describe('file-validator.ts', () => {
       expect(result.error).toContain('invalid format')
     })
 
+    it('should reject CSV files with PDF magic bytes (%PDF)', async () => {
+      // PDF magic: 0x25 0x50 0x44 0x46 = "%PDF"
+      const pdfBytes = [0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34]
+      const file = createFileWithBytes(pdfBytes, 'data.csv')
+
+      const result = await validateFileContent(file)
+      expect(result.valid).toBe(false)
+      expect(result.error).toBe('File appears to be a PDF, not a CSV')
+    })
+
     it('should handle errors gracefully', async () => {
       const mockFile = {
         name: 'test.csv',
@@ -391,6 +401,16 @@ describe('file-validator.ts', () => {
         // UTF-16 LE BOM (FF FE) followed by printable bytes
         const file = createFileWithBytes(
           [0xff, 0xfe, 0x41, 0x00, 0x42, 0x00, 0x43, 0x00],
+          'test.csv',
+        )
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should accept CSV with UTF-16 BE BOM (FE FF)', async () => {
+        // UTF-16 BE BOM (FE FF) followed by printable bytes (line 129 branch)
+        const file = createFileWithBytes(
+          [0xfe, 0xff, 0x00, 0x41, 0x00, 0x42, 0x00, 0x43],
           'test.csv',
         )
         const result = await validateFileContent(file)
@@ -592,16 +612,35 @@ describe('file-validator.ts', () => {
         expect(result.error).toBe('Invalid ZIP structure: corrupted central directory')
       })
 
-      it('should reject XLSX when arrayBuffer throws (catch branch — fail-closed)', async () => {
-        // Build a file with valid ZIP magic bytes but whose arrayBuffer() throws
-        const magic = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00])
+      it('should accept XLSX when central directory entry has wrong signature (stops walk gracefully)', async () => {
+        // Build a ZIP with EOCD pointing to a CD area that starts with a wrong signature
+        // The while loop at line 248 breaks immediately (line 250 branch)
+        const cdEntry = new Uint8Array(46)
+        const cdEntryView = new DataView(cdEntry.buffer)
+        // Wrong signature — not 0x02014b50
+        cdEntryView.setUint32(0, 0xdeadbeef, true)
 
-        const file = new File([magic], 'throw.xlsx', {
+        const eocd = new Uint8Array(22)
+        const eocdView = new DataView(eocd.buffer)
+        eocdView.setUint32(0, 0x06054b50, true) // EOCD sig
+        eocdView.setUint16(8, 1, true)
+        eocdView.setUint16(10, 1, true)
+        eocdView.setUint32(12, cdEntry.length, true) // cdSize
+        eocdView.setUint32(16, 0, true) // cdOffset = 0 (relative to tail buffer)
+
+        // Magic ZIP bytes as local file header placeholder
+        const magic = new Uint8Array([0x50, 0x4b, 0x03, 0x04])
+        const full = new Uint8Array(magic.length + cdEntry.length + eocd.length)
+        full.set(magic, 0)
+        full.set(cdEntry, magic.length)
+        full.set(eocd, magic.length + cdEntry.length)
+
+        const file = new File([full], 'noentries.xlsx', {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         })
 
         const sliceImpl = (start?: number, end?: number) => {
-          const sliced = magic.slice(start, end)
+          const sliced = full.slice(start, end)
           const blob = new Blob([sliced])
           Object.defineProperty(blob, 'arrayBuffer', {
             value: async () => sliced.buffer as ArrayBuffer,
@@ -609,12 +648,43 @@ describe('file-validator.ts', () => {
           return blob as Blob
         }
         Object.defineProperty(file, 'slice', { value: sliceImpl })
-        // arrayBuffer throws to exercise the catch block
         Object.defineProperty(file, 'arrayBuffer', {
-          value: async () => {
-            throw new Error('IO error reading file')
-          },
+          value: async () => full.buffer as ArrayBuffer,
         })
+
+        // totalCompressed = 0, so ratio check is skipped — should be valid
+        const result = await validateFileContent(file)
+        expect(result.valid).toBe(true)
+      })
+
+      it('should reject XLSX when arrayBuffer throws (catch branch — fail-closed)', async () => {
+        // Build a file with valid ZIP magic bytes
+        const magic = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00])
+
+        const file = new File([magic], 'throw.xlsx', {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+
+        let callCount = 0
+        const sliceImpl = (start?: number, end?: number) => {
+          callCount++
+          const sliced = magic.slice(start, end)
+          const blob = new Blob([sliced])
+          if (callCount > 1) {
+            // Second slice call (from checkZipCompressionRatio) — throw to exercise catch
+            Object.defineProperty(blob, 'arrayBuffer', {
+              value: async () => {
+                throw new Error('IO error reading file')
+              },
+            })
+          } else {
+            Object.defineProperty(blob, 'arrayBuffer', {
+              value: async () => sliced.buffer as ArrayBuffer,
+            })
+          }
+          return blob as Blob
+        }
+        Object.defineProperty(file, 'slice', { value: sliceImpl })
 
         const result = await validateFileContent(file)
         expect(result.valid).toBe(false)

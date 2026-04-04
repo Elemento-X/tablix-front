@@ -32,11 +32,7 @@ function getClientIp(request: NextRequest): string {
   return '***'
 }
 
-export function audit(
-  request: NextRequest,
-  entry: AuditEntry,
-  startTime?: number,
-): void {
+export function audit(request: NextRequest, entry: AuditEntry, startTime?: number): void {
   const timestamp = new Date().toISOString()
   const ip = getClientIp(request)
   const method = request.method

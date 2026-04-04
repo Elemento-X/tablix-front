@@ -98,11 +98,7 @@ class InMemoryStore {
     }
   }
 
-  async atomicCheckAndIncr(
-    key: string,
-    limit: number,
-    ttlSeconds: number,
-  ): Promise<number> {
+  async atomicCheckAndIncr(key: string, limit: number, ttlSeconds: number): Promise<number> {
     const current = (await this.get(key)) || 0
     if (current >= limit) {
       return -1
@@ -283,20 +279,12 @@ export const storage = {
    * Atomic check-and-increment: increments key only if current value < limit
    * Returns new count on success, -1 if limit reached
    */
-  async atomicCheckAndIncr(
-    key: string,
-    limit: number,
-    ttlSeconds: number,
-  ): Promise<number> {
+  async atomicCheckAndIncr(key: string, limit: number, ttlSeconds: number): Promise<number> {
     const redis = getRedisClient()
 
     if (redis) {
       try {
-        const result = await redis.eval(
-          ATOMIC_CHECK_AND_INCR_SCRIPT,
-          [key],
-          [limit, ttlSeconds],
-        )
+        const result = await redis.eval(ATOMIC_CHECK_AND_INCR_SCRIPT, [key], [limit, ttlSeconds])
         return result as number
       } catch (error) {
         console.error(

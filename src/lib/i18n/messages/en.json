@@ -125,9 +125,6 @@
     "legal": {
       "title": "Legal & Contact"
     },
-    "contact": {
-      "email": "contact@tablix.me"
-    },
     "nav": {
       "product": "Product navigation",
       "legal": "Legal and contact"
@@ -274,7 +271,9 @@
     "parseNoSheets": "No sheets found in the workbook.",
     "parseEmpty": "The spreadsheet is empty.",
     "parseFailed": "Error reading the file. Please check the format is valid.",
-    "parseGeneric": "Error parsing the file: {detail}"
+    "parseGeneric": "Error parsing the file: {detail}",
+    "fileValidation": "Invalid file type. Use CSV, XLS or XLSX.",
+    "fileContentValidation": "File content does not match the expected format."
   },
   "dropzone": {
     "dragActive": "Drop the files here...",

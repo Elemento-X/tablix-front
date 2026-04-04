@@ -2,11 +2,8 @@ import { useState } from 'react'
 import Papa from 'papaparse'
 import { PLAN_LIMITS, type PlanType } from '@/lib/limits'
 import { sanitizeString } from '@/lib/security/validation-schemas'
-import {
-  getExcelJS,
-  worksheetToArray,
-  worksheetToJsonWithHeaders,
-} from '@/lib/excel-utils'
+import { env } from '@/config/env'
+import { getExcelJS, worksheetToArray, worksheetToJsonWithHeaders } from '@/lib/excel-utils'
 import { parseXls } from '@/lib/xls-parser'
 
 export interface ParseResult {
@@ -48,10 +45,7 @@ export function useFileParser() {
    * Supports .xlsx, .csv (and .xls via Web Worker in Phase 2.5)
    * Enforces row limits based on plan and sanitizes column names
    */
-  const parseFileInBrowser = async (
-    file: File,
-    plan: PlanType = 'free',
-  ): Promise<ParseResult> => {
+  const parseFileInBrowser = async (file: File, plan: PlanType = 'free'): Promise<ParseResult> => {
     const limits = PLAN_LIMITS[plan]
     const buffer = await file.arrayBuffer()
 
@@ -78,16 +72,12 @@ export function useFileParser() {
 
       // Sanitize column names to prevent XSS
       const rawColumns = fullParse.meta.fields || []
-      const columns = rawColumns
-        .map((col) => sanitizeString(col))
-        .filter((col) => col.length > 0)
+      const columns = rawColumns.map((col) => sanitizeString(col)).filter((col) => col.length > 0)
 
       return {
         columns,
         rowCount: totalRows,
-        preview: sanitizePreviewRows(
-          (fullParse.data as PreviewRow[]).slice(0, 5),
-        ),
+        preview: sanitizePreviewRows((fullParse.data as PreviewRow[]).slice(0, 5)),
       }
     }
 
@@ -111,9 +101,7 @@ export function useFileParser() {
         )
       }
 
-      const preview = sanitizePreviewRows(
-        result.rows.slice(0, 5) as PreviewRow[],
-      )
+      const preview = sanitizePreviewRows(result.rows.slice(0, 5) as PreviewRow[])
 
       return {
         columns,
@@ -160,10 +148,7 @@ export function useFileParser() {
 
     // Get preview (first 5 rows) using custom headers starting from row 2
     const preview = sanitizePreviewRows(
-      worksheetToJsonWithHeaders(worksheet, columns, 2).slice(
-        0,
-        5,
-      ) as PreviewRow[],
+      worksheetToJsonWithHeaders(worksheet, columns, 2).slice(0, 5) as PreviewRow[],
     )
 
     return {
@@ -200,10 +185,7 @@ export function useFileParser() {
   /**
    * Smart parsing: client-side for small files, server-side for large files
    */
-  const parseFile = async (
-    file: File,
-    plan: PlanType = 'free',
-  ): Promise<ParseResult> => {
+  const parseFile = async (file: File, plan: PlanType = 'free'): Promise<ParseResult> => {
     setIsLoading(true)
     setError(null)
 
@@ -221,8 +203,21 @@ export function useFileParser() {
       setIsLoading(false)
       return result
     } catch (err) {
+      if (env.NODE_ENV !== 'production') {
+        console.error('[useFileParser]', err)
+      }
+
+      // Preserve known internal error messages (row limit, no columns, etc.)
+      // for toastFetchError to map to i18n keys — these are safe patterns
+      const rawMsg = err instanceof Error ? err.message : 'Unknown parsing error'
+      const isSafeMessage =
+        /^File exceeds row limit:/.test(rawMsg) ||
+        rawMsg === 'No columns found in first row' ||
+        rawMsg === 'No sheets found in workbook' ||
+        rawMsg === 'Empty spreadsheet'
+
       const parseError: ParseError = {
-        message: err instanceof Error ? err.message : 'Unknown parsing error',
+        message: isSafeMessage ? rawMsg : 'Parse failed',
         code: 'PARSE_ERROR',
       }
       setError(parseError)

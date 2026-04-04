@@ -125,9 +125,6 @@
     "legal": {
       "title": "Legal & Contacto"
     },
-    "contact": {
-      "email": "contact@tablix.me"
-    },
     "nav": {
       "product": "Navegación del producto",
       "legal": "Legal y contacto"
@@ -274,7 +271,9 @@
     "parseNoSheets": "No se encontraron hojas en el libro.",
     "parseEmpty": "La hoja de cálculo está vacía.",
     "parseFailed": "Error al leer el archivo. Verifica que el formato sea válido.",
-    "parseGeneric": "Error al analizar el archivo: {detail}"
+    "parseGeneric": "Error al analizar el archivo: {detail}",
+    "fileValidation": "Tipo de archivo inválido. Use CSV, XLS o XLSX.",
+    "fileContentValidation": "El contenido del archivo no corresponde al formato esperado."
   },
   "dropzone": {
     "dragActive": "Suelta los archivos aqui...",

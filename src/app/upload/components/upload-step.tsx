@@ -8,13 +8,7 @@ import { FileDropzone } from '@/components/file-dropzone'
 import { formatFileSize } from '@/hooks/use-usage'
 import { useLocale } from '@/lib/i18n'
 import { sanitizeFileName } from '@/lib/security'
-import {
-  FileSpreadsheet,
-  LoaderCircle,
-  X,
-  Lightbulb,
-  AlertCircle,
-} from 'lucide-react'
+import { FileSpreadsheet, LoaderCircle, X, Lightbulb, AlertCircle } from 'lucide-react'
 
 const ONBOARDING_KEY = 'tablix-onboarding-upload-seen'
 
@@ -63,9 +57,7 @@ export function UploadStep({
           {showTip && (
             <div className="flex w-full items-start gap-3 rounded-lg border border-teal-200 bg-teal-50/50 p-3 dark:border-teal-800 dark:bg-teal-950/20">
               <Lightbulb className="mt-0.5 h-4 w-4 flex-shrink-0 text-teal-700 dark:text-teal-400" />
-              <p className="text-foreground flex-1 text-sm">
-                {t('onboarding.tipUpload')}
-              </p>
+              <p className="text-foreground flex-1 text-sm">{t('onboarding.tipUpload')}</p>
               <button
                 type="button"
                 onClick={dismissTip}
@@ -92,24 +84,16 @@ export function UploadStep({
           {quotaExhausted && files.length === 0 && (
             <div className="flex w-full flex-col items-center gap-2 rounded-lg border border-dashed border-stone-300 p-6 text-center dark:border-stone-700">
               <AlertCircle className="text-muted-foreground h-8 w-8" />
-              <p className="text-foreground text-sm font-medium">
-                {t('status.quotaExhausted')}
-              </p>
-              <p className="text-muted-foreground text-xs">
-                {t('status.quotaExhaustedHint')}
-              </p>
+              <p className="text-foreground text-sm font-medium">{t('status.quotaExhausted')}</p>
+              <p className="text-muted-foreground text-xs">{t('status.quotaExhaustedHint')}</p>
             </div>
           )}
 
           {files.length > 0 && (
-            <div
-              data-testid="file-list"
-              className="bg-muted w-full space-y-2 rounded-lg p-4"
-            >
+            <div data-testid="file-list" className="bg-muted w-full space-y-2 rounded-lg p-4">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-foreground/80 text-sm font-medium">
-                  {files.length} {t('columns.of')} {maxInputFiles}{' '}
-                  {t('status.files')}
+                  {files.length} {t('columns.of')} {maxInputFiles} {t('status.files')}
                 </span>
                 <span className="text-muted-foreground text-xs">
                   {formatFileSize(currentTotalSize)} {t('columns.of')}{' '}
@@ -150,9 +134,7 @@ export function UploadStep({
           )}
 
           <div className="w-full py-4 text-center">
-            <p className="text-muted-foreground text-sm">
-              {t('upload.securityNote')}
-            </p>
+            <p className="text-muted-foreground text-sm">{t('upload.securityNote')}</p>
           </div>
 
           <Button

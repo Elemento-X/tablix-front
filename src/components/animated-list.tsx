@@ -15,11 +15,7 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 }
 
-export function AnimatedList({
-  children,
-  className,
-  staggerDelay = 0.05,
-}: AnimatedListProps) {
+export function AnimatedList({ children, className, staggerDelay = 0.05 }: AnimatedListProps) {
   const prefersReducedMotion = useReducedMotion()
 
   if (prefersReducedMotion) {
@@ -49,10 +45,7 @@ interface AnimatedListItemProps {
   className?: string
 }
 
-export function AnimatedListItem({
-  children,
-  className,
-}: AnimatedListItemProps) {
+export function AnimatedListItem({ children, className }: AnimatedListItemProps) {
   const prefersReducedMotion = useReducedMotion()
 
   if (prefersReducedMotion) {
