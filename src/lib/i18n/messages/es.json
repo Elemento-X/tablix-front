@@ -161,7 +161,8 @@
     "startOver": "Empezar de Nuevo",
     "deselectAll": "Deseleccionar Todo",
     "selectAll": "Seleccionar Todo",
-    "processAndDownload": "Procesar y Descargar"
+    "processAndDownload": "Procesar y Descargar",
+    "previewHint": "Vista previa de las primeras filas de tu primer archivo"
   },
   "status": {
     "plan": "Plan",
@@ -174,7 +175,9 @@
     "maxRowsLabel": "Máx",
     "maxColumnsLabel": "Máx",
     "clickToAddMore": "Haz clic arriba para agregar más archivos",
-    "loading": "Cargando información del plan..."
+    "loading": "Cargando información del plan...",
+    "quotaExhausted": "Cuota mensual agotada",
+    "quotaExhaustedHint": "Tu cuota de unificaciones de este mes fue utilizada. Espera el próximo ciclo o mejora tu plan."
   },
   "messages": {
     "tooManyFiles": "Demasiados archivos. Máximo {max} archivos para el plan {plan}.",
@@ -491,8 +494,93 @@
     }
   },
   "pricingPage": {
-    "ctaText": "Listo para simplificar tus hojas de calculo?",
-    "cta": "Empezar gratis"
+    "metaTitle": "Planes y Precios | Tablix",
+    "metaDescription": "Compare los planes Free, Pro y Enterprise de Tablix. Comience gratis, sin registro.",
+    "ctaText": "¿Listo para simplificar tus hojas de cálculo?",
+    "ctaSubtext": "Comienza en segundos. Sin registro, sin tarjeta de crédito.",
+    "cta": "Empezar gratis",
+    "comparison": {
+      "title": "Compara los planes",
+      "features": {
+        "sheetsPerMonth": "Hojas de cálculo por mes",
+        "maxRows": "Filas por hoja de cálculo",
+        "maxColumns": "Columnas",
+        "maxFileSize": "Tamaño máx. por archivo",
+        "processing": "Procesamiento",
+        "watermark": "Marca de agua",
+        "fileHistory": "Historial de archivos",
+        "support": "Soporte",
+        "infrastructure": "Infraestructura"
+      },
+      "values": {
+        "free": {
+          "sheetsPerMonth": "1",
+          "maxRows": "500",
+          "maxColumns": "3",
+          "maxFileSize": "1 MB",
+          "processing": "Local (navegador)",
+          "watermark": "Sí",
+          "fileHistory": "No",
+          "support": "Comunidad",
+          "infrastructure": "Compartida"
+        },
+        "pro": {
+          "sheetsPerMonth": "40",
+          "maxRows": "5.000",
+          "maxColumns": "10",
+          "maxFileSize": "2 MB",
+          "processing": "Servidor prioritario",
+          "watermark": "No",
+          "fileHistory": "30 días",
+          "support": "Soporte prioritario por email",
+          "infrastructure": "Compartida"
+        },
+        "enterprise": {
+          "sheetsPerMonth": "Personalizado",
+          "maxRows": "Personalizado",
+          "maxColumns": "Personalizado",
+          "maxFileSize": "Personalizado",
+          "processing": "Dedicado",
+          "watermark": "No",
+          "fileHistory": "Personalizado",
+          "support": "Dedicado + SLA",
+          "infrastructure": "Dedicada"
+        }
+      }
+    },
+    "faq": {
+      "title": "Preguntas frecuentes",
+      "items": {
+        "q1": {
+          "question": "¿Puedo probar antes de suscribirme?",
+          "answer": "¡Sí! El plan Free es gratuito y no requiere registro. Puedes procesar hasta 1 hoja de cálculo por mes con hasta 500 filas y 3 columnas, sin compromiso."
+        },
+        "q2": {
+          "question": "¿Cómo funciona el procesamiento local?",
+          "answer": "En el plan Free, tus hojas de cálculo se procesan directamente en tu navegador. Ningún dato sale de tu computadora — es 100% local y privado."
+        },
+        "q3": {
+          "question": "¿Puedo cancelar en cualquier momento?",
+          "answer": "Sí. No hay permanencia ni tarifa de cancelación. Mantienes el precio de lanzamiento mientras tu suscripción esté activa."
+        },
+        "q4": {
+          "question": "¿Mis datos están seguros?",
+          "answer": "Tus archivos se procesan de forma temporal y se descartan inmediatamente después de la descarga. No almacenamos el contenido de tus hojas de cálculo."
+        },
+        "q5": {
+          "question": "¿Cuál es la diferencia entre Free y Pro?",
+          "answer": "El plan Free es ideal para pruebas rápidas con límites menores. Pro ofrece hasta 40 hojas/mes, 5.000 filas, 10 columnas, procesamiento en servidor, sin marca de agua y historial de 30 días."
+        },
+        "q6": {
+          "question": "¿Cómo funciona el plan Enterprise?",
+          "answer": "Enterprise es para empresas con alto volumen o necesidades específicas. Ofrecemos límites personalizados, SLA garantizado, soporte dedicado e infraestructura exclusiva. Contáctenos para una propuesta."
+        },
+        "q7": {
+          "question": "¿Qué formatos de archivo se aceptan?",
+          "answer": "Tablix acepta archivos CSV y XLSX (Excel). Puedes subir hasta 3 archivos a la vez en el plan Free y hasta 15 en Pro."
+        }
+      }
+    }
   },
   "cookieConsent": {
     "title": "Cookies",
