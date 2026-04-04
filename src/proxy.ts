@@ -57,6 +57,7 @@ export function proxy(request: NextRequest) {
     "font-src 'self' data:",
     `connect-src 'self' ${isDev ? 'ws://localhost:* ws://127.0.0.1:* ws://0.0.0.0:* ' : ''}https://vercel.live https://*.vercel-insights.com https://*.vercel-scripts.com https://*.ingest.sentry.io`,
     "worker-src 'self'",
+    "frame-src 'self' https://vercel.live",
     "frame-ancestors 'self'",
     "base-uri 'self'",
     "form-action 'self'",
