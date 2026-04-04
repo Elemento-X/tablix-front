@@ -5,10 +5,7 @@ interface GridBackgroundProps {
   className?: string
 }
 
-export function GridBackground({
-  active = false,
-  className,
-}: GridBackgroundProps) {
+export function GridBackground({ active = false, className }: GridBackgroundProps) {
   return (
     <div
       aria-hidden="true"
@@ -23,10 +20,8 @@ export function GridBackground({
           `linear-gradient(to bottom, ${active ? '#14b8a6' : 'currentColor'} 1px, transparent 1px)`,
         ].join(', '),
         backgroundSize: '24px 24px',
-        maskImage:
-          'radial-gradient(ellipse at center, black 30%, transparent 80%)',
-        WebkitMaskImage:
-          'radial-gradient(ellipse at center, black 30%, transparent 80%)',
+        maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)',
+        WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)',
       }}
     />
   )

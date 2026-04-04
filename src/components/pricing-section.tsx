@@ -54,10 +54,7 @@ export function PricingSection({
   const proPrice = getProPrice()
 
   return (
-    <Tag
-      id={id}
-      className={`mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-20 ${className}`}
-    >
+    <Tag id={id} className={`mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-20 ${className}`}>
       <div className="mb-8 text-center sm:mb-12">
         <Heading className="text-foreground text-3xl font-bold sm:text-4xl">
           {t('pricing.title')}
@@ -121,17 +118,13 @@ export function PricingSection({
       <div className="mx-auto grid max-w-5xl gap-6 sm:gap-8 md:grid-cols-3">
         <Card className="border-border transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
           <CardContent className="p-5 sm:p-8">
-            <h3 className="text-foreground text-2xl font-bold">
-              {t('pricing.plans.free.name')}
-            </h3>
+            <h3 className="text-foreground text-2xl font-bold">{t('pricing.plans.free.name')}</h3>
             <div className="mt-4">
               <span className="text-foreground text-3xl font-bold sm:text-4xl">
                 {t('pricing.plans.free.price')}
               </span>
             </div>
-            <p className="text-muted-foreground mt-2 text-sm">
-              {t('pricing.plans.free.period')}
-            </p>
+            <p className="text-muted-foreground mt-2 text-sm">{t('pricing.plans.free.period')}</p>
 
             <div className="mt-8 space-y-3">
               <div className="flex items-start gap-3">
@@ -159,11 +152,7 @@ export function PricingSection({
             </p>
 
             <Link href="/upload">
-              <Button
-                variant="outline"
-                className="mt-8 w-full bg-transparent"
-                size="lg"
-              >
+              <Button variant="outline" className="mt-8 w-full bg-transparent" size="lg">
                 {t('pricing.plans.free.cta')}
               </Button>
             </Link>
@@ -177,9 +166,7 @@ export function PricingSection({
             </Badge>
           </div>
           <CardContent className="p-5 sm:p-8">
-            <h3 className="text-foreground text-2xl font-bold">
-              {t('pricing.plans.pro.name')}
-            </h3>
+            <h3 className="text-foreground text-2xl font-bold">{t('pricing.plans.pro.name')}</h3>
             <div className="mt-4">
               <div className="flex items-baseline gap-1">
                 <span className="text-muted-foreground text-sm line-through">
@@ -190,18 +177,14 @@ export function PricingSection({
                 <span className="text-foreground text-3xl font-bold sm:text-4xl">
                   {t('proPricing.currencySymbol')} {proPrice.price}
                 </span>
-                <span className="text-muted-foreground">
-                  /{t('pricing.plans.pro.period')}
-                </span>
+                <span className="text-muted-foreground">/{t('pricing.plans.pro.period')}</span>
               </div>
             </div>
             <p className="mt-2 text-sm font-medium text-teal-700 dark:text-teal-400">
               {t('pricing.plans.pro.launchPrice')}
             </p>
             {billingPeriod !== 'monthly' && (
-              <p className="text-muted-foreground mt-1 text-xs">
-                {proPrice.total}
-              </p>
+              <p className="text-muted-foreground mt-1 text-xs">{proPrice.total}</p>
             )}
 
             <div className="mt-8 space-y-3">
@@ -243,12 +226,7 @@ export function PricingSection({
               </div>
             </div>
 
-            <Button
-              type="button"
-              variant="brand"
-              className="mt-8 h-12 w-full"
-              size="lg"
-            >
+            <Button type="button" variant="brand" className="mt-8 h-12 w-full" size="lg">
               {t('pricing.plans.pro.cta')}
             </Button>
           </CardContent>
@@ -300,11 +278,7 @@ export function PricingSection({
             </p>
 
             <a href={`mailto:${CONTACT_EMAIL}`}>
-              <Button
-                variant="outline"
-                className="mt-8 w-full bg-transparent"
-                size="lg"
-              >
+              <Button variant="outline" className="mt-8 w-full bg-transparent" size="lg">
                 {t('pricing.plans.enterprise.cta')}
               </Button>
             </a>

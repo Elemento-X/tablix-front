@@ -1,11 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import {
-  fetchWithResilience,
-  FetchError,
-  type FetchErrorType,
-} from '@/lib/fetch-client'
+import { fetchWithResilience, FetchError, type FetchErrorType } from '@/lib/fetch-client'
+import { env } from '@/config/env'
 
 export interface UsageInfo {
   plan: 'free' | 'pro' | 'enterprise'
@@ -26,7 +23,7 @@ export interface UsageInfo {
 export function useUsage() {
   const [usage, setUsage] = useState<UsageInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [hasError, setHasError] = useState(false)
   const [errorType, setErrorType] = useState<FetchErrorType | null>(null)
 
   const fetchUsage = async () => {
@@ -34,16 +31,14 @@ export function useUsage() {
       setIsLoading(true)
       const { data } = await fetchWithResilience<UsageInfo>('/api/usage')
       setUsage(data)
-      setError(null)
+      setHasError(false)
       setErrorType(null)
     } catch (err) {
-      if (err instanceof FetchError) {
-        setError(err.message)
-        setErrorType(err.type)
-      } else {
-        setError(err instanceof Error ? err.message : 'Unknown error')
-        setErrorType('unknown')
+      if (env.NODE_ENV !== 'production') {
+        console.error('[useUsage]', err)
       }
+      setHasError(true)
+      setErrorType(err instanceof FetchError ? err.type : 'unknown')
       setUsage(null)
     } finally {
       setIsLoading(false)
@@ -57,7 +52,7 @@ export function useUsage() {
   return {
     usage,
     isLoading,
-    error,
+    hasError,
     errorType,
     refetch: fetchUsage,
   }

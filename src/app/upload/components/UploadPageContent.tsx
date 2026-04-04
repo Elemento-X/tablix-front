@@ -53,8 +53,7 @@ export function UploadPageContent() {
     headingRef.current?.focus()
   }, [step])
 
-  const quotaExhausted =
-    !isLoadingUsage && usage !== null && usage.unifications.remaining <= 0
+  const quotaExhausted = !isLoadingUsage && usage !== null && usage.unifications.remaining <= 0
 
   const stepDirection = step === 'upload' ? 'backward' : 'forward'
 
@@ -96,10 +95,7 @@ export function UploadPageContent() {
         </div>
       </header>
 
-      <main
-        id="main-content"
-        className="relative mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-16"
-      >
+      <main id="main-content" className="relative mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-16">
         <GridBackground />
 
         <StepIndicator currentStep={step} />
@@ -118,20 +114,14 @@ export function UploadPageContent() {
           </p>
         </div>
 
-        {step !== 'result' && (
-          <UsageStatus usage={usage} isLoading={isLoadingUsage} />
-        )}
+        {step !== 'result' && <UsageStatus usage={usage} isLoading={isLoadingUsage} />}
 
         {quotaExhausted && step === 'upload' && (
           <div className="border-destructive/50 bg-destructive/10 mb-6 flex items-start gap-3 rounded-lg border p-4">
             <TriangleAlert className="text-destructive mt-0.5 h-5 w-5 flex-shrink-0" />
             <div>
-              <p className="text-foreground text-sm font-medium">
-                {t('quotaGate.title')}
-              </p>
-              <p className="text-muted-foreground mt-1 text-sm">
-                {t('quotaGate.description')}
-              </p>
+              <p className="text-foreground text-sm font-medium">{t('quotaGate.title')}</p>
+              <p className="text-muted-foreground mt-1 text-sm">{t('quotaGate.description')}</p>
             </div>
           </div>
         )}
@@ -164,11 +154,7 @@ export function UploadPageContent() {
               onStartOver={handleStartOver}
             />
           ) : resultData ? (
-            <ResultStep
-              resultData={resultData}
-              usage={usage}
-              onStartOver={handleStartOver}
-            />
+            <ResultStep resultData={resultData} usage={usage} onStartOver={handleStartOver} />
           ) : null}
         </StepTransition>
       </main>

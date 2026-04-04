@@ -5,7 +5,7 @@
   "scripts": {
     "build": "npm run lint && next build",
     "dev": "next dev",
-    "lint": "eslint src --ext .ts,tsx --fix",
+    "lint": "eslint src e2e --fix",
     "start": "next start",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -42,7 +42,7 @@
   "devDependencies": {
     "@edge-runtime/jest-environment": "^4.0.0",
     "@playwright/test": "^1.59.1",
-    "@rocketseat/eslint-config": "^2.2.2",
+    "@rocketseat/eslint-config": "^3.0.12",
     "@tailwindcss/postcss": "^4.1.9",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -52,7 +52,9 @@
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^8.57.1",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
     "postcss": "^8.5",

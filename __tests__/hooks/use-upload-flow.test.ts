@@ -247,7 +247,7 @@ describe('useUploadFlow', () => {
       })
 
       expect(result.current.files).toHaveLength(0)
-      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('Invalid extension'))
+      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('errors.fileValidation'))
     })
 
     it('rejects files failing content validation', async () => {
@@ -262,7 +262,9 @@ describe('useUploadFlow', () => {
       })
 
       expect(result.current.files).toHaveLength(0)
-      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('Zip bomb detected'))
+      expect(mockToast.error).toHaveBeenCalledWith(
+        expect.stringContaining('errors.fileContentValidation'),
+      )
     })
 
     it('shows plural message when multiple files added', async () => {
@@ -328,10 +330,16 @@ describe('useUploadFlow', () => {
       }
       const { result } = renderHook(() => useUploadFlow())
 
-      act(() => { result.current.handleToggleColumn('A') })
-      act(() => { result.current.handleToggleColumn('B') })
+      act(() => {
+        result.current.handleToggleColumn('A')
+      })
+      act(() => {
+        result.current.handleToggleColumn('B')
+      })
       // At limit — adding C should be blocked
-      act(() => { result.current.handleToggleColumn('C') })
+      act(() => {
+        result.current.handleToggleColumn('C')
+      })
 
       expect(result.current.selectedColumns).toEqual(['A', 'B'])
       expect(mockToast.error).toHaveBeenCalledWith(
@@ -346,10 +354,16 @@ describe('useUploadFlow', () => {
       }
       const { result } = renderHook(() => useUploadFlow())
 
-      act(() => { result.current.handleToggleColumn('A') })
-      act(() => { result.current.handleToggleColumn('B') })
+      act(() => {
+        result.current.handleToggleColumn('A')
+      })
+      act(() => {
+        result.current.handleToggleColumn('B')
+      })
       // Remove one — should succeed
-      act(() => { result.current.handleToggleColumn('A') })
+      act(() => {
+        result.current.handleToggleColumn('A')
+      })
 
       expect(result.current.selectedColumns).toEqual(['B'])
       // No error toast for the removal
@@ -362,11 +376,19 @@ describe('useUploadFlow', () => {
       usageOverride = null
       const { result } = renderHook(() => useUploadFlow())
 
-      act(() => { result.current.handleToggleColumn('A') })
-      act(() => { result.current.handleToggleColumn('B') })
-      act(() => { result.current.handleToggleColumn('C') })
+      act(() => {
+        result.current.handleToggleColumn('A')
+      })
+      act(() => {
+        result.current.handleToggleColumn('B')
+      })
+      act(() => {
+        result.current.handleToggleColumn('C')
+      })
       // At fallback limit of 3 — adding D should be blocked
-      act(() => { result.current.handleToggleColumn('D') })
+      act(() => {
+        result.current.handleToggleColumn('D')
+      })
 
       expect(result.current.selectedColumns).toHaveLength(3)
       expect(mockToast.error).toHaveBeenCalledWith(
@@ -434,8 +456,12 @@ describe('useUploadFlow', () => {
         await result.current.handleUpload()
       })
 
-      act(() => { result.current.handleDeselectAll() })
-      act(() => { result.current.handleSelectAll() })
+      act(() => {
+        result.current.handleDeselectAll()
+      })
+      act(() => {
+        result.current.handleSelectAll()
+      })
 
       expect(result.current.selectedColumns).toEqual(['A', 'B'])
       expect(result.current.selectedColumns).toHaveLength(2)
@@ -462,8 +488,12 @@ describe('useUploadFlow', () => {
         await result.current.handleUpload()
       })
 
-      act(() => { result.current.handleDeselectAll() })
-      act(() => { result.current.handleSelectAll() })
+      act(() => {
+        result.current.handleDeselectAll()
+      })
+      act(() => {
+        result.current.handleSelectAll()
+      })
 
       expect(result.current.selectedColumns).toHaveLength(3)
     })
@@ -1134,7 +1164,7 @@ describe('useUploadFlow', () => {
         await result.current.handleFilesAccepted([createFile('test.csv')])
       })
 
-      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('upload.error'))
+      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('errors.fileValidation'))
     })
 
     it('handles content validation with no error message', async () => {
@@ -1145,7 +1175,9 @@ describe('useUploadFlow', () => {
         await result.current.handleFilesAccepted([createFile('test.csv')])
       })
 
-      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('upload.error'))
+      expect(mockToast.error).toHaveBeenCalledWith(
+        expect.stringContaining('errors.fileContentValidation'),
+      )
     })
 
     it('handles single file parsed success message', async () => {
@@ -1526,7 +1558,7 @@ describe('useUploadFlow', () => {
           })
         }
         // Capture headers for /api/process
-        capturedHeaders.push(opts?.headers as Record<string, string> ?? {})
+        capturedHeaders.push((opts?.headers as Record<string, string>) ?? {})
         return Promise.resolve({
           ok: true,
           status: 200,
@@ -1554,13 +1586,81 @@ describe('useUploadFlow', () => {
         expect(processHeaders['X-CSRF-Token']).toBe('test-csrf-value')
       }
       // Either the token was sent or the fetch was called — verify fetch was called
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/process',
-        expect.anything(),
-      )
+      expect(global.fetch).toHaveBeenCalledWith('/api/process', expect.anything())
 
       // Clean up cookie
       document.cookie = 'csrf-token=; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    })
+
+    // Lines 236-255: toastFetchError branches for safe parse error messages
+    it('maps rowLimit parse error to parseRowLimit i18n key', async () => {
+      mockParseFile.mockRejectedValue({
+        message: 'File exceeds row limit: 501 rows (max 500 for Free plan)',
+        code: 'PARSE_ERROR',
+      })
+      const { result } = renderHook(() => useUploadFlow())
+
+      await act(async () => {
+        await result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await result.current.handleUpload()
+      })
+
+      expect(mockToast.error).toHaveBeenCalledWith(
+        expect.stringContaining('errors.parseRowLimit'),
+      )
+    })
+
+    it('maps noColumns parse error to parseNoColumns i18n key', async () => {
+      mockParseFile.mockRejectedValue({
+        message: 'No columns found in first row',
+        code: 'PARSE_ERROR',
+      })
+      const { result } = renderHook(() => useUploadFlow())
+
+      await act(async () => {
+        await result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await result.current.handleUpload()
+      })
+
+      expect(mockToast.error).toHaveBeenCalledWith('errors.parseNoColumns')
+    })
+
+    it('maps noSheets parse error to parseNoSheets i18n key', async () => {
+      mockParseFile.mockRejectedValue({
+        message: 'No sheets found in workbook',
+        code: 'PARSE_ERROR',
+      })
+      const { result } = renderHook(() => useUploadFlow())
+
+      await act(async () => {
+        await result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await result.current.handleUpload()
+      })
+
+      expect(mockToast.error).toHaveBeenCalledWith('errors.parseNoSheets')
+    })
+
+    it('maps empty spreadsheet parse error to parseEmpty i18n key', async () => {
+      mockParseFile.mockRejectedValue({
+        message: 'Empty spreadsheet',
+        code: 'PARSE_ERROR',
+      })
+      const { result } = renderHook(() => useUploadFlow())
+
+      await act(async () => {
+        await result.current.handleFilesAccepted([createFile('test.csv')])
+      })
+      await act(async () => {
+        await result.current.handleUpload()
+      })
+
+      expect(mockToast.error).toHaveBeenCalledWith('errors.parseEmpty')
     })
 
     // Branch coverage: usage === null during handleProcess (line 189: usage?.plan ?? 'free')

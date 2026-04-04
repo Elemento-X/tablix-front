@@ -25,9 +25,7 @@ export default async function OGImage() {
   const cookieStore = await cookies()
   const stored = cookieStore.get('tablix-locale')?.value
   const locale: Locale =
-    stored && locales.includes(stored as Locale)
-      ? (stored as Locale)
-      : defaultLocale
+    stored && locales.includes(stored as Locale) ? (stored as Locale) : defaultLocale
 
   const t = messages[locale]
 
@@ -40,8 +38,7 @@ export default async function OGImage() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background:
-          'linear-gradient(135deg, #1c1917 0%, #292524 50%, #1c1917 100%)',
+        background: 'linear-gradient(135deg, #1c1917 0%, #292524 50%, #1c1917 100%)',
         fontFamily: 'system-ui, sans-serif',
       }}
     >
@@ -70,8 +67,7 @@ export default async function OGImage() {
           right: 0,
           height: '4px',
           display: 'flex',
-          background:
-            'linear-gradient(90deg, transparent 0%, #14b8a6 50%, transparent 100%)',
+          background: 'linear-gradient(90deg, transparent 0%, #14b8a6 50%, transparent 100%)',
         }}
       />
 

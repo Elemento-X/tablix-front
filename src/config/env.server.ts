@@ -11,9 +11,7 @@ import { z } from 'zod'
  */
 const serverEnvSchema = z
   .object({
-    NODE_ENV: z
-      .enum(['production', 'development', 'test'])
-      .default('development'),
+    NODE_ENV: z.enum(['production', 'development', 'test']).default('development'),
 
     // Redis — required in production (rate limiting is ineffective without it in serverless)
     UPSTASH_REDIS_REST_URL: z.string().url().optional(),
@@ -30,8 +28,7 @@ const serverEnvSchema = z
       data.NODE_ENV !== 'production' ||
       (!!data.UPSTASH_REDIS_REST_URL && !!data.UPSTASH_REDIS_REST_TOKEN),
     {
-      message:
-        'UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required in production',
+      message: 'UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required in production',
     },
   )
   .refine(

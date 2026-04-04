@@ -8,9 +8,7 @@ interface DropdownMenuContextValue {
   setOpen: (open: boolean) => void
 }
 
-const DropdownMenuContext = React.createContext<
-  DropdownMenuContextValue | undefined
->(undefined)
+const DropdownMenuContext = React.createContext<DropdownMenuContextValue | undefined>(undefined)
 
 function useDropdownMenu() {
   const context = React.useContext(DropdownMenuContext)
@@ -53,22 +51,19 @@ function DropdownMenuTrigger({
   const { open, setOpen } = useDropdownMenu()
 
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(
-      children as React.ReactElement<Record<string, unknown>>,
-      {
-        onClick: (e: React.MouseEvent) => {
-          setOpen(!open)
-          const childOnClick = (
-            children as React.ReactElement<{
-              onClick?: (e: React.MouseEvent) => void
-            }>
-          ).props.onClick
-          if (childOnClick) childOnClick(e)
-        },
-        'aria-expanded': open,
-        'data-state': open ? 'open' : 'closed',
+    return React.cloneElement(children as React.ReactElement<Record<string, unknown>>, {
+      onClick: (e: React.MouseEvent) => {
+        setOpen(!open)
+        const childOnClick = (
+          children as React.ReactElement<{
+            onClick?: (e: React.MouseEvent) => void
+          }>
+        ).props.onClick
+        if (childOnClick) childOnClick(e)
       },
-    )
+      'aria-expanded': open,
+      'data-state': open ? 'open' : 'closed',
+    })
   }
 
   return (
@@ -99,10 +94,7 @@ function DropdownMenuContent({
 
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        contentRef.current &&
-        !contentRef.current.contains(e.target as Node)
-      ) {
+      if (contentRef.current && !contentRef.current.contains(e.target as Node)) {
         const trigger = contentRef.current.previousElementSibling
         if (trigger && !trigger.contains(e.target as Node)) {
           setOpen(false)
@@ -142,11 +134,7 @@ function DropdownMenuContent({
   )
 }
 
-function DropdownMenuItem({
-  className,
-  onClick,
-  ...props
-}: React.ComponentProps<'div'>) {
+function DropdownMenuItem({ className, onClick, ...props }: React.ComponentProps<'div'>) {
   const { setOpen } = useDropdownMenu()
 
   return (
@@ -165,10 +153,7 @@ function DropdownMenuItem({
   )
 }
 
-function DropdownMenuSeparator({
-  className,
-  ...props
-}: React.ComponentProps<'div'>) {
+function DropdownMenuSeparator({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="dropdown-menu-separator"
@@ -178,10 +163,7 @@ function DropdownMenuSeparator({
   )
 }
 
-function DropdownMenuLabel({
-  className,
-  ...props
-}: React.ComponentProps<'div'>) {
+function DropdownMenuLabel({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="dropdown-menu-label"

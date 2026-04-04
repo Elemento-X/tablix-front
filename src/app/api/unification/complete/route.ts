@@ -2,12 +2,10 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { atomicIncrementUnification } from '@/lib/usage-tracker'
 import { setFingerprintCookie, getUserFingerprint } from '@/lib/fingerprint'
 import { consumeUnificationToken } from '@/lib/security/unification-token'
-import {
-  validateContentType,
-  readBodyWithLimit,
-} from '@/lib/security/validation-schemas'
+import { validateContentType, readBodyWithLimit } from '@/lib/security/validation-schemas'
 import { rateLimiters } from '@/lib/security/rate-limit'
 import { audit } from '@/lib/audit-logger'
+import { env } from '@/config/env'
 
 /**
  * POST /api/unification/complete
@@ -37,10 +35,7 @@ export async function POST(request: NextRequest) {
     // Validate Content-Type
     const contentTypeCheck = validateContentType(request, 'json')
     if (!contentTypeCheck.valid) {
-      return NextResponse.json(
-        { error: contentTypeCheck.error },
-        { status: 415 },
-      )
+      return NextResponse.json({ error: contentTypeCheck.error }, { status: 415 })
     }
 
     // Read body with streaming byte limit (Content-Length is untrusted)
@@ -58,18 +53,12 @@ export async function POST(request: NextRequest) {
       const text = new TextDecoder().decode(bodyResult.body)
       body = JSON.parse(text)
     } catch {
-      return NextResponse.json(
-        { error: 'Invalid request body' },
-        { status: 400 },
-      )
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
 
     // Validate one-time token (must come from /api/preview)
-    if (!body.token) {
-      return NextResponse.json(
-        { error: 'Missing unification token' },
-        { status: 400 },
-      )
+    if (!body.token || typeof body.token !== 'string') {
+      return NextResponse.json({ error: 'Missing unification token' }, { status: 400 })
     }
 
     const tokenValid = await consumeUnificationToken(body.token, fingerprint)
@@ -79,10 +68,7 @@ export async function POST(request: NextRequest) {
         fingerprint,
         detail: 'unification token',
       })
-      return NextResponse.json(
-        { error: 'Invalid or expired unification token' },
-        { status: 403 },
-      )
+      return NextResponse.json({ error: 'Invalid or expired unification token' }, { status: 403 })
     }
 
     // Atomic check + increment (no TOCTOU race condition)
@@ -126,13 +112,12 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error(
-      '[Unification Complete API] Error:',
-      error instanceof Error ? error.message : 'Unknown error',
-    )
-    return NextResponse.json(
-      { error: 'Failed to record unification' },
-      { status: 500 },
-    )
+    if (env.NODE_ENV !== 'production') {
+      console.error(
+        '[Unification Complete API] Error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      )
+    }
+    return NextResponse.json({ error: 'Failed to record unification' }, { status: 500 })
   }
 }

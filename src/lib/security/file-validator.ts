@@ -28,9 +28,7 @@ export function validateFile(file: File): ValidationResult {
 
   // Check file extension
   const fileName = file.name.toLowerCase()
-  const hasValidExtension = ALLOWED_EXTENSIONS.some((ext) =>
-    fileName.endsWith(ext),
-  )
+  const hasValidExtension = ALLOWED_EXTENSIONS.some((ext) => fileName.endsWith(ext))
 
   if (!hasValidExtension) {
     return {
@@ -98,19 +96,14 @@ function containsSuspiciousPatterns(fileName: string): boolean {
   return suspiciousPatterns.some((pattern) => pattern.test(fileName))
 }
 
-export async function validateFileContent(
-  file: File,
-): Promise<ValidationResult> {
+export async function validateFileContent(file: File): Promise<ValidationResult> {
   try {
     // Read first few bytes to check file signature (magic numbers)
     const buffer = await file.slice(0, 8).arrayBuffer()
     const bytes = new Uint8Array(buffer)
 
     // Check for ZIP signature (XLSX files are ZIP archives)
-    const isZip =
-      bytes[0] === 0x50 &&
-      bytes[1] === 0x4b &&
-      (bytes[2] === 0x03 || bytes[2] === 0x05)
+    const isZip = bytes[0] === 0x50 && bytes[1] === 0x4b && (bytes[2] === 0x03 || bytes[2] === 0x05)
 
     // Check for Microsoft Compound Document signature (XLS files)
     const isCDF =
@@ -126,10 +119,8 @@ export async function validateFileContent(
     // Check for CSV/plain text
     // If file starts with a BOM, treat as valid text (UTF-8 or UTF-16)
     const hasUtf16BOM =
-      (bytes[0] === 0xff && bytes[1] === 0xfe) ||
-      (bytes[0] === 0xfe && bytes[1] === 0xff)
-    const hasUtf8BOM =
-      bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf
+      (bytes[0] === 0xff && bytes[1] === 0xfe) || (bytes[0] === 0xfe && bytes[1] === 0xff)
+    const hasUtf8BOM = bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf
 
     const isText =
       hasUtf16BOM ||
@@ -160,12 +151,7 @@ export async function validateFileContent(
 
     if (fileName.endsWith('.csv')) {
       // Reject PDF files disguised as CSV (%PDF magic bytes are printable ASCII)
-      if (
-        bytes[0] === 0x25 &&
-        bytes[1] === 0x50 &&
-        bytes[2] === 0x44 &&
-        bytes[3] === 0x46
-      ) {
+      if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) {
         return {
           valid: false,
           error: 'File appears to be a PDF, not a CSV',
@@ -189,7 +175,7 @@ export async function validateFileContent(
     }
 
     return { valid: true }
-  } catch (error) {
+  } catch (_error) {
     return { valid: false, error: 'Failed to validate file content' }
   }
 }
@@ -198,17 +184,16 @@ const MAX_COMPRESSION_RATIO = 100 // Reject if uncompressed/compressed > 100:1
 
 async function checkZipCompressionRatio(file: File): Promise<ValidationResult> {
   try {
-    const buffer = await file.arrayBuffer()
+    // Only read the tail of the file — EOCD lives in the last 65,557 bytes
+    const tailSize = Math.min(file.size, 65558)
+    const tailOffset = file.size - tailSize
+    const buffer = await file.slice(tailOffset).arrayBuffer()
     const view = new DataView(buffer)
 
     // Find End of Central Directory record (EOCD)
     // EOCD signature: 0x06054b50
     let eocdOffset = -1
-    for (
-      let i = buffer.byteLength - 22;
-      i >= 0 && i >= buffer.byteLength - 65557;
-      i--
-    ) {
+    for (let i = buffer.byteLength - 22; i >= 0 && i >= buffer.byteLength - 65557; i--) {
       if (view.getUint32(i, true) === 0x06054b50) {
         eocdOffset = i
         break
@@ -223,12 +208,14 @@ async function checkZipCompressionRatio(file: File): Promise<ValidationResult> {
       }
     }
 
-    // Read central directory offset and size from EOCD
-    const cdOffset = view.getUint32(eocdOffset + 16, true)
+    // Read central directory offset and size from EOCD (absolute file offsets)
+    const cdAbsOffset = view.getUint32(eocdOffset + 16, true)
     const cdSize = view.getUint32(eocdOffset + 12, true)
 
-    if (cdOffset + cdSize > buffer.byteLength) {
-      // Corrupted central directory — reject (fail-closed)
+    // Convert absolute file offset to buffer-relative offset
+    const cdOffset = cdAbsOffset - tailOffset
+    if (cdOffset < 0 || cdOffset + cdSize > buffer.byteLength) {
+      // Central directory outside our tail buffer or corrupted — reject (fail-closed)
       return {
         valid: false,
         error: 'Invalid ZIP structure: corrupted central directory',

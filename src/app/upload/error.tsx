@@ -36,14 +36,10 @@ export default function UploadError({
 
       <div>
         <h2 className="text-foreground text-xl font-semibold">
-          {isOffline
-            ? t('errors.offlineShort')
-            : t('errorBoundary.uploadTitle')}
+          {isOffline ? t('errors.offlineShort') : t('errorBoundary.uploadTitle')}
         </h2>
         <p className="text-muted-foreground mt-2 max-w-md text-sm">
-          {isOffline
-            ? t('errors.offline')
-            : t('errorBoundary.uploadDescription')}
+          {isOffline ? t('errors.offline') : t('errorBoundary.uploadDescription')}
         </p>
       </div>
 

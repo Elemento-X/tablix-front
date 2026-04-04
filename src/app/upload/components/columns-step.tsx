@@ -61,9 +61,7 @@ export function ColumnsStep({
   }
 
   const processingLabel =
-    isProcessing && processingPhase
-      ? t(PHASE_LABELS[processingPhase])
-      : t('upload.processing')
+    isProcessing && processingPhase ? t(PHASE_LABELS[processingPhase]) : t('upload.processing')
 
   return (
     <Card className="border-border">
@@ -72,9 +70,7 @@ export function ColumnsStep({
           {showTip && (
             <div className="flex w-full items-start gap-3 rounded-lg border border-teal-200 bg-teal-50/50 p-3 dark:border-teal-800 dark:bg-teal-950/20">
               <Lightbulb className="mt-0.5 h-4 w-4 flex-shrink-0 text-teal-700 dark:text-teal-400" />
-              <p className="text-foreground flex-1 text-sm">
-                {t('onboarding.tipColumns')}
-              </p>
+              <p className="text-foreground flex-1 text-sm">{t('onboarding.tipColumns')}</p>
               <button
                 type="button"
                 onClick={dismissTip}
@@ -91,12 +87,13 @@ export function ColumnsStep({
                 {t('columns.detected')} ({detectedColumns.length})
               </h3>
               <p className="text-muted-foreground mt-1 text-sm">
-                {selectedColumns.length} {t('columns.of')}{' '}
-                {detectedColumns.length} {t('columns.selected')}
+                {selectedColumns.length} {t('columns.of')} {detectedColumns.length}{' '}
+                {t('columns.selected')}
                 {usage && ` (${t('columns.max')} ${usage.limits.maxColumns})`}
               </p>
             </div>
             <Button
+              data-testid="btn-start-over"
               variant="outline"
               size="sm"
               onClick={onStartOver}
@@ -143,10 +140,7 @@ export function ColumnsStep({
 
           {previewRows.length > 0 && selectedColumns.length > 0 && (
             <div className="overflow-x-auto rounded-lg border">
-              <table
-                className="w-full text-left text-xs"
-                aria-label={t('columns.previewHint')}
-              >
+              <table className="w-full text-left text-xs" aria-label={t('columns.previewHint')}>
                 <thead>
                   <tr className="bg-muted">
                     {selectedColumns.map((col) => (
@@ -183,6 +177,7 @@ export function ColumnsStep({
 
           <div className="flex gap-3 pt-4">
             <Button
+              data-testid="btn-deselect-all"
               variant="outline"
               onClick={onDeselectAll}
               className="flex-1"
@@ -191,15 +186,13 @@ export function ColumnsStep({
               {t('columns.deselectAll')}
             </Button>
             <Button
+              data-testid="btn-select-all"
               variant="outline"
               onClick={onSelectAll}
               className="flex-1"
               disabled={
                 selectedColumns.length >=
-                  Math.min(
-                    detectedColumns.length,
-                    usage?.limits.maxColumns ?? 3,
-                  ) || isProcessing
+                  Math.min(detectedColumns.length, usage?.limits.maxColumns ?? 3) || isProcessing
               }
             >
               {t('columns.selectAll')}

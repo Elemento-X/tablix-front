@@ -9,11 +9,7 @@ const messages: Record<Locale, Record<string, unknown>> = { 'pt-BR': ptBR, en }
  * Resolve uma chave de i18n para o texto localizado.
  * Suporta interpolação: t('pt-BR', 'messages.tooManyFiles', { max: '3', plan: 'Free' })
  */
-export function t(
-  locale: Locale,
-  key: string,
-  values?: Record<string, string | number>,
-): string {
+export function t(locale: Locale, key: string, values?: Record<string, string | number>): string {
   const parts = key.split('.')
   let result: unknown = messages[locale]
 

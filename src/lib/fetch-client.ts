@@ -7,13 +7,7 @@
 
 // ── Error types ──────────────────────────────────────────────────────────────
 
-export type FetchErrorType =
-  | 'offline'
-  | 'timeout'
-  | 'server'
-  | 'rate-limit'
-  | 'client'
-  | 'unknown'
+export type FetchErrorType = 'offline' | 'timeout' | 'server' | 'rate-limit' | 'client' | 'unknown'
 
 export class FetchError extends Error {
   readonly type: FetchErrorType
@@ -78,18 +72,13 @@ export interface ResilientFetchOptions extends Omit<RequestInit, 'signal'> {
 
 export function getCsrfToken(): string | null {
   if (typeof document === 'undefined') return null
-  const match = document.cookie
-    .split('; ')
-    .find((row) => row.startsWith('__csrf='))
+  const match = document.cookie.split('; ').find((row) => row.startsWith('__csrf='))
   return match ? match.split('=')[1] : null
 }
 
 // ── Classify errors ──────────────────────────────────────────────────────────
 
-function classifyResponseError(
-  status: number,
-  retryAfter: number | null,
-): FetchError {
+function classifyResponseError(status: number, retryAfter: number | null): FetchError {
   if (status === 429) {
     return new FetchError('rate-limit', 'Too many requests', status, retryAfter)
   }
@@ -109,19 +98,12 @@ function classifyNetworkError(err: unknown): FetchError {
   if (err instanceof TypeError) {
     return new FetchError('offline', 'Network request failed')
   }
-  return new FetchError(
-    'unknown',
-    err instanceof Error ? err.message : 'Unknown error',
-  )
+  return new FetchError('unknown', err instanceof Error ? err.message : 'Unknown error')
 }
 
 // ── Retry logic ──────────────────────────────────────────────────────────────
 
-function shouldRetry(
-  error: FetchError,
-  method: string,
-  idempotent: boolean,
-): boolean {
+function shouldRetry(error: FetchError, method: string, idempotent: boolean): boolean {
   const isRetryableMethod = method === 'GET' || method === 'HEAD' || idempotent
 
   if (!isRetryableMethod) return false
@@ -129,11 +111,7 @@ function shouldRetry(
   // Never retry rate-limited requests — respect the server's throttling
   if (error.type === 'rate-limit') return false
 
-  return (
-    error.type === 'offline' ||
-    error.type === 'timeout' ||
-    error.type === 'server'
-  )
+  return error.type === 'offline' || error.type === 'timeout' || error.type === 'server'
 }
 
 function getRetryDelay(attempt: number, config: RetryConfig): number {
@@ -173,12 +151,7 @@ export async function fetchWithResilience<T = unknown>(
 
   // Inject CSRF token for state-changing requests
   const headers = new Headers(fetchInit.headers)
-  if (
-    !skipCsrf &&
-    method !== 'GET' &&
-    method !== 'HEAD' &&
-    method !== 'OPTIONS'
-  ) {
+  if (!skipCsrf && method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
     const csrfToken = getCsrfToken()
     if (csrfToken) {
       headers.set('X-CSRF-Token', csrfToken)
@@ -213,16 +186,11 @@ export async function fetchWithResilience<T = unknown>(
 
       if (!response.ok) {
         const retryAfterHeader = response.headers.get('Retry-After')
-        const retryAfter = retryAfterHeader
-          ? parseInt(retryAfterHeader, 10) * 1000
-          : null
+        const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) * 1000 : null
 
         const error = classifyResponseError(response.status, retryAfter)
 
-        if (
-          attempt < retryConfig.maxAttempts - 1 &&
-          shouldRetry(error, method, idempotent)
-        ) {
+        if (attempt < retryConfig.maxAttempts - 1 && shouldRetry(error, method, idempotent)) {
           lastError = error
           continue
         }
@@ -236,10 +204,7 @@ export async function fetchWithResilience<T = unknown>(
       clearTimeout(timeoutId)
 
       if (err instanceof FetchError) {
-        if (
-          attempt < retryConfig.maxAttempts - 1 &&
-          shouldRetry(err, method, idempotent)
-        ) {
+        if (attempt < retryConfig.maxAttempts - 1 && shouldRetry(err, method, idempotent)) {
           lastError = err
           continue
         }
@@ -248,10 +213,7 @@ export async function fetchWithResilience<T = unknown>(
 
       const classified = classifyNetworkError(err)
 
-      if (
-        attempt < retryConfig.maxAttempts - 1 &&
-        shouldRetry(classified, method, idempotent)
-      ) {
+      if (attempt < retryConfig.maxAttempts - 1 && shouldRetry(classified, method, idempotent)) {
         lastError = classified
         continue
       }

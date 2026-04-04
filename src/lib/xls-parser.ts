@@ -22,9 +22,7 @@ const WORKER_TIMEOUT_MS = 30_000
  */
 export function parseXls(buffer: ArrayBuffer): Promise<XlsParseResult> {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(
-      new URL('./workers/xls-parser.worker.ts', import.meta.url),
-    )
+    const worker = new Worker(new URL('./workers/xls-parser.worker.ts', import.meta.url))
 
     let settled = false
 
@@ -40,9 +38,7 @@ export function parseXls(buffer: ArrayBuffer): Promise<XlsParseResult> {
       }
     }, WORKER_TIMEOUT_MS)
 
-    worker.onmessage = (
-      event: MessageEvent<XlsParseResult | { error: string }>,
-    ) => {
+    worker.onmessage = (event: MessageEvent<XlsParseResult | { error: string }>) => {
       if (settled) return
       settled = true
       clearTimeout(timeoutId)

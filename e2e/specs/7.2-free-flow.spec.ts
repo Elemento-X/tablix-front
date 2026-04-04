@@ -30,10 +30,7 @@ test.describe('7.2 — Free Flow Completo', () => {
     )
   })
 
-  test('single CSV: upload → parse → columns → download', async ({
-    uploadPage,
-    columnsPage,
-  }) => {
+  test('single CSV: upload → parse → columns → download', async ({ uploadPage, columnsPage }) => {
     await uploadPage.goto()
     await uploadPage.uploadFixture('valid-3col-5row.csv')
 
@@ -59,19 +56,14 @@ test.describe('7.2 — Free Flow Completo', () => {
     const parsed = await parseDownloadedXlsx(download)
     expect(parsed.sheetNames.length).toBeGreaterThan(0)
     const sheet = parsed.sheets[parsed.sheetNames[0]]
-    expect(sheet.headers).toEqual(
-      expect.arrayContaining(['ID', 'Nome', 'Email']),
-    )
+    expect(sheet.headers).toEqual(expect.arrayContaining(['ID', 'Nome', 'Email']))
     expect(sheet.rowCount).toBe(5)
 
     // Volta pro step de upload
     await expect(uploadPage.dropzone).toBeVisible({ timeout: 5_000 })
   })
 
-  test('two CSVs with common columns: merge flow', async ({
-    uploadPage,
-    columnsPage,
-  }) => {
+  test('two CSVs with common columns: merge flow', async ({ uploadPage, columnsPage }) => {
     await uploadPage.goto()
     await uploadPage.uploadFixture('valid-common-cols-a.csv')
     await expect(uploadPage.fileItems).toHaveCount(1)
@@ -138,10 +130,7 @@ test.describe('7.2 — Free Flow Completo', () => {
     await expect(afterToggle).toHaveCount(2)
   })
 
-  test('start over resets to upload step', async ({
-    uploadPage,
-    columnsPage,
-  }) => {
+  test('start over resets to upload step', async ({ uploadPage, columnsPage }) => {
     await uploadPage.goto()
     await uploadPage.uploadFixture('valid-3col-5row.csv')
     await uploadPage.clickContinue()

@@ -33,12 +33,9 @@ export default function RootError({
     <html lang="pt-BR">
       <body className="font-sans antialiased">
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
-          <h2 className="text-xl font-semibold text-stone-900">
-            Algo deu errado
-          </h2>
+          <h2 className="text-xl font-semibold text-stone-900">Algo deu errado</h2>
           <p className="max-w-md text-sm text-stone-500">
-            Ocorreu um erro inesperado. Tente novamente ou volte para a página
-            inicial.
+            Ocorreu um erro inesperado. Tente novamente ou volte para a página inicial.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <button

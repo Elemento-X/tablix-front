@@ -21,8 +21,7 @@ const mockExcelJS = {
 jest.mock('@/lib/excel-utils', () => ({
   getExcelJS: jest.fn(() => Promise.resolve(mockExcelJS)),
   worksheetToArray: (...args: unknown[]) => mockWorksheetToArray(...args),
-  worksheetToJsonWithHeaders: (...args: unknown[]) =>
-    mockWorksheetToJsonWithHeaders(...args),
+  worksheetToJsonWithHeaders: (...args: unknown[]) => mockWorksheetToJsonWithHeaders(...args),
 }))
 
 // Mock xls-parser (Web Worker not available in jsdom)
@@ -129,13 +128,13 @@ describe('useFileParser hook', () => {
 
         await act(async () => {
           await expect(result.current.parseFile(file)).rejects.toEqual({
-            message: 'Invalid CSV format',
+            message: 'Parse failed',
             code: 'PARSE_ERROR',
           })
         })
 
         expect(result.current.error).toEqual({
-          message: 'Invalid CSV format',
+          message: 'Parse failed',
           code: 'PARSE_ERROR',
         })
       })
@@ -317,8 +316,7 @@ describe('useFileParser hook', () => {
 
         await act(async () => {
           await expect(result.current.parseFile(file, 'free')).rejects.toEqual({
-            message:
-              'File exceeds row limit: 501 rows (max 500 for Free plan)',
+            message: 'File exceeds row limit: 501 rows (max 500 for Free plan)',
             code: 'PARSE_ERROR',
           })
         })
@@ -336,7 +334,7 @@ describe('useFileParser hook', () => {
 
         await act(async () => {
           await expect(result.current.parseFile(file)).rejects.toEqual({
-            message: 'Worker crashed',
+            message: 'Parse failed',
             code: 'PARSE_ERROR',
           })
         })
@@ -353,7 +351,7 @@ describe('useFileParser hook', () => {
 
         await act(async () => {
           await expect(result.current.parseFile(file)).rejects.toEqual({
-            message: 'Read failed',
+            message: 'Parse failed',
             code: 'PARSE_ERROR',
           })
         })
@@ -405,7 +403,7 @@ describe('useFileParser hook', () => {
 
       await act(async () => {
         await expect(result.current.parseFile(file)).rejects.toEqual({
-          message: 'Server processing failed',
+          message: 'Parse failed',
           code: 'PARSE_ERROR',
         })
       })
@@ -425,16 +423,14 @@ describe('useFileParser hook', () => {
 
       await act(async () => {
         await expect(result.current.parseFile(file)).rejects.toEqual({
-          message: 'Failed to parse file on server',
+          message: 'Parse failed',
           code: 'PARSE_ERROR',
         })
       })
     })
 
     it('should handle network failure', async () => {
-      ;(global.fetch as jest.Mock).mockRejectedValueOnce(
-        new Error('Network error'),
-      )
+      ;(global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'))
 
       const file = new File([''], 'large.csv', { type: 'text/csv' })
       Object.defineProperty(file, 'size', { value: 15 * 1024 * 1024 })
@@ -443,7 +439,7 @@ describe('useFileParser hook', () => {
 
       await act(async () => {
         await expect(result.current.parseFile(file)).rejects.toEqual({
-          message: 'Network error',
+          message: 'Parse failed',
           code: 'PARSE_ERROR',
         })
       })
@@ -618,7 +614,7 @@ describe('useFileParser hook', () => {
         }
       })
 
-      expect(result.current.error?.message).toBe('Unknown parsing error')
+      expect(result.current.error?.message).toBe('Parse failed')
     })
   })
 
@@ -667,10 +663,7 @@ describe('useFileParser hook', () => {
 
     it('should reject XLSX files exceeding free plan row limit', async () => {
       // 502 rows: 1 header + 501 data rows
-      const arrayData = [
-        ['Name'],
-        ...Array.from({ length: 501 }, (_, i) => [`Row${i}`]),
-      ]
+      const arrayData = [['Name'], ...Array.from({ length: 501 }, (_, i) => [`Row${i}`])]
       mockWorksheetToArray.mockReturnValue(arrayData)
 
       const file = new File([''], 'big.xlsx', {
@@ -813,9 +806,7 @@ describe('useFileParser hook', () => {
 
     it('should preserve non-string values (numbers, booleans, null) in preview rows', async () => {
       ;(Papa.parse as jest.Mock).mockReturnValue({
-        data: [
-          { Count: 42, Active: true, Note: null },
-        ],
+        data: [{ Count: 42, Active: true, Note: null }],
         errors: [],
         meta: { fields: ['Count', 'Active', 'Note'] },
       })
