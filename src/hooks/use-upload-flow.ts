@@ -5,30 +5,14 @@ import { toast } from 'sonner'
 import { useUsage, formatFileSize } from '@/hooks/use-usage'
 import { useFileParser } from '@/hooks/use-file-parser'
 import { useLocale } from '@/lib/i18n'
-import {
-  fetchWithResilience,
-  FetchError,
-  getCsrfToken,
-} from '@/lib/fetch-client'
-import {
-  validateFile,
-  validateFileContent,
-  sanitizeFileName,
-} from '@/lib/security'
+import { fetchWithResilience, FetchError, getCsrfToken } from '@/lib/fetch-client'
+import { validateFile, validateFileContent, sanitizeFileName } from '@/lib/security'
 import { env } from '@/config/env'
-import {
-  mergeSpreadsheets,
-  canProcessClientSide,
-  downloadBlob,
-} from '@/lib/spreadsheet-merge'
+import { mergeSpreadsheets, canProcessClientSide, downloadBlob } from '@/lib/spreadsheet-merge'
 
 export type UploadStep = 'upload' | 'columns' | 'result'
 
-export type ProcessingPhase =
-  | 'consuming-quota'
-  | 'merging'
-  | 'generating'
-  | 'downloading'
+export type ProcessingPhase = 'consuming-quota' | 'merging' | 'generating' | 'downloading'
 
 export interface ResultData {
   fileCount: number
@@ -74,8 +58,7 @@ export function useUploadFlow() {
   const [detectedColumns, setDetectedColumns] = useState<string[]>([])
   const [selectedColumns, setSelectedColumns] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
-  const [processingPhase, setProcessingPhase] =
-    useState<ProcessingPhase | null>(null)
+  const [processingPhase, setProcessingPhase] = useState<ProcessingPhase | null>(null)
   const [step, setStep] = useState<UploadStep>('upload')
   const [unificationToken, setUnificationToken] = useState<string | null>(null)
   const [resultData, setResultData] = useState<ResultData | null>(null)
@@ -122,8 +105,7 @@ export function useUploadFlow() {
         continue
       }
 
-      const newTotalSize =
-        currentTotalSize + newFiles.reduce((s, f) => s + f.size, 0) + file.size
+      const newTotalSize = currentTotalSize + newFiles.reduce((s, f) => s + f.size, 0) + file.size
       if (newTotalSize > maxTotalSize) {
         toast.error(
           t('messages.totalSizeExceeded', {
@@ -310,10 +292,7 @@ export function useUploadFlow() {
 
         // /api/process returns a blob, not JSON — use fetch directly with timeout + CSRF
         const processController = new AbortController()
-        const processTimeout = setTimeout(
-          () => processController.abort(),
-          60_000,
-        )
+        const processTimeout = setTimeout(() => processController.abort(), 60_000)
         const csrfHeaders: Record<string, string> = {}
         const csrfToken = getCsrfToken()
         if (csrfToken) csrfHeaders['X-CSRF-Token'] = csrfToken
@@ -350,10 +329,7 @@ export function useUploadFlow() {
           downloadBlob(blob, `tablix-unificado-${timestamp}.xlsx`)
         } catch (processErr) {
           clearTimeout(processTimeout)
-          if (
-            processErr instanceof DOMException &&
-            processErr.name === 'AbortError'
-          ) {
+          if (processErr instanceof DOMException && processErr.name === 'AbortError') {
             toast.error(t('errors.timeout'))
           } else {
             toastFetchError(processErr, 'messages.processFailed')
@@ -426,6 +402,10 @@ export function useUploadFlow() {
         if (i === 0 && result.preview) {
           setPreviewRows(result.preview.slice(0, 3))
         }
+      }
+
+      if (parsingToastId) {
+        toast.dismiss(parsingToastId)
       }
 
       if (usage && totalRowCount > usage.limits.maxRows) {
