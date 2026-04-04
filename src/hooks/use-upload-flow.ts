@@ -219,6 +219,20 @@ export function useUploadFlow() {
     }
   }
 
+  const toastFetchError = (err: unknown, fallbackKey: string) => {
+    if (err instanceof FetchError) {
+      const errorKeyMap: Record<string, string> = {
+        offline: 'errors.offline',
+        timeout: 'errors.timeout',
+        server: 'errors.serverError',
+        'rate-limit': 'errors.rateLimited',
+      }
+      toast.error(t(errorKeyMap[err.type] ?? fallbackKey))
+    } else {
+      toast.error(t(fallbackKey))
+    }
+  }
+
   const handleProcess = async () => {
     if (selectedColumns.length === 0) {
       toast.error(t('messages.selectAtLeastOneColumn'))
