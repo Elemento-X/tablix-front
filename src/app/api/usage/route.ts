@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { getUserUsage } from '@/lib/usage-tracker'
 import { setFingerprintCookie, getUserFingerprint } from '@/lib/fingerprint'
 import { rateLimiters } from '@/lib/security/rate-limit'
+import { env } from '@/config/env'
 
 /**
  * GET /api/usage
@@ -55,13 +56,9 @@ export async function GET(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error(
-      '[Usage API] Error:',
-      error instanceof Error ? error.message : 'Unknown error',
-    )
-    return NextResponse.json(
-      { error: 'Failed to get usage statistics' },
-      { status: 500 },
-    )
+    if (env.NODE_ENV !== 'production') {
+      console.error('[Usage API] Error:', error instanceof Error ? error.message : 'Unknown error')
+    }
+    return NextResponse.json({ error: 'Failed to get usage statistics' }, { status: 500 })
   }
 }

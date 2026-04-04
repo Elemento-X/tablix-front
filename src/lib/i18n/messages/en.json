@@ -125,9 +125,6 @@
     "legal": {
       "title": "Legal & Contact"
     },
-    "contact": {
-      "email": "contact@tablix.me"
-    },
     "nav": {
       "product": "Product navigation",
       "legal": "Legal and contact"
@@ -268,7 +265,15 @@
     "serverError": "Server error. Please try again in a moment.",
     "rateLimited": "Too many attempts. Please wait a moment before trying again.",
     "networkGeneric": "Connection error. Check your internet.",
-    "retryingConnection": "Reconnecting..."
+    "retryingConnection": "Reconnecting...",
+    "parseRowLimit": "File exceeds the limit of {total} rows (max {max} on {plan} plan).",
+    "parseNoColumns": "No columns found in the first row of the file.",
+    "parseNoSheets": "No sheets found in the workbook.",
+    "parseEmpty": "The spreadsheet is empty.",
+    "parseFailed": "Error reading the file. Please check the format is valid.",
+    "parseGeneric": "Error parsing the file: {detail}",
+    "fileValidation": "Invalid file type. Use CSV, XLS or XLSX.",
+    "fileContentValidation": "File content does not match the expected format."
   },
   "dropzone": {
     "dragActive": "Drop the files here...",

@@ -13,9 +13,7 @@ import { z } from 'zod'
  * are NOT included — consumed by the Sentry webpack plugin, not our code.
  */
 const envSchema = z.object({
-  NODE_ENV: z
-    .enum(['production', 'development', 'test'])
-    .default('development'),
+  NODE_ENV: z.enum(['production', 'development', 'test']).default('development'),
 
   // Sentry — public (inlined by Next.js at build time), optional (disabled when missing)
   // Preprocess: empty string → undefined (CI/build may have empty value)

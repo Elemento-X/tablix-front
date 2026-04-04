@@ -21,11 +21,7 @@ interface ResultStepProps {
   onStartOver: () => void
 }
 
-export function ResultStep({
-  resultData,
-  usage,
-  onStartOver,
-}: ResultStepProps) {
+export function ResultStep({ resultData, usage, onStartOver }: ResultStepProps) {
   const { t } = useLocale()
   const isFree = usage?.plan === 'free'
 
@@ -38,9 +34,7 @@ export function ResultStep({
           </div>
 
           <div className="text-center">
-            <h2 className="text-foreground text-xl font-bold sm:text-2xl">
-              {t('result.title')}
-            </h2>
+            <h2 className="text-foreground text-xl font-bold sm:text-2xl">{t('result.title')}</h2>
             <p className="text-muted-foreground mt-2 text-sm sm:text-base">
               {t('result.subtitle')}
             </p>
@@ -96,17 +90,10 @@ export function ResultStep({
             <div className="border-border w-full rounded-lg border bg-teal-50/50 p-4 dark:bg-teal-950/20">
               <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
                 <div className="flex-1">
-                  <p className="text-foreground text-sm font-semibold">
-                    {t('result.upgradePro')}
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    {t('result.upgradeMessage')}
-                  </p>
+                  <p className="text-foreground text-sm font-semibold">{t('result.upgradePro')}</p>
+                  <p className="text-muted-foreground mt-1 text-xs">{t('result.upgradeMessage')}</p>
                 </div>
-                <Link
-                  href="/#pricing"
-                  className={buttonVariants({ variant: 'brand', size: 'sm' })}
-                >
+                <Link href="/#pricing" className={buttonVariants({ variant: 'brand', size: 'sm' })}>
                   {t('result.upgradePro')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
@@ -114,12 +101,7 @@ export function ResultStep({
             </div>
           )}
 
-          <Button
-            variant="outline"
-            onClick={onStartOver}
-            className="h-12 w-full"
-            size="lg"
-          >
+          <Button variant="outline" onClick={onStartOver} className="h-12 w-full" size="lg">
             <RotateCcw className="mr-2 h-4 w-4" />
             {t('result.newUnification')}
           </Button>

@@ -21,10 +21,7 @@ export function LandingHeader() {
     <header className="border-border bg-background/80 sticky top-0 z-50 border-b backdrop-blur-lg">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-8">
-          <Link
-            href="/"
-            className="text-foreground flex items-center gap-2 text-xl font-semibold"
-          >
+          <Link href="/" className="text-foreground flex items-center gap-2 text-xl font-semibold">
             {t('header.brand')}
           </Link>
           <LandingHeaderNav activeSection={activeSection} />

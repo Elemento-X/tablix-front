@@ -127,9 +127,7 @@ async function parseFileData(file: File): Promise<RowData[]> {
  * - Concatenates all rows
  * - Optionally adds watermark for Free plan
  */
-export async function mergeSpreadsheets(
-  options: MergeOptions,
-): Promise<MergeResult> {
+export async function mergeSpreadsheets(options: MergeOptions): Promise<MergeResult> {
   const { files, selectedColumns, addWatermark, plan = 'free' } = options
   const l = { ...DEFAULT_LABELS, ...options.labels }
   const limits = PLAN_LIMITS[plan]
@@ -152,9 +150,7 @@ export async function mergeSpreadsheets(
     for (const row of fileData) {
       // Enforce row limit based on plan
       if (allRows.length >= limits.maxRows) {
-        throw new Error(
-          `Row limit exceeded: max ${limits.maxRows} rows for ${limits.name} plan`,
-        )
+        throw new Error(`Row limit exceeded: max ${limits.maxRows} rows for ${limits.name} plan`)
       }
 
       const filteredRow: RowData = {}
@@ -179,11 +175,7 @@ export async function mergeSpreadsheets(
     ? [...selectedColumns, l.watermarkColumn]
     : selectedColumns
 
-  const workbook = await createWorkbookFromJson(
-    l.sheetName,
-    allRows,
-    columnsWithWatermark,
-  )
+  const workbook = await createWorkbookFromJson(l.sheetName, allRows, columnsWithWatermark)
 
   // Add "About" sheet for Free plan
   if (addWatermark) {
@@ -216,10 +208,7 @@ export async function mergeSpreadsheets(
       },
     ]
 
-    addSheetFromJson(workbook, l.aboutSheetName, aboutData, [
-      l.aboutHeaderInfo,
-      l.aboutHeaderValue,
-    ])
+    addSheetFromJson(workbook, l.aboutSheetName, aboutData, [l.aboutHeaderInfo, l.aboutHeaderValue])
   }
 
   // Generate file
@@ -244,10 +233,7 @@ export async function mergeSpreadsheets(
  * Free plan: always client-side (plan limits guarantee small files).
  * Pro/Enterprise: client-side if total size < 10MB, server-side otherwise.
  */
-export function canProcessClientSide(
-  files: File[],
-  plan: PlanType = 'free',
-): boolean {
+export function canProcessClientSide(files: File[], plan: PlanType = 'free'): boolean {
   const limits = PLAN_LIMITS[plan]
 
   // Free plan: total size is capped at maxTotalSize (1MB), always client-side

@@ -70,10 +70,7 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
       .filter((col) => col.length > 0)
 
     // Extract rows as objects
-    const rows = XLSX.utils.sheet_to_json(firstSheet) as Record<
-      string,
-      unknown
-    >[]
+    const rows = XLSX.utils.sheet_to_json(firstSheet) as Record<string, unknown>[]
 
     const result: WorkerSuccess = {
       columns,
@@ -82,7 +79,7 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
     }
 
     self.postMessage(result)
-  } catch (err) {
+  } catch (_err) {
     const errorMsg: WorkerError = {
       error: 'Failed to parse XLS file',
     }

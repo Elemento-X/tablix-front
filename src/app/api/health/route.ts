@@ -55,9 +55,7 @@ export async function GET(request: NextRequest) {
     checks.redis = 'error'
   }
 
-  const overallStatus = Object.values(checks).every((c) => c === 'ok')
-    ? 'ok'
-    : 'degraded'
+  const overallStatus = Object.values(checks).every((c) => c === 'ok') ? 'ok' : 'degraded'
 
   return NextResponse.json({
     status: overallStatus,

@@ -11,42 +11,22 @@ export function SecurityBadges() {
 
   const badges = [
     {
-      icon: (
-        <Monitor
-          className="h-8 w-8 text-teal-600 dark:text-teal-400"
-          aria-hidden="true"
-        />
-      ),
+      icon: <Monitor className="h-8 w-8 text-teal-600 dark:text-teal-400" aria-hidden="true" />,
       title: t('securityBadges.local.title'),
       subtitle: t('securityBadges.local.subtitle'),
     },
     {
-      icon: (
-        <Trash2
-          className="h-8 w-8 text-teal-600 dark:text-teal-400"
-          aria-hidden="true"
-        />
-      ),
+      icon: <Trash2 className="h-8 w-8 text-teal-600 dark:text-teal-400" aria-hidden="true" />,
       title: t('securityBadges.noStorage.title'),
       subtitle: t('securityBadges.noStorage.subtitle'),
     },
     {
-      icon: (
-        <Lock
-          className="h-8 w-8 text-teal-600 dark:text-teal-400"
-          aria-hidden="true"
-        />
-      ),
+      icon: <Lock className="h-8 w-8 text-teal-600 dark:text-teal-400" aria-hidden="true" />,
       title: t('securityBadges.tls.title'),
       subtitle: t('securityBadges.tls.subtitle'),
     },
     {
-      icon: (
-        <ShieldCheck
-          className="h-8 w-8 text-teal-600 dark:text-teal-400"
-          aria-hidden="true"
-        />
-      ),
+      icon: <ShieldCheck className="h-8 w-8 text-teal-600 dark:text-teal-400" aria-hidden="true" />,
       title: t('securityBadges.validation.title'),
       subtitle: t('securityBadges.validation.subtitle'),
     },
@@ -70,17 +50,10 @@ export function SecurityBadges() {
               })}
         >
           {badges.map((badge) => (
-            <div
-              key={badge.title}
-              className="flex flex-col items-center text-center"
-            >
+            <div key={badge.title} className="flex flex-col items-center text-center">
               {badge.icon}
-              <span className="text-foreground mt-2 text-sm font-medium">
-                {badge.title}
-              </span>
-              <span className="text-muted-foreground mt-0.5 text-xs">
-                {badge.subtitle}
-              </span>
+              <span className="text-foreground mt-2 text-sm font-medium">{badge.title}</span>
+              <span className="text-muted-foreground mt-0.5 text-xs">{badge.subtitle}</span>
             </div>
           ))}
         </motion.div>

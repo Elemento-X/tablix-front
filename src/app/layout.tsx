@@ -5,11 +5,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { headers } from 'next/headers'
 import { Analytics } from '@vercel/analytics/next'
 import { LocaleProvider } from '@/lib/i18n'
-import {
-  getServerLocale,
-  getMessages,
-  toOpenGraphLocale,
-} from '@/lib/i18n/server'
+import { getServerLocale, getMessages, toOpenGraphLocale } from '@/lib/i18n/server'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from 'sonner'
 import { CookieConsent } from '@/components/cookie-consent'
@@ -19,7 +15,7 @@ import { SITE_URL } from '@/lib/constants'
 import './globals.css'
 
 const geistSans = Geist({ subsets: ['latin'] })
-// eslint-disable-next-line camelcase
+
 const geistMono = Geist_Mono({ subsets: ['latin'] })
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -92,15 +88,8 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body
-        className={`${geistSans.className} ${geistMono.className} font-sans antialiased`}
-      >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          nonce={nonce}
-        >
+      <body className={`${geistSans.className} ${geistMono.className} font-sans antialiased`}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem nonce={nonce}>
           <LocaleProvider>
             <SkipLink />
             <OfflineIndicator />

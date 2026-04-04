@@ -13,9 +13,7 @@ interface LandingHeaderMobileProps {
   activeSection: string | null
 }
 
-export function LandingHeaderMobile({
-  activeSection,
-}: LandingHeaderMobileProps) {
+export function LandingHeaderMobile({ activeSection }: LandingHeaderMobileProps) {
   const [open, setOpen] = useState(false)
   const { t } = useLocale()
   const prefersReducedMotion = useReducedMotion()
@@ -174,11 +172,7 @@ export function LandingHeaderMobile({
                         if (!item.href) {
                           e.preventDefault()
                           close()
-                          setTimeout(
-                            () =>
-                              scrollToSection(item.key, prefersReducedMotion),
-                            150,
-                          )
+                          setTimeout(() => scrollToSection(item.key, prefersReducedMotion), 150)
                         } else {
                           close()
                         }

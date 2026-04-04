@@ -49,7 +49,7 @@ export function proxy(request: NextRequest) {
   // unsafe-inline is required for Tailwind/CSS-in-JS; nonce omitted since unsafe-inline overrides it
   const styleSrc = "style-src 'self' 'unsafe-inline'"
 
-  const cspHeader = [
+  const cspDirectives = [
     "default-src 'self'",
     scriptSrc,
     styleSrc,
@@ -57,10 +57,17 @@ export function proxy(request: NextRequest) {
     "font-src 'self' data:",
     `connect-src 'self' ${isDev ? 'ws://localhost:* ws://127.0.0.1:* ws://0.0.0.0:* ' : ''}https://vercel.live https://*.vercel-insights.com https://*.vercel-scripts.com https://*.ingest.sentry.io`,
     "worker-src 'self'",
+    "frame-src 'self' https://vercel.live",
     "frame-ancestors 'self'",
     "base-uri 'self'",
     "form-action 'self'",
-  ].join('; ')
+  ]
+
+  if (!isDev) {
+    cspDirectives.push('upgrade-insecure-requests')
+  }
+
+  const cspHeader = cspDirectives.join('; ')
 
   // Pass nonce via request headers (invisible to browser, accessible in server components)
   const requestHeaders = new Headers(request.headers)
@@ -72,10 +79,7 @@ export function proxy(request: NextRequest) {
 
   // Security Headers
   response.headers.set('X-DNS-Prefetch-Control', 'on')
-  response.headers.set(
-    'Strict-Transport-Security',
-    'max-age=63072000; includeSubDomains; preload',
-  )
+  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
   response.headers.set('X-Frame-Options', 'SAMEORIGIN')
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
@@ -117,10 +121,7 @@ export function proxy(request: NextRequest) {
   }
 
   // Prevent search engines from indexing preview/non-production deploys
-  if (
-    process.env.VERCEL_ENV === 'preview' ||
-    process.env.VERCEL_ENV === 'development'
-  ) {
+  if (process.env.VERCEL_ENV === 'preview' || process.env.VERCEL_ENV === 'development') {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow')
   }
 

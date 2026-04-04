@@ -5,30 +5,14 @@ import { toast } from 'sonner'
 import { useUsage, formatFileSize } from '@/hooks/use-usage'
 import { useFileParser } from '@/hooks/use-file-parser'
 import { useLocale } from '@/lib/i18n'
-import {
-  fetchWithResilience,
-  FetchError,
-  getCsrfToken,
-} from '@/lib/fetch-client'
-import {
-  validateFile,
-  validateFileContent,
-  sanitizeFileName,
-} from '@/lib/security'
+import { fetchWithResilience, FetchError, getCsrfToken } from '@/lib/fetch-client'
+import { validateFile, validateFileContent, sanitizeFileName } from '@/lib/security'
 import { env } from '@/config/env'
-import {
-  mergeSpreadsheets,
-  canProcessClientSide,
-  downloadBlob,
-} from '@/lib/spreadsheet-merge'
+import { mergeSpreadsheets, canProcessClientSide, downloadBlob } from '@/lib/spreadsheet-merge'
 
 export type UploadStep = 'upload' | 'columns' | 'result'
 
-export type ProcessingPhase =
-  | 'consuming-quota'
-  | 'merging'
-  | 'generating'
-  | 'downloading'
+export type ProcessingPhase = 'consuming-quota' | 'merging' | 'generating' | 'downloading'
 
 export interface ResultData {
   fileCount: number
@@ -74,8 +58,7 @@ export function useUploadFlow() {
   const [detectedColumns, setDetectedColumns] = useState<string[]>([])
   const [selectedColumns, setSelectedColumns] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
-  const [processingPhase, setProcessingPhase] =
-    useState<ProcessingPhase | null>(null)
+  const [processingPhase, setProcessingPhase] = useState<ProcessingPhase | null>(null)
   const [step, setStep] = useState<UploadStep>('upload')
   const [unificationToken, setUnificationToken] = useState<string | null>(null)
   const [resultData, setResultData] = useState<ResultData | null>(null)
@@ -122,8 +105,7 @@ export function useUploadFlow() {
         continue
       }
 
-      const newTotalSize =
-        currentTotalSize + newFiles.reduce((s, f) => s + f.size, 0) + file.size
+      const newTotalSize = currentTotalSize + newFiles.reduce((s, f) => s + f.size, 0) + file.size
       if (newTotalSize > maxTotalSize) {
         toast.error(
           t('messages.totalSizeExceeded', {
@@ -136,17 +118,19 @@ export function useUploadFlow() {
 
       const basicValidation = validateFile(file)
       if (!basicValidation.valid) {
-        toast.error(
-          `"${safeName}": ${basicValidation.error || t('upload.error') || 'Invalid file'}`,
-        )
+        if (env.NODE_ENV !== 'production') {
+          console.error(`[validateFile] ${safeName}:`, basicValidation.error)
+        }
+        toast.error(`"${safeName}": ${t('errors.fileValidation')}`)
         continue
       }
 
       const contentValidation = await validateFileContent(file)
       if (!contentValidation.valid) {
-        toast.error(
-          `"${safeName}": ${contentValidation.error || t('upload.error') || 'Invalid file content'}`,
-        )
+        if (env.NODE_ENV !== 'production') {
+          console.error(`[validateFileContent] ${safeName}:`, contentValidation.error)
+        }
+        toast.error(`"${safeName}": ${t('errors.fileContentValidation')}`)
         continue
       }
 
@@ -215,9 +199,38 @@ export function useUploadFlow() {
         'rate-limit': 'errors.rateLimited',
       }
       toast.error(t(errorKeyMap[err.type] ?? fallbackKey))
-    } else {
-      toast.error(t(fallbackKey))
+      return
     }
+
+    // Parse errors from use-file-parser have specific messages
+    const msg = err instanceof Error ? err.message : (err as { message?: string })?.message
+    if (msg) {
+      const rowLimitMatch = msg.match(/exceeds row limit: (\d+) rows \(max (\d+) for (\w+) plan\)/)
+      if (rowLimitMatch) {
+        toast.error(
+          t('errors.parseRowLimit', {
+            total: rowLimitMatch[1],
+            max: rowLimitMatch[2],
+            plan: rowLimitMatch[3].toUpperCase(),
+          }),
+        )
+        return
+      }
+      if (msg.includes('No columns found')) {
+        toast.error(t('errors.parseNoColumns'))
+        return
+      }
+      if (msg.includes('No sheets found')) {
+        toast.error(t('errors.parseNoSheets'))
+        return
+      }
+      if (msg.includes('Empty spreadsheet')) {
+        toast.error(t('errors.parseEmpty'))
+        return
+      }
+    }
+
+    toast.error(t(fallbackKey))
   }
 
   const handleProcess = async () => {
@@ -310,10 +323,7 @@ export function useUploadFlow() {
 
         // /api/process returns a blob, not JSON — use fetch directly with timeout + CSRF
         const processController = new AbortController()
-        const processTimeout = setTimeout(
-          () => processController.abort(),
-          60_000,
-        )
+        const processTimeout = setTimeout(() => processController.abort(), 60_000)
         const csrfHeaders: Record<string, string> = {}
         const csrfToken = getCsrfToken()
         if (csrfToken) csrfHeaders['X-CSRF-Token'] = csrfToken
@@ -350,10 +360,7 @@ export function useUploadFlow() {
           downloadBlob(blob, `tablix-unificado-${timestamp}.xlsx`)
         } catch (processErr) {
           clearTimeout(processTimeout)
-          if (
-            processErr instanceof DOMException &&
-            processErr.name === 'AbortError'
-          ) {
+          if (processErr instanceof DOMException && processErr.name === 'AbortError') {
             toast.error(t('errors.timeout'))
           } else {
             toastFetchError(processErr, 'messages.processFailed')
