@@ -54,7 +54,7 @@ describe('use-usage.ts', () => {
         // Initial loading state
         expect(result.current.isLoading).toBe(true)
         expect(result.current.usage).toBeNull()
-        expect(result.current.error).toBeNull()
+        expect(result.current.hasError).toBe(false)
 
         await waitFor(() => {
           expect(result.current.isLoading).toBe(false)
@@ -62,7 +62,7 @@ describe('use-usage.ts', () => {
 
         // After fetch completes
         expect(result.current.usage).toEqual(mockUsageData)
-        expect(result.current.error).toBeNull()
+        expect(result.current.hasError).toBe(false)
         expect(global.fetch).toHaveBeenCalledWith(
           '/api/usage',
           expect.objectContaining({ signal: expect.any(AbortSignal) }),
@@ -83,7 +83,7 @@ describe('use-usage.ts', () => {
         })
 
         expect(result.current.usage).toBeNull()
-        expect(result.current.error).toBe('Server error (500)')
+        expect(result.current.hasError).toBe(true)
         expect(result.current.errorType).toBe('server')
       })
 
@@ -97,7 +97,7 @@ describe('use-usage.ts', () => {
         })
 
         expect(result.current.usage).toBeNull()
-        expect(result.current.error).toBe('Network request failed')
+        expect(result.current.hasError).toBe(true)
         expect(result.current.errorType).toBe('offline')
       })
 
@@ -110,7 +110,7 @@ describe('use-usage.ts', () => {
           expect(result.current.isLoading).toBe(false)
         })
 
-        expect(result.current.error).toBe('Unknown error')
+        expect(result.current.hasError).toBe(true)
         expect(result.current.errorType).toBe('unknown')
       })
     })
@@ -207,19 +207,19 @@ describe('use-usage.ts', () => {
           expect(result.current.isLoading).toBe(false)
         })
 
-        expect(result.current.error).toBe('Server error (500)')
+        expect(result.current.hasError).toBe(true)
 
         // Successful refetch
         await act(async () => {
           await result.current.refetch()
         })
 
-        expect(result.current.error).toBeNull()
+        expect(result.current.hasError).toBe(false)
         expect(result.current.usage).toEqual(mockUsageData)
       })
     })
 
-    describe('different plan types', () => {
+describe('different plan types', () => {
       it('should handle Free plan data', async () => {
         const freePlanData: UsageInfo = {
           plan: 'free',

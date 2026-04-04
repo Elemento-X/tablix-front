@@ -12,25 +12,19 @@ import {
   validateContentType,
   parseMultipartWithLimit,
 } from '@/lib/security/validation-schemas'
-import {
-  getUserFingerprint,
-  setFingerprintCookie,
-  getUserPlan,
-} from '@/lib/fingerprint'
+import { getUserFingerprint, setFingerprintCookie, getUserPlan } from '@/lib/fingerprint'
 import { getPlanLimits } from '@/lib/limits'
 import { atomicIncrementUnification } from '@/lib/usage-tracker'
 import { consumeUnificationToken } from '@/lib/security/unification-token'
 import { audit } from '@/lib/audit-logger'
+import { env } from '@/config/env'
 
 export async function POST(request: NextRequest) {
   try {
     // Validate Content-Type
     const contentTypeCheck = validateContentType(request, 'multipart')
     if (!contentTypeCheck.valid) {
-      return NextResponse.json(
-        { error: contentTypeCheck.error },
-        { status: 415 },
-      )
+      return NextResponse.json({ error: contentTypeCheck.error }, { status: 415 })
     }
 
     // Apply rate limiting
@@ -62,31 +56,19 @@ export async function POST(request: NextRequest) {
     }
 
     const { formData } = formDataResult
-    const files = formData
-      .getAll('files')
-      .filter((f): f is File => f instanceof File)
+    const files = formData.getAll('files').filter((f): f is File => f instanceof File)
     const columnsJson = formData.get('columns') as string
     const token = formData.get('token') as string
 
-    // Validate token presence early (cheap check, no Redis call)
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Missing unification token' },
-        { status: 400 },
-      )
+    // Validate token presence and type early (cheap check, no Redis call)
+    if (!token || typeof token !== 'string') {
+      return NextResponse.json({ error: 'Missing unification token' }, { status: 400 })
     }
 
     // Validate file count and per-file size using plan limits
-    const fileLimitValidation = validateFileLimits(
-      files,
-      limits.maxInputFiles,
-      limits.maxFileSize,
-    )
+    const fileLimitValidation = validateFileLimits(files, limits.maxInputFiles, limits.maxFileSize)
     if (!fileLimitValidation.valid) {
-      return NextResponse.json(
-        { error: fileLimitValidation.error },
-        { status: 400 },
-      )
+      return NextResponse.json({ error: fileLimitValidation.error }, { status: 400 })
     }
 
     // Validate total size across all files
@@ -101,24 +83,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate and parse columns JSON
+    if (!columnsJson || typeof columnsJson !== 'string') {
+      return NextResponse.json({ error: 'Missing columns selection' }, { status: 400 })
+    }
+
     let selectedColumns: string[]
     try {
       const parsedColumns = JSON.parse(columnsJson)
       const columnValidation = validateColumnSelection(parsedColumns)
 
       if (!columnValidation.valid) {
-        return NextResponse.json(
-          { error: columnValidation.error },
-          { status: 400 },
-        )
+        return NextResponse.json({ error: columnValidation.error }, { status: 400 })
       }
 
       selectedColumns = columnValidation.data!
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Invalid columns format' },
-        { status: 400 },
-      )
+    } catch (_error) {
+      return NextResponse.json({ error: 'Invalid columns format' }, { status: 400 })
     }
 
     // Additional column limit check using plan limits
@@ -131,11 +111,7 @@ export async function POST(request: NextRequest) {
 
     // Validate file types
     for (const file of files) {
-      if (
-        !(FILE_VALIDATOR.ALLOWED_MIME_TYPES as readonly string[]).includes(
-          file.type,
-        )
-      ) {
+      if (!(FILE_VALIDATOR.ALLOWED_MIME_TYPES as readonly string[]).includes(file.type)) {
         return NextResponse.json(
           { error: 'Invalid file type. Only CSV and XLSX files are allowed.' },
           { status: 400 },
@@ -161,10 +137,7 @@ export async function POST(request: NextRequest) {
       // Validate file content (magic numbers + zip bomb check)
       const contentValidation = await validateFileContent(file)
       if (!contentValidation.valid) {
-        return NextResponse.json(
-          { error: contentValidation.error },
-          { status: 400 },
-        )
+        return NextResponse.json({ error: contentValidation.error }, { status: 400 })
       }
     }
 
@@ -177,10 +150,7 @@ export async function POST(request: NextRequest) {
         fingerprint,
         detail: 'unification token',
       })
-      return NextResponse.json(
-        { error: 'Invalid or expired unification token' },
-        { status: 403 },
-      )
+      return NextResponse.json({ error: 'Invalid or expired unification token' }, { status: 403 })
     }
 
     // Atomic check + increment quota (after token, so quota only counts real processing)
@@ -216,8 +186,7 @@ export async function POST(request: NextRequest) {
 
     const response = new NextResponse(blob, {
       headers: {
-        'Content-Type':
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': `attachment; filename="${outputFileName}"`,
         'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
       },
@@ -236,13 +205,12 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error(
-      '[Process API] Error:',
-      error instanceof Error ? error.message : 'Unknown error',
-    )
-    return NextResponse.json(
-      { error: 'Error processing files' },
-      { status: 500 },
-    )
+    if (env.NODE_ENV !== 'production') {
+      console.error(
+        '[Process API] Error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      )
+    }
+    return NextResponse.json({ error: 'Error processing files' }, { status: 500 })
   }
 }

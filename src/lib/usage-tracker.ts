@@ -27,9 +27,7 @@ export interface UnificationCheckResult {
  * Check if user can create a unification
  * Returns detailed information about usage and limits
  */
-export async function checkUnificationLimit(
-  request: NextRequest,
-): Promise<UnificationCheckResult> {
+export async function checkUnificationLimit(request: NextRequest): Promise<UnificationCheckResult> {
   // Get user fingerprint and plan
   const { fingerprint } = getUserFingerprint(request)
   const plan = getUserPlan(request)
@@ -69,9 +67,7 @@ export async function checkUnificationLimit(
  * Uses Redis Lua script to prevent TOCTOU race conditions
  * Returns new count on success, or null if limit reached
  */
-export async function atomicIncrementUnification(
-  request: NextRequest,
-): Promise<{
+export async function atomicIncrementUnification(request: NextRequest): Promise<{
   success: boolean
   newCount: number
   plan: PlanType
@@ -85,17 +81,8 @@ export async function atomicIncrementUnification(
 
   // Calculate TTL: end of next month
   const now = new Date()
-  const endOfNextMonth = new Date(
-    now.getFullYear(),
-    now.getMonth() + 2,
-    0,
-    23,
-    59,
-    59,
-  )
-  const ttlSeconds = Math.floor(
-    (endOfNextMonth.getTime() - now.getTime()) / 1000,
-  )
+  const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59)
+  const ttlSeconds = Math.floor((endOfNextMonth.getTime() - now.getTime()) / 1000)
 
   const result = await storage.atomicCheckAndIncr(
     unificationKey,

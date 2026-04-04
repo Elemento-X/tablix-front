@@ -199,6 +199,37 @@ describe('POST /api/unification/complete', () => {
       expect(data.error).toBe('Missing unification token')
     })
 
+    it('should return 400 when token is not a string (typeof check — Card #79)', async () => {
+      // body.token exists but is a number — should be rejected by typeof check
+      const request = createRequest({ token: 12345 })
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.error).toBe('Missing unification token')
+      // consumeUnificationToken must NOT be called with a non-string token
+      expect(consumeUnificationToken).not.toHaveBeenCalled()
+    })
+
+    it('should return 400 when token is null', async () => {
+      const request = createRequest({ token: null })
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.error).toBe('Missing unification token')
+    })
+
+    it('should return 400 when token is an object', async () => {
+      const request = createRequest({ token: { nested: 'value' } })
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.error).toBe('Missing unification token')
+      expect(consumeUnificationToken).not.toHaveBeenCalled()
+    })
+
     it('should return 403 when token is invalid or expired', async () => {
       ;(consumeUnificationToken as jest.Mock).mockResolvedValue(false)
 

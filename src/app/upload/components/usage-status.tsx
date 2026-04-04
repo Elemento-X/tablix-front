@@ -84,12 +84,10 @@ export function UsageStatus({ usage, isLoading }: UsageStatusProps) {
             </div>
 
             <p className="text-muted-foreground mt-2 text-xs">
-              {t('status.maxFiles')} {usage.limits.maxInputFiles}{' '}
-              {t('status.files')} • {t('status.maxTotalSize')}:{' '}
-              {formatFileSize(usage.limits.maxTotalSize)} •{' '}
-              {t('status.maxRowsLabel')} {usage.limits.maxRows}{' '}
-              {t('status.maxRows')} • {t('status.maxColumnsLabel')}{' '}
-              {usage.limits.maxColumns} {t('status.maxColumns')}
+              {t('status.maxFiles')} {usage.limits.maxInputFiles} {t('status.files')} •{' '}
+              {t('status.maxTotalSize')}: {formatFileSize(usage.limits.maxTotalSize)} •{' '}
+              {t('status.maxRowsLabel')} {usage.limits.maxRows} {t('status.maxRows')} •{' '}
+              {t('status.maxColumnsLabel')} {usage.limits.maxColumns} {t('status.maxColumns')}
             </p>
           </div>
         </section>

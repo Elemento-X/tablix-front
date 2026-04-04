@@ -14,15 +14,9 @@ export class ColumnsPage {
     this.columnGrid = page.getByTestId('column-grid')
     this.columnButtons = page.locator('button[aria-pressed]')
     this.processButton = page.getByTestId('btn-process')
-    this.startOverButton = page.locator('button', {
-      hasText: /Recomeçar|Start Over/,
-    })
-    this.selectAllButton = page.locator('button', {
-      hasText: /Selecionar Todas|Select All/,
-    })
-    this.deselectAllButton = page.locator('button', {
-      hasText: /Desmarcar Todas|Deselect All/,
-    })
+    this.startOverButton = page.getByTestId('btn-start-over')
+    this.selectAllButton = page.getByTestId('btn-select-all')
+    this.deselectAllButton = page.getByTestId('btn-deselect-all')
   }
 
   async waitForColumns() {

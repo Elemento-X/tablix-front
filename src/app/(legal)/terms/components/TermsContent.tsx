@@ -32,9 +32,7 @@ export function TermsContent() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-foreground text-3xl font-bold">
-          {t('legal.terms.title')}
-        </h1>
+        <h1 className="text-foreground text-3xl font-bold">{t('legal.terms.title')}</h1>
         <p className="text-muted-foreground mt-2 text-sm">
           {t('legal.lastUpdated', { date: LEGAL_LAST_UPDATED })}
         </p>
@@ -152,10 +150,7 @@ export function TermsContent() {
             <p>{t('legal.terms.contact.p1')}</p>
             <p>
               {t('legal.terms.contact.emailLabel')}{' '}
-              <a
-                href={`mailto:${CONTACT_EMAIL}`}
-                className="text-primary hover:underline"
-              >
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline">
                 {CONTACT_EMAIL}
               </a>
             </p>

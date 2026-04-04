@@ -11,13 +11,10 @@ import {
   parseMultipartWithLimit,
 } from '@/lib/security/validation-schemas'
 import { checkUnificationLimit, checkFileSizeLimit } from '@/lib/usage-tracker'
-import {
-  getUserFingerprint,
-  setFingerprintCookie,
-  getUserPlan,
-} from '@/lib/fingerprint'
+import { getUserFingerprint, setFingerprintCookie, getUserPlan } from '@/lib/fingerprint'
 import { generateUnificationToken } from '@/lib/security/unification-token'
 import { audit } from '@/lib/audit-logger'
+import { env } from '@/config/env'
 
 const MAX_FILES = 1 // Only 1 file per upload
 
@@ -26,10 +23,7 @@ export async function POST(request: NextRequest) {
     // Validate Content-Type
     const contentTypeCheck = validateContentType(request, 'multipart')
     if (!contentTypeCheck.valid) {
-      return NextResponse.json(
-        { error: contentTypeCheck.error },
-        { status: 415 },
-      )
+      return NextResponse.json({ error: contentTypeCheck.error }, { status: 415 })
     }
 
     // Apply rate limiting (anti-DDoS protection)
@@ -91,9 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { formData } = formDataResult
-    const files = formData
-      .getAll('files')
-      .filter((f): f is File => f instanceof File)
+    const files = formData.getAll('files').filter((f): f is File => f instanceof File)
 
     // Validate file count (only 1 file allowed)
     if (files.length === 0) {
@@ -101,10 +93,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (files.length > MAX_FILES) {
-      return NextResponse.json(
-        { error: 'Only 1 file allowed per upload' },
-        { status: 400 },
-      )
+      return NextResponse.json({ error: 'Only 1 file allowed per upload' }, { status: 400 })
     }
 
     const file = files[0]
@@ -124,11 +113,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file types
-    if (
-      !(FILE_VALIDATOR.ALLOWED_MIME_TYPES as readonly string[]).includes(
-        file.type,
-      )
-    ) {
+    if (!(FILE_VALIDATOR.ALLOWED_MIME_TYPES as readonly string[]).includes(file.type)) {
       return NextResponse.json(
         { error: `Invalid file type. Only CSV and XLSX files are allowed.` },
         { status: 400 },
@@ -156,10 +141,7 @@ export async function POST(request: NextRequest) {
     // Validate file content (magic numbers + zip bomb check)
     const contentValidation = await validateFileContent(file)
     if (!contentValidation.valid) {
-      return NextResponse.json(
-        { error: contentValidation.error },
-        { status: 400 },
-      )
+      return NextResponse.json({ error: contentValidation.error }, { status: 400 })
     }
 
     // TODO: Implement actual file parsing logic
@@ -217,13 +199,12 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error(
-      '[Preview API] Error:',
-      error instanceof Error ? error.message : 'Unknown error',
-    )
-    return NextResponse.json(
-      { error: 'Error processing file' },
-      { status: 500 },
-    )
+    if (env.NODE_ENV !== 'production') {
+      console.error(
+        '[Preview API] Error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      )
+    }
+    return NextResponse.json({ error: 'Error processing file' }, { status: 500 })
   }
 }

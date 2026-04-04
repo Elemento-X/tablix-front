@@ -85,9 +85,7 @@ export function LegalTableOfContents({ items }: LegalTableOfContentsProps) {
           className="border-border bg-muted flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium"
         >
           {t('legal.tableOfContents')}
-          <ChevronDown
-            className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          />
+          <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
         {isOpen && (
           <ul className="border-border mt-2 space-y-1 rounded-lg border p-3">
@@ -111,9 +109,7 @@ export function LegalTableOfContents({ items }: LegalTableOfContentsProps) {
 
       {/* Desktop: sticky sidebar */}
       <div className="hidden lg:block">
-        <p className="text-foreground mb-3 text-sm font-semibold">
-          {t('legal.tableOfContents')}
-        </p>
+        <p className="text-foreground mb-3 text-sm font-semibold">{t('legal.tableOfContents')}</p>
         <ul className="space-y-1">
           {items.map((item) => (
             <li key={item.id}>

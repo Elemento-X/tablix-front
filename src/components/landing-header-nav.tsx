@@ -49,10 +49,7 @@ export function LandingHeaderNav({ activeSection }: LandingHeaderNavProps) {
   ]
 
   return (
-    <nav
-      aria-label={t('a11y.mainNavigation')}
-      className="hidden lg:flex lg:items-center lg:gap-1"
-    >
+    <nav aria-label={t('a11y.mainNavigation')} className="hidden lg:flex lg:items-center lg:gap-1">
       {navItems.map((item) => {
         const isActive = activeSection === item.key
         return (
@@ -61,9 +58,7 @@ export function LandingHeaderNav({ activeSection }: LandingHeaderNavProps) {
             href={item.href}
             aria-current={isActive ? 'location' : undefined}
             className={`relative rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 ${
-              isActive
-                ? 'text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
+              isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
             onClick={(e) => {
               if (item.href.startsWith('/#')) {

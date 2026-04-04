@@ -87,10 +87,7 @@ export function getUserFingerprint(request: NextRequest): {
 /**
  * Set fingerprint cookie in response
  */
-export function setFingerprintCookie(
-  response: NextResponse,
-  cookieId: string,
-): void {
+export function setFingerprintCookie(response: NextResponse, cookieId: string): void {
   response.cookies.set(FINGERPRINT_COOKIE_NAME, cookieId, {
     httpOnly: true,
     secure: serverEnv.NODE_ENV === 'production',
@@ -105,10 +102,7 @@ export function setFingerprintCookie(
  * For now, always returns 'free' since there's no authentication
  * TODO: Implement plan detection when authentication is added
  */
-export function getUserPlan(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _request: NextRequest,
-): 'free' | 'pro' | 'enterprise' {
+export function getUserPlan(_request: NextRequest): 'free' | 'pro' | 'enterprise' {
   // TODO: When authentication is implemented, get plan from JWT token
   // const token = request.headers.get('authorization')
   // const user = await verifyToken(token)
@@ -131,9 +125,6 @@ export function getCurrentMonthKey(): string {
 /**
  * Create Redis key for upload tracking
  */
-export function createUploadCountKey(
-  fingerprint: string,
-  monthKey: string,
-): string {
+export function createUploadCountKey(fingerprint: string, monthKey: string): string {
   return `upload:${fingerprint}:${monthKey}`
 }

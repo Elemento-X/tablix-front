@@ -44,17 +44,11 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
                   }`}
                   aria-current={isCurrent ? 'step' : undefined}
                 >
-                  {isCompleted ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <span>{index + 1}</span>
-                  )}
+                  {isCompleted ? <Check className="h-4 w-4" /> : <span>{index + 1}</span>}
                 </div>
                 <span
                   className={`text-xs font-medium ${
-                    isCompleted || isCurrent
-                      ? 'text-foreground'
-                      : 'text-muted-foreground'
+                    isCompleted || isCurrent ? 'text-foreground' : 'text-muted-foreground'
                   }`}
                 >
                   {t(STEP_LABELS[step])}

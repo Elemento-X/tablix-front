@@ -1,9 +1,5 @@
 import type { Metadata } from 'next'
-import {
-  getServerLocale,
-  getMessages,
-  toOpenGraphLocale,
-} from '@/lib/i18n/server'
+import { getServerLocale, getMessages, toOpenGraphLocale } from '@/lib/i18n/server'
 import { SITE_URL } from '@/lib/constants'
 import { TermsContent } from './components/TermsContent'
 

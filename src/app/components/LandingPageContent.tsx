@@ -53,11 +53,7 @@ export function LandingPageContent() {
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link href="/upload" data-testid="cta-upload">
-                <Button
-                  variant="brand"
-                  size="lg"
-                  className="h-12 px-8 text-base"
-                >
+                <Button variant="brand" size="lg" className="h-12 px-8 text-base">
                   {t('hero.cta')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -76,9 +72,7 @@ export function LandingPageContent() {
           <div className="grid gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-4 md:gap-8">
             {[
               {
-                icon: (
-                  <FileSpreadsheet className="text-muted-foreground h-6 w-6" />
-                ),
+                icon: <FileSpreadsheet className="text-muted-foreground h-6 w-6" />,
                 title: t('howItWorks.steps.upload.title'),
                 description: t('howItWorks.steps.upload.description'),
               },
@@ -110,12 +104,8 @@ export function LandingPageContent() {
                   delay: index * 0.08,
                 }}
               >
-                <div className="bg-background w-fit rounded-lg p-3">
-                  {step.icon}
-                </div>
-                <h3 className="text-foreground mt-4 font-semibold">
-                  {step.title}
-                </h3>
+                <div className="bg-background w-fit rounded-lg p-3">{step.icon}</div>
+                <h3 className="text-foreground mt-4 font-semibold">{step.title}</h3>
                 <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
                   {step.description}
                 </p>
@@ -132,32 +122,17 @@ export function LandingPageContent() {
             <div className="grid gap-10 md:grid-cols-3 md:gap-8">
               {[
                 {
-                  icon: (
-                    <BarChart3
-                      className="text-muted-foreground h-6 w-6"
-                      aria-hidden="true"
-                    />
-                  ),
+                  icon: <BarChart3 className="text-muted-foreground h-6 w-6" aria-hidden="true" />,
                   title: t('audience.roles.analysts.title'),
                   description: t('audience.roles.analysts.description'),
                 },
                 {
-                  icon: (
-                    <Users
-                      className="text-muted-foreground h-6 w-6"
-                      aria-hidden="true"
-                    />
-                  ),
+                  icon: <Users className="text-muted-foreground h-6 w-6" aria-hidden="true" />,
                   title: t('audience.roles.admins.title'),
                   description: t('audience.roles.admins.description'),
                 },
                 {
-                  icon: (
-                    <RefreshCw
-                      className="text-muted-foreground h-6 w-6"
-                      aria-hidden="true"
-                    />
-                  ),
+                  icon: <RefreshCw className="text-muted-foreground h-6 w-6" aria-hidden="true" />,
                   title: t('audience.roles.recurring.title'),
                   description: t('audience.roles.recurring.description'),
                 },
@@ -177,9 +152,7 @@ export function LandingPageContent() {
                   <div className="bg-background mx-auto flex h-12 w-12 items-center justify-center rounded-full">
                     {role.icon}
                   </div>
-                  <h3 className="text-foreground mt-4 font-semibold">
-                    {role.title}
-                  </h3>
+                  <h3 className="text-foreground mt-4 font-semibold">{role.title}</h3>
                   <p className="text-muted-foreground mx-auto mt-2 max-w-[240px] text-sm leading-relaxed">
                     {role.description}
                   </p>

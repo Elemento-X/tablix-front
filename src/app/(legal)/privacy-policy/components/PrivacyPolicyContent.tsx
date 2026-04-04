@@ -30,9 +30,7 @@ export function PrivacyPolicyContent() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-foreground text-3xl font-bold">
-          {t('legal.privacy.title')}
-        </h1>
+        <h1 className="text-foreground text-3xl font-bold">{t('legal.privacy.title')}</h1>
         <p className="text-muted-foreground mt-2 text-sm">
           {t('legal.lastUpdated', { date: LEGAL_LAST_UPDATED })}
         </p>
@@ -110,10 +108,7 @@ export function PrivacyPolicyContent() {
             <p>{t('legal.privacy.rights.legalBasis')}</p>
             <p>
               {t('legal.privacy.rights.contact')}{' '}
-              <a
-                href={`mailto:${CONTACT_EMAIL}`}
-                className="text-primary hover:underline"
-              >
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline">
                 {CONTACT_EMAIL}
               </a>
             </p>
@@ -141,10 +136,7 @@ export function PrivacyPolicyContent() {
             <p>{t('legal.privacy.contact.controller')}</p>
             <p>
               {t('legal.privacy.contact.emailLabel')}{' '}
-              <a
-                href={`mailto:${CONTACT_EMAIL}`}
-                className="text-primary hover:underline"
-              >
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline">
                 {CONTACT_EMAIL}
               </a>
             </p>

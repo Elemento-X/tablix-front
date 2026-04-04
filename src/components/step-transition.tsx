@@ -21,11 +21,7 @@ function focusFirstHeading(container: HTMLDivElement | null) {
   }
 }
 
-export function StepTransition({
-  stepKey,
-  children,
-  direction = 'forward',
-}: StepTransitionProps) {
+export function StepTransition({ stepKey, children, direction = 'forward' }: StepTransitionProps) {
   const prefersReducedMotion = useReducedMotion()
   const containerRef = useRef<HTMLDivElement>(null)
 

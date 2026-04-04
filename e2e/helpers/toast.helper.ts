@@ -15,11 +15,7 @@ export async function expectToast(
 /**
  * Asserta que qualquer toast aparece com o texto esperado (ignora tipo).
  */
-export async function expectAnyToast(
-  page: Page,
-  text: string | RegExp,
-  timeout = 5_000,
-) {
+export async function expectAnyToast(page: Page, text: string | RegExp, timeout = 5_000) {
   const toast = page.locator('[data-sonner-toast]')
   await expect(toast.first()).toContainText(text, { timeout })
 }
