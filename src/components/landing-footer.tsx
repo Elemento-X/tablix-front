@@ -13,7 +13,11 @@ export function LandingFooter() {
   const productLinks = [
     { label: t('footer.product.howItWorks'), section: 'how-it-works' },
     { label: t('footer.product.audience'), section: 'audience' },
-    { label: t('footer.product.pricing'), section: 'pricing' },
+    {
+      label: t('footer.product.pricing'),
+      section: 'pricing',
+      href: '/pricing',
+    },
   ]
 
   return (
@@ -37,11 +41,13 @@ export function LandingFooter() {
               {productLinks.map((link) => (
                 <li key={link.section}>
                   <a
-                    href={`/#${link.section}`}
+                    href={link.href ?? `/#${link.section}`}
                     className="text-muted-foreground hover:text-foreground text-sm transition-colors"
                     onClick={(e) => {
-                      e.preventDefault()
-                      scrollToSection(link.section, prefersReducedMotion)
+                      if (!link.href) {
+                        e.preventDefault()
+                        scrollToSection(link.section, prefersReducedMotion)
+                      }
                     }}
                   >
                     {link.label}

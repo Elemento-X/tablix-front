@@ -183,7 +183,7 @@ describe('LandingHeaderNav', () => {
 
     expect(howItWorksLink).toHaveAttribute('href', '/#how-it-works')
     expect(audienceLink).toHaveAttribute('href', '/#audience')
-    expect(pricingLink).toHaveAttribute('href', '/#pricing')
+    expect(pricingLink).toHaveAttribute('href', '/pricing')
   })
 
   it('clicking a nav link calls e.preventDefault() preventing default anchor navigation', () => {

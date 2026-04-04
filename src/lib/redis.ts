@@ -1,11 +1,5 @@
 import { Redis } from '@upstash/redis'
-
-/**
- * Upstash Redis client
- * Requires environment variables:
- * - UPSTASH_REDIS_REST_URL
- * - UPSTASH_REDIS_REST_TOKEN
- */
+import { serverEnv } from '@/config/env.server'
 
 const REDIS_TIMEOUT_MS = 5000 // 5 second timeout for all Redis operations
 
@@ -17,7 +11,7 @@ let redis: Redis | null = null
  * Guarded: no-op in production to prevent abuse.
  */
 export function __resetRedisClient() {
-  if (process.env.NODE_ENV !== 'test') return
+  if (serverEnv.NODE_ENV !== 'test') return
   redis = null
 }
 
@@ -27,8 +21,8 @@ export function __resetRedisClient() {
  */
 export function getRedisClient(): Redis | null {
   // Check if Redis is configured
-  const url = process.env.UPSTASH_REDIS_REST_URL
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  const url = serverEnv.UPSTASH_REDIS_REST_URL
+  const token = serverEnv.UPSTASH_REDIS_REST_TOKEN
 
   if (!url || !token) {
     console.warn(

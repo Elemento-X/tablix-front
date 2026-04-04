@@ -287,7 +287,12 @@ describe('fingerprint.ts', () => {
 
     it('should set secure flag to true in production', () => {
       const originalEnv = process.env.NODE_ENV
+      const originalUrl = process.env.UPSTASH_REDIS_REST_URL
+      const originalToken = process.env.UPSTASH_REDIS_REST_TOKEN
+      // Redis vars required in production by env.server.ts refine()
       process.env.NODE_ENV = 'production'
+      process.env.UPSTASH_REDIS_REST_URL = 'https://test.upstash.io'
+      process.env.UPSTASH_REDIS_REST_TOKEN = 'test-token'
 
       const response = NextResponse.json({})
       setFingerprintCookie(response, 'test-123')
@@ -296,6 +301,8 @@ describe('fingerprint.ts', () => {
       expect(cookie?.secure).toBe(true)
 
       process.env.NODE_ENV = originalEnv
+      process.env.UPSTASH_REDIS_REST_URL = originalUrl as string
+      process.env.UPSTASH_REDIS_REST_TOKEN = originalToken as string
     })
 
     it('should set secure flag to false in development', () => {
@@ -326,9 +333,7 @@ describe('fingerprint.ts', () => {
   })
 
   describe('getUserPlan', () => {
-    const createRequest = (
-      headers: Record<string, string> = {},
-    ): NextRequest => {
+    const createRequest = (headers: Record<string, string> = {}): NextRequest => {
       return new NextRequest('http://localhost:3000/test', {
         headers: new Headers(headers),
       })
@@ -342,18 +347,10 @@ describe('fingerprint.ts', () => {
     })
 
     it('should always return "free" regardless of x-tablix-plan header', () => {
-      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'pro' }))).toBe(
-        'free',
-      )
-      expect(
-        getUserPlan(createRequest({ 'x-tablix-plan': 'enterprise' })),
-      ).toBe('free')
-      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'Pro' }))).toBe(
-        'free',
-      )
-      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'invalid' }))).toBe(
-        'free',
-      )
+      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'pro' }))).toBe('free')
+      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'enterprise' }))).toBe('free')
+      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'Pro' }))).toBe('free')
+      expect(getUserPlan(createRequest({ 'x-tablix-plan': 'invalid' }))).toBe('free')
       expect(getUserPlan(createRequest({ 'x-tablix-plan': '' }))).toBe('free')
     })
   })

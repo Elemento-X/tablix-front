@@ -54,9 +54,13 @@ jest.mock('next/navigation', () => ({
   },
 }))
 
-// Mock environment variables
-process.env.UPSTASH_REDIS_REST_URL = undefined
-process.env.UPSTASH_REDIS_REST_TOKEN = undefined
+// Clear Redis env vars to ensure tests use in-memory fallback
+// Note: `= undefined` produces the string "undefined" in process.env — use delete
+delete process.env.UPSTASH_REDIS_REST_URL
+delete process.env.UPSTASH_REDIS_REST_TOKEN
+
+// Mock server-only — it throws in client bundles but Jest runs server-side
+jest.mock('server-only', () => ({}))
 
 // Mock @upstash/ratelimit to avoid ESM issues
 jest.mock('@upstash/ratelimit', () => ({
