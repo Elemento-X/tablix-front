@@ -15,6 +15,7 @@ import {
   validateFileContent,
   sanitizeFileName,
 } from '@/lib/security'
+import { env } from '@/config/env'
 import {
   mergeSpreadsheets,
   canProcessClientSide,
@@ -370,7 +371,7 @@ export function useUploadFlow() {
         setStep('result')
       }
     } catch (err) {
-      if (process.env.NODE_ENV !== 'production') {
+      if (env.NODE_ENV !== 'production') {
         console.error('[handleProcess]', err)
       }
       toastFetchError(err, 'messages.processFailed')
@@ -502,11 +503,14 @@ export function useUploadFlow() {
       setSelectedColumns(commonColumns.slice(0, maxSelectable))
       setStep('columns')
     } catch (err) {
-      if (process.env.NODE_ENV !== 'production') {
+      if (env.NODE_ENV !== 'production') {
         console.error('[handleUpload]', err)
       }
       toastFetchError(err, 'upload.error')
     } finally {
+      if (files.length > 1) {
+        toast.dismiss('parsing-progress')
+      }
       setIsUploading(false)
     }
   }

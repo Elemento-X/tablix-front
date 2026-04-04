@@ -45,7 +45,7 @@ export function LandingHeaderNav({ activeSection }: LandingHeaderNavProps) {
       href: '/#how-it-works',
     },
     { key: 'audience', label: t('header.nav.audience'), href: '/#audience' },
-    { key: 'pricing', label: t('header.nav.pricing'), href: '/#pricing' },
+    { key: 'pricing', label: t('header.nav.pricing'), href: '/pricing' },
   ]
 
   return (
@@ -66,8 +66,10 @@ export function LandingHeaderNav({ activeSection }: LandingHeaderNavProps) {
                 : 'text-muted-foreground hover:text-foreground'
             }`}
             onClick={(e) => {
-              e.preventDefault()
-              scrollToSection(item.key, prefersReducedMotion)
+              if (item.href.startsWith('/#')) {
+                e.preventDefault()
+                scrollToSection(item.key, prefersReducedMotion)
+              }
             }}
           >
             {item.label}

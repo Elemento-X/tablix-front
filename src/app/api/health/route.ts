@@ -1,4 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
+import { serverEnv } from '@/config/env.server'
+import { getRedisClient } from '@/lib/redis'
 import { rateLimiters } from '@/lib/security/rate-limit'
 
 /**
@@ -32,23 +34,23 @@ export async function GET(request: NextRequest) {
 
   // Deep health check requires secret
   const secret = request.headers.get('x-health-secret')
-  const expectedSecret = process.env.HEALTH_SECRET
+  const expectedSecret = serverEnv.HEALTH_SECRET
 
   if (!expectedSecret || secret !== expectedSecret) {
     return NextResponse.json({ status: 'ok', timestamp })
   }
 
-  // Deep check: verify Redis connectivity
+  // Deep check: verify Redis connectivity via singleton (respects timeout + circuit breaker)
   const checks: Record<string, 'ok' | 'error'> = {}
 
   try {
-    const { Redis } = await import('@upstash/redis')
-    const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL ?? '',
-      token: process.env.UPSTASH_REDIS_REST_TOKEN ?? '',
-    })
-    await redis.ping()
-    checks.redis = 'ok'
+    const redis = getRedisClient()
+    if (redis) {
+      await redis.ping()
+      checks.redis = 'ok'
+    } else {
+      checks.redis = 'error'
+    }
   } catch {
     checks.redis = 'error'
   }
