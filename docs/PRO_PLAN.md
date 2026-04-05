@@ -1,4 +1,4 @@
-# 📘 Tablix — Plano Pro (Especificação Oficial)
+# Tablix — Plano Pro (Especificacao Oficial)
 
 ## 1. Escopo do plano
 
