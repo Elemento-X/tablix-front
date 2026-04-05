@@ -8,7 +8,7 @@ export class LandingPage {
   constructor(page: Page) {
     this.page = page
     this.ctaButton = page.getByTestId('cta-upload')
-    this.brand = page.getByRole('link', { name: 'Tablix' })
+    this.brand = page.locator('header').getByRole('link', { name: 'Tablix' })
   }
 
   async goto() {
