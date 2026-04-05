@@ -1,4 +1,4 @@
-# 📘 Tablix — Plano Free (Especificação Oficial)
+# Tablix — Plano Free (Especificacao Oficial)
 
 ## 1. Escopo do plano
 

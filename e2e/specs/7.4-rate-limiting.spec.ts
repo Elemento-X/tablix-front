@@ -4,6 +4,9 @@ import { expectAnyToast } from '../helpers/toast.helper'
 test.describe('7.4 — Rate Limiting & Error Handling', () => {
   test.describe.configure({ mode: 'serial' })
 
+  // Rate limiter in-memory reseta no HMR do dev — teste real só funciona em CI (build de produção)
+  const isCI = !!process.env.CI
+
   test('shows error toast when preview API returns 429 (mocked)', async ({ uploadPage }) => {
     // Mock /api/preview para retornar 429
     await uploadPage.page.route('**/api/preview', (route) =>
@@ -62,51 +65,48 @@ test.describe('7.4 — Rate Limiting & Error Handling', () => {
     await columnsPage.clickProcess()
     await expectAnyToast(uploadPage.page, /too many|muitas tentativas|tente novamente/i)
   })
+  ;(isCI ? test : test.skip)(
+    'real rate limit: preview returns 429 with Retry-After after rapid requests',
+    async ({ page }) => {
+      // Visita a página para obter cookies (fingerprint)
+      await page.goto('/upload')
+      await page.waitForLoadState('networkidle')
 
-  test.skip('real rate limit: preview returns 429 with Retry-After after rapid requests', async ({
-    page,
-  }) => {
-    // Skip: rate limit in-memory resets on HMR/dev server restart.
-    // Covered by mocked tests above. Enable in CI with stable server.
+      let got429 = false
+      let retryAfter: string | null = null
 
-    // Visita a página para obter cookies (fingerprint)
-    await page.goto('/upload')
-    await page.waitForLoadState('networkidle')
+      // Dispara requests rápidos até obter 429 (máx 20 tentativas)
+      for (let i = 0; i < 20; i++) {
+        const result = await page.evaluate(async () => {
+          const formData = new FormData()
+          const csvBlob = new Blob(['ID,Nome\n1,Test'], { type: 'text/csv' })
+          formData.append('files', csvBlob, 'test.csv')
 
-    let got429 = false
-    let retryAfter: string | null = null
-
-    // Dispara requests rápidos até obter 429 (máx 20 tentativas)
-    for (let i = 0; i < 20; i++) {
-      const result = await page.evaluate(async () => {
-        const formData = new FormData()
-        const csvBlob = new Blob(['ID,Nome\n1,Test'], { type: 'text/csv' })
-        formData.append('files', csvBlob, 'test.csv')
-
-        const response = await fetch('/api/preview', {
-          method: 'POST',
-          body: formData,
+          const response = await fetch('/api/preview', {
+            method: 'POST',
+            body: formData,
+          })
+          return {
+            status: response.status,
+            retryAfter: response.headers.get('retry-after'),
+          }
         })
-        return {
-          status: response.status,
-          retryAfter: response.headers.get('retry-after'),
+
+        if (result.status === 429) {
+          got429 = true
+          retryAfter = result.retryAfter
+          break
         }
-      })
-
-      if (result.status === 429) {
-        got429 = true
-        retryAfter = result.retryAfter
-        break
       }
-    }
 
-    // Deve ter recebido 429
-    expect(got429).toBe(true)
+      // Deve ter recebido 429
+      expect(got429).toBe(true)
 
-    // Deve incluir header Retry-After válido
-    expect(retryAfter).not.toBeNull()
-    expect(Number(retryAfter)).toBeGreaterThan(0)
-  })
+      // Deve incluir header Retry-After válido
+      expect(retryAfter).not.toBeNull()
+      expect(Number(retryAfter)).toBeGreaterThan(0)
+    },
+  )
 
   // --- Cenários adicionais de erros ---
 

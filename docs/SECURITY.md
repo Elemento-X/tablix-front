@@ -15,9 +15,9 @@
 
 ## Security Headers e CSP
 
-**Arquivo:** `src/middleware.ts`
+**Arquivo:** `src/proxy.ts`
 
-Todos os headers sao aplicados via middleware do Next.js em todas as rotas (exceto assets estaticos).
+Todos os headers sao aplicados via funcao `proxy()` exportada de `src/proxy.ts`, invocada pelo middleware do Next.js em todas as rotas (exceto assets estaticos definidos no matcher).
 
 ### Headers fixos
 
@@ -27,39 +27,43 @@ Todos os headers sao aplicados via middleware do Next.js em todas as rotas (exce
 | X-Frame-Options | `SAMEORIGIN` |
 | X-Content-Type-Options | `nosniff` |
 | Referrer-Policy | `strict-origin-when-cross-origin` |
-| X-XSS-Protection | `1; mode=block` |
 | X-DNS-Prefetch-Control | `on` |
 
 ### Permissions-Policy
 
-Desabilita APIs desnecessarias: camera, microphone, geolocation, accelerometer, gyroscope, magnetometer, payment, usb, bluetooth, serial, midi, display-capture, xr-spatial-tracking, interest-cohort (FLoC).
+Desabilita APIs desnecessarias: camera, microphone, geolocation, accelerometer, gyroscope, magnetometer, payment, usb, bluetooth, serial, midi, display-capture, xr-spatial-tracking, browsing-topics.
 
 ### Content-Security-Policy
 
 **Producao:**
 - `script-src 'self' 'nonce-{random}' 'strict-dynamic' https://vercel.live https://*.vercel-scripts.com` — nonce gerado por request, propagado via request headers (invisivel ao browser)
-- `style-src 'self' 'unsafe-inline'` — necessario para Tailwind/CSS-in-JS
-- `connect-src 'self' https://vercel.live https://*.vercel-insights.com https://*.vercel-scripts.com`
+- `style-src 'self' 'unsafe-inline'` — necessario para Framer Motion (inline style attributes) e componentes com style={} dinamico
+- `connect-src 'self' https://vercel.live https://*.vercel-insights.com https://*.vercel-scripts.com https://*.ingest.sentry.io`
+- `worker-src 'self'`
+- `frame-src 'self' https://vercel.live`
 - `default-src 'self'`, `img-src 'self' data: blob: https:`, `font-src 'self' data:`
 - `frame-ancestors 'self'`, `base-uri 'self'`, `form-action 'self'`
+- `upgrade-insecure-requests` (somente producao)
 
 **Desenvolvimento:**
 - `script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-scripts.com` — HMR requer eval
 - `connect-src` inclui `ws://localhost:* ws://127.0.0.1:* ws://0.0.0.0:*` para WebSocket do HMR
-- Sem nonce ou strict-dynamic
+- Sem nonce, strict-dynamic ou upgrade-insecure-requests
 
 **Fluxo do nonce:**
-1. Middleware gera nonce unico por request
-2. Nonce injetado como request header pelo middleware, consumido exclusivamente em server components — nunca chega ao browser
+1. `proxy()` gera nonce unico por request
+2. Nonce injetado como request header (`x-nonce`) pelo proxy, consumido exclusivamente em server components — nunca chega ao browser
 3. Layout server-side le o nonce e injeta nos scripts permitidos
 
 ---
 
 ## CSRF Protection
 
-**Arquivo:** `src/middleware.ts`
+**Arquivo:** `src/proxy.ts`
 
-Validacao de Origin em requests state-changing para `/api/*`:
+Protecao CSRF em duas camadas para requests state-changing em `/api/*`:
+
+### Camada 1: Validacao de Origin
 
 - Metodos protegidos: POST, PUT, PATCH, DELETE
 - Metodos isentos: GET, HEAD, OPTIONS
@@ -67,6 +71,14 @@ Validacao de Origin em requests state-changing para `/api/*`:
 - Verificacao: `Origin` header deve ter mesmo host que `Host` header
 - Sem Origin ou com Origin malformada: 403 `{ error: "Forbidden" }`
 - Mensagem generica — nao revela detalhes da validacao
+
+### Camada 2: Double-Submit Cookie
+
+- Cookie `__csrf` setado automaticamente pelo proxy quando ausente
+- Configuracao do cookie: `httpOnly: false` (deve ser legivel por JS), `sameSite: strict`, `secure` em producao, `maxAge: 24h`
+- Validacao: header `X-CSRF-Token` deve ser identico ao valor do cookie `__csrf`
+- Ausencia do cookie, do header, ou divergencia entre eles: 403 `{ error: "Forbidden" }`
+- O frontend deve ler o cookie `__csrf` e enviar como header `X-CSRF-Token` em toda request state-changing
 
 ---
 
@@ -87,6 +99,16 @@ Validacao de Origin em requests state-changing para `/api/*`:
 - **Producao:** Upstash Redis (sliding window)
 - **Desenvolvimento:** in-memory fallback com cleanup periodico
 - **Producao sem Redis:** fail-closed — rejeita request (in-memory nao funciona em serverless)
+
+### Circuit Breaker
+
+Previne falhas em cascata quando o Redis esta indisponivel:
+
+- **Closed** (normal): requests vao ao Redis normalmente
+- **Open** (apos 3 falhas consecutivas): pula Redis por 30s, usa in-memory como fallback degradado
+- **Half-Open** (apos 30s): tenta 1 request ao Redis. Se sucesso, volta a Closed. Se falha, volta a Open.
+
+Em producao, se o circuito nao esta aberto e o Redis falha, o comportamento e fail-closed (rejeita o request). Se o circuito esta aberto, usa in-memory como modo degradado.
 
 ### Identificacao
 
@@ -266,8 +288,9 @@ Logging estruturado em JSON para acoes de seguranca:
 2. **TypeScript strict:** sem `any`, validacao em tempo de compilacao
 3. **Cookies de fingerprint:** httpOnly, Secure (prod), SameSite=Strict
 4. **Redis com timeout:** 5s por operacao, 2 retries com backoff
-5. **Nonce por request:** previne execucao de scripts injetados
+5. **Circuit breaker:** 3 falhas consecutivas no Redis abrem circuito por 30s, degraded mode com in-memory
+6. **Nonce por request:** previne execucao de scripts injetados
 
 ---
 
-**Atualizado em:** 2026-03-30
+**Atualizado em:** 2026-04-05

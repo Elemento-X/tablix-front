@@ -170,4 +170,4 @@ Headers na resposta: `X-RateLimit-Remaining`, `Retry-After: 60` (em 429)
 
 ---
 
-**Atualizado em:** 2026-03-30
+**Atualizado em:** 2026-04-05
