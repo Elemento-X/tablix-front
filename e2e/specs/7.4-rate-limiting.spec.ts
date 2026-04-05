@@ -83,9 +83,19 @@ test.describe('7.4 — Rate Limiting & Error Handling', () => {
           const csvBlob = new Blob(['ID,Nome\n1,Test'], { type: 'text/csv' })
           formData.append('files', csvBlob, 'test.csv')
 
+          // Ler cookie __csrf para double-submit pattern
+          const csrfToken = document.cookie
+            .split('; ')
+            .find((c) => c.startsWith('__csrf='))
+            ?.split('=')[1]
+
+          const headers: Record<string, string> = {}
+          if (csrfToken) headers['X-CSRF-Token'] = csrfToken
+
           const response = await fetch('/api/preview', {
             method: 'POST',
             body: formData,
+            headers,
           })
           return {
             status: response.status,
