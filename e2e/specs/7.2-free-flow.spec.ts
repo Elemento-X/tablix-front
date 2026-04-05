@@ -59,7 +59,12 @@ test.describe('7.2 — Free Flow Completo', () => {
     expect(sheet.headers).toEqual(expect.arrayContaining(['ID', 'Nome', 'Email']))
     expect(sheet.rowCount).toBe(5)
 
-    // Volta pro step de upload
+    // Tela de resultado aparece com botão "Nova unificação"
+    const newUnificationBtn = uploadPage.page.getByRole('button', { name: /nova unificação/i })
+    await expect(newUnificationBtn).toBeVisible({ timeout: 5_000 })
+
+    // Clicar "Nova unificação" volta ao step de upload
+    await newUnificationBtn.click()
     await expect(uploadPage.dropzone).toBeVisible({ timeout: 5_000 })
   })
 
@@ -155,5 +160,185 @@ test.describe('7.2 — Free Flow Completo', () => {
     await uploadPage.goto()
     await uploadPage.uploadFixture('valid-3col-5row.csv')
     await expectAnyToast(uploadPage.page, /sucesso|adicionado/i)
+  })
+
+  // --- Cenários adicionais ---
+
+  test('file list shows correct count and size', async ({ uploadPage }) => {
+    await uploadPage.goto()
+    await uploadPage.uploadFixture('valid-3col-5row.csv')
+    await expect(uploadPage.fileItems).toHaveCount(1)
+
+    // Verifica contador "1 de 3 arquivos"
+    const fileList = uploadPage.fileList
+    await expect(fileList).toContainText(/1/)
+    await expect(fileList).toContainText(/3/)
+  })
+
+  test('remove file and add another works correctly', async ({ uploadPage }) => {
+    await uploadPage.goto()
+    await uploadPage.uploadFixture('valid-3col-5row.csv')
+    await expect(uploadPage.fileItems).toHaveCount(1)
+
+    await uploadPage.removeFile(0)
+    await expect(uploadPage.fileItems).toHaveCount(0)
+
+    await uploadPage.uploadFixture('valid-common-cols-a.csv')
+    await expect(uploadPage.fileItems).toHaveCount(1)
+    await expect(uploadPage.continueButton).toBeEnabled()
+  })
+
+  test('column buttons have aria-pressed state', async ({ uploadPage, columnsPage }) => {
+    await uploadPage.goto()
+    await uploadPage.uploadFixture('valid-3col-5row.csv')
+    await uploadPage.clickContinue()
+    await columnsPage.waitForColumns()
+
+    // Todas as colunas selecionadas por padrão
+    const selectedBtns = columnsPage.page.locator('button[aria-pressed="true"]')
+    await expect(selectedBtns).toHaveCount(3)
+
+    // Desmarcar uma → aria-pressed muda
+    await columnsPage.toggleColumn('Nome')
+    const afterDeselect = columnsPage.page.locator('button[aria-pressed="false"]')
+    await expect(afterDeselect).toHaveCount(1)
+  })
+
+  test('preview table shows data rows', async ({ uploadPage, columnsPage }) => {
+    await uploadPage.goto()
+    await uploadPage.uploadFixture('valid-3col-5row.csv')
+    await uploadPage.clickContinue()
+    await columnsPage.waitForColumns()
+
+    // Preview table deve estar visível com headers e dados
+    const previewTable = columnsPage.page.locator('table')
+    await expect(previewTable).toBeVisible()
+
+    // Headers da tabela
+    const headers = previewTable.locator('th')
+    await expect(headers).toHaveCount(3)
+  })
+
+  test('deselect all then select all re-enables process', async ({ uploadPage, columnsPage }) => {
+    await uploadPage.goto()
+    await uploadPage.uploadFixture('valid-3col-5row.csv')
+    await uploadPage.clickContinue()
+    await columnsPage.waitForColumns()
+
+    await columnsPage.clickDeselectAll()
+    await expect(columnsPage.processButton).toBeDisabled()
+
+    await columnsPage.clickSelectAll()
+    await expect(columnsPage.processButton).toBeEnabled()
+  })
+
+  test('result step shows success metrics', async ({ uploadPage, columnsPage }) => {
+    await uploadPage.goto()
+    await uploadPage.uploadFixture('valid-3col-5row.csv')
+    await uploadPage.clickContinue()
+    await columnsPage.waitForColumns()
+
+    const downloadPromise = uploadPage.page.waitForEvent('download')
+    await columnsPage.clickProcess()
+    await downloadPromise
+
+    // Tela resultado com métricas
+    const resultHeading = uploadPage.page.getByRole('heading', { name: /pronto|success/i })
+    await expect(resultHeading.first()).toBeVisible({ timeout: 5_000 })
+
+    // Métricas: arquivo(s), linhas, colunas
+    await expect(uploadPage.page.getByText(/arquivo.*unificado/i)).toBeVisible()
+    await expect(uploadPage.page.getByText(/coluna.*selecionada/i)).toBeVisible()
+  })
+
+  test('result step shows upgrade card for free plan', async ({ uploadPage, columnsPage }) => {
+    await uploadPage.goto()
+    await uploadPage.uploadFixture('valid-3col-5row.csv')
+    await uploadPage.clickContinue()
+    await columnsPage.waitForColumns()
+
+    const downloadPromise = uploadPage.page.waitForEvent('download')
+    await columnsPage.clickProcess()
+    await downloadPromise
+
+    // Card de upgrade pro
+    const upgradeLink = uploadPage.page.getByRole('link', { name: /upgrade.*pro/i })
+    await expect(upgradeLink).toBeVisible({ timeout: 5_000 })
+  })
+
+  test('result step shows remaining quota', async ({ uploadPage, columnsPage }) => {
+    await uploadPage.goto()
+    await uploadPage.uploadFixture('valid-3col-5row.csv')
+    await uploadPage.clickContinue()
+    await columnsPage.waitForColumns()
+
+    const downloadPromise = uploadPage.page.waitForEvent('download')
+    await columnsPage.clickProcess()
+    await downloadPromise
+
+    // Quota restante
+    await expect(uploadPage.page.getByText(/unificação|unification/i).first()).toBeVisible({
+      timeout: 5_000,
+    })
+  })
+
+  test('columns detected count header is accurate', async ({ uploadPage, columnsPage }) => {
+    await uploadPage.goto()
+    await uploadPage.uploadFixture('valid-3col-5row.csv')
+    await uploadPage.clickContinue()
+    await columnsPage.waitForColumns()
+
+    // "Colunas Detectadas (3)"
+    const heading = columnsPage.page.getByRole('heading', { name: /3/i })
+    await expect(heading).toBeVisible()
+  })
+
+  test('selected count text updates on toggle', async ({ uploadPage, columnsPage }) => {
+    await uploadPage.goto()
+    await uploadPage.uploadFixture('valid-3col-5row.csv')
+    await uploadPage.clickContinue()
+    await columnsPage.waitForColumns()
+
+    // "3 de 3 selecionada(s)"
+    await expect(columnsPage.page.getByText(/3 .* 3 .*selecionada/)).toBeVisible()
+
+    await columnsPage.toggleColumn('Email')
+    // "2 de 3 selecionada(s)"
+    await expect(columnsPage.page.getByText(/2 .* 3 .*selecionada/)).toBeVisible()
+  })
+
+  test('preview table hides when no columns selected', async ({ uploadPage, columnsPage }) => {
+    await uploadPage.goto()
+    await uploadPage.uploadFixture('valid-3col-5row.csv')
+    await uploadPage.clickContinue()
+    await columnsPage.waitForColumns()
+
+    // Table visível com colunas selecionadas
+    await expect(columnsPage.page.locator('table')).toBeVisible()
+
+    // Desmarcar todas → table some
+    await columnsPage.clickDeselectAll()
+    await expect(columnsPage.page.locator('table')).not.toBeVisible()
+  })
+
+  test('select all button disabled when all selected', async ({ uploadPage, columnsPage }) => {
+    await uploadPage.goto()
+    await uploadPage.uploadFixture('valid-3col-5row.csv')
+    await uploadPage.clickContinue()
+    await columnsPage.waitForColumns()
+
+    // Todas já selecionadas → "Selecionar Todas" disabled
+    await expect(columnsPage.selectAllButton).toBeDisabled()
+  })
+
+  test('deselect all button disabled when none selected', async ({ uploadPage, columnsPage }) => {
+    await uploadPage.goto()
+    await uploadPage.uploadFixture('valid-3col-5row.csv')
+    await uploadPage.clickContinue()
+    await columnsPage.waitForColumns()
+
+    await columnsPage.clickDeselectAll()
+    // Nenhuma selecionada → "Desmarcar Todas" disabled
+    await expect(columnsPage.deselectAllButton).toBeDisabled()
   })
 })
