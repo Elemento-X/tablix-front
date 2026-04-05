@@ -96,7 +96,7 @@ describe('proxy', () => {
         'midi=()',
         'display-capture=()',
         'xr-spatial-tracking=()',
-        'interest-cohort=()',
+        'browsing-topics=()',
       ]
 
       for (const policy of requiredPolicies) {
