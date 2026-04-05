@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { fetchWithResilience, FetchError, type FetchErrorType } from '@/lib/fetch-client'
 import { env } from '@/config/env'
 
@@ -26,7 +26,7 @@ export function useUsage() {
   const [hasError, setHasError] = useState(false)
   const [errorType, setErrorType] = useState<FetchErrorType | null>(null)
 
-  const fetchUsage = async () => {
+  const fetchUsage = useCallback(async () => {
     try {
       setIsLoading(true)
       const { data } = await fetchWithResilience<UsageInfo>('/api/usage')
@@ -43,11 +43,11 @@ export function useUsage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchUsage()
-  }, [])
+  }, [fetchUsage])
 
   return {
     usage,

@@ -46,7 +46,13 @@ export function proxy(request: NextRequest) {
     ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-scripts.com"
     : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live https://*.vercel-scripts.com`
 
-  // unsafe-inline is required for Tailwind/CSS-in-JS; nonce omitted since unsafe-inline overrides it
+  // unsafe-inline is required because:
+  // 1. Framer Motion applies inline style attributes (transform, opacity) at runtime — nonce cannot cover these
+  // 2. Components use dynamic style={} for computed values (grid-background, dropdown-menu, usage-status)
+  // 3. Nonce-based CSP only works with <style> tags, not inline style attributes
+  // Removing unsafe-inline would require replacing all Framer Motion animations with pure CSS,
+  // which is disproportionate to the security gain (CSS injection is low-severity vs XSS).
+  // Investigated 2026-04-04 — decision: keep unsafe-inline, document justification.
   const styleSrc = "style-src 'self' 'unsafe-inline'"
 
   const cspDirectives = [
@@ -101,7 +107,7 @@ export function proxy(request: NextRequest) {
       'midi=()',
       'display-capture=()',
       'xr-spatial-tracking=()',
-      'interest-cohort=()',
+      'browsing-topics=()',
     ].join(', '),
   )
 

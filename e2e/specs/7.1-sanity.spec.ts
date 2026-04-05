@@ -33,4 +33,48 @@ test.describe('7.1 — Sanity', () => {
     await uploadPage.clickBack()
     await expect(uploadPage.page).toHaveURL('/')
   })
+
+  test('dropzone has accessible role and label', async ({ uploadPage }) => {
+    await uploadPage.goto()
+    const dropzone = uploadPage.dropzone
+    await expect(dropzone).toHaveAttribute('role', 'button')
+    await expect(dropzone).toHaveAttribute('aria-label', /.+/)
+  })
+
+  test('file input accepts only CSV and XLSX', async ({ uploadPage }) => {
+    await uploadPage.goto()
+    const accept = await uploadPage.fileInput.getAttribute('accept')
+    expect(accept).toContain('.csv')
+    expect(accept).toContain('.xlsx')
+  })
+
+  test('upload page step navigation shows 3 steps', async ({ uploadPage }) => {
+    await uploadPage.goto()
+    const steps = uploadPage.page.locator('nav[aria-label] li')
+    await expect(steps).toHaveCount(3)
+  })
+
+  test('theme toggle button is visible', async ({ uploadPage }) => {
+    await uploadPage.goto()
+    const themeBtn = uploadPage.page.getByRole('button', { name: /tema|theme/i })
+    await expect(themeBtn).toBeVisible()
+  })
+
+  test('language selector button is visible', async ({ uploadPage }) => {
+    await uploadPage.goto()
+    const langBtn = uploadPage.page.getByRole('button', { name: /idioma|language/i })
+    await expect(langBtn).toBeVisible()
+  })
+
+  test('usage status shows plan and quota info', async ({ uploadPage }) => {
+    await uploadPage.goto()
+    await expect(uploadPage.usageStatus).toBeVisible({ timeout: 5_000 })
+    await expect(uploadPage.usageStatus).toContainText(/free/i)
+  })
+
+  test('security note is visible below dropzone', async ({ uploadPage }) => {
+    await uploadPage.goto()
+    const secNote = uploadPage.page.getByText(/segur|security|local/i)
+    await expect(secNote.first()).toBeVisible()
+  })
 })

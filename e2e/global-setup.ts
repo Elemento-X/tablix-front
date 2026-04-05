@@ -86,4 +86,50 @@ export default async function globalSetup() {
     bigRows.push(`${i},User${i},user${i}@test.com,${padding}`)
   }
   writeCsv('large-1.1mb.csv', bigRows.join('\n'))
+
+  // empty-headers-only.csv — apenas headers, sem linhas de dados
+  writeCsv('empty-headers-only.csv', 'ID,Nome,Email')
+
+  // single-column.csv — uma única coluna
+  writeCsv('single-column.csv', ['ID', '1', '2', '3', '4', '5'].join('\n'))
+
+  // exact-500-rows.csv — exatamente no limite Free de 500 linhas
+  const exact500 = ['ID,Nome,Email']
+  for (let i = 1; i <= 500; i++) {
+    exact500.push(`${i},User${i},user${i}@test.com`)
+  }
+  writeCsv('exact-500-rows.csv', exact500.join('\n'))
+
+  // valid-third-file.csv — terceiro arquivo com colunas em comum (ID, Nome)
+  writeCsv('valid-third-file.csv', ['ID,Nome,Cidade', '5,Eva,SP', '6,Flavio,RJ'].join('\n'))
+
+  // formula-injection.csv — conteúdo com formula injection (=CMD, +, -, @, \t, \r)
+  writeCsv(
+    'formula-injection.csv',
+    [
+      'ID,Nome,Email',
+      '1,=CMD|"/C calc"!A0,hack@test.com',
+      '2,+HYPERLINK("http://evil.com"),evil@test.com',
+      '3,-1+1,normal@test.com',
+      '4,@SUM(A1:A2),sum@test.com',
+      '5,\t=DDE_ATTACK,tab@test.com',
+      '6,\r=DDE_ATTACK,cr@test.com',
+    ].join('\n'),
+  )
+
+  // invalid-extension.txt — extensão não permitida
+  writeCsv('invalid-extension.txt', 'ID,Nome\n1,Ana')
+
+  // duplicate-test.csv — para teste de arquivo duplicado
+  writeCsv('duplicate-test.csv', ['ID,Nome,Email', '1,Ana,ana@test.com'].join('\n'))
+
+  // xss-column-name.csv — payload XSS como nome de coluna
+  writeCsv(
+    'xss-column-name.csv',
+    [
+      'ID,<img src=x onerror=alert(1)>,<script>alert("xss")</script>',
+      '1,test-value,another-value',
+      '2,normal,data',
+    ].join('\n'),
+  )
 }
