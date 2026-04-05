@@ -89,8 +89,8 @@ jobs:
     needs: quality-gate
 
     env:
-      UPSTASH_REDIS_REST_URL: ''
-      UPSTASH_REDIS_REST_TOKEN: ''
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
       NEXT_PUBLIC_SENTRY_DSN: ''
       SENTRY_AUTH_TOKEN: ''
       SENTRY_ORG: ''
