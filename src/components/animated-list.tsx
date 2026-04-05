@@ -2,9 +2,9 @@
 
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
-import type { ReactNode } from 'react'
+import type { HTMLAttributes, ReactNode } from 'react'
 
-interface AnimatedListProps extends React.HTMLAttributes<HTMLDivElement> {
+interface AnimatedListProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode
   className?: string
   staggerDelay?: number
@@ -50,7 +50,7 @@ export function AnimatedList({
   )
 }
 
-interface AnimatedListItemProps extends React.HTMLAttributes<HTMLDivElement> {
+interface AnimatedListItemProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode
   className?: string
 }
