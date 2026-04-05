@@ -5,7 +5,7 @@ export default defineConfig({
   testMatch: '**/*.spec.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: 0,
   workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI ? 'github' : 'html',
   outputDir: './e2e/test-results',
@@ -25,7 +25,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: process.env.CI ? 'NODE_ENV=test npm start' : 'npm run dev',
+    command: process.env.CI ? 'npm start' : 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
