@@ -2,12 +2,13 @@
 
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
-import type { HTMLAttributes, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
-interface AnimatedListProps extends HTMLAttributes<HTMLDivElement> {
+interface AnimatedListProps {
   children: ReactNode
   className?: string
   staggerDelay?: number
+  'data-testid'?: string
 }
 
 const itemVariants = {
@@ -19,13 +20,13 @@ export function AnimatedList({
   children,
   className,
   staggerDelay = 0.05,
-  ...rest
+  'data-testid': testId,
 }: AnimatedListProps) {
   const prefersReducedMotion = useReducedMotion()
 
   if (prefersReducedMotion) {
     return (
-      <div className={className} {...rest}>
+      <div className={className} data-testid={testId}>
         {children}
       </div>
     )
@@ -34,6 +35,7 @@ export function AnimatedList({
   return (
     <motion.div
       className={className}
+      data-testid={testId}
       initial="hidden"
       animate="visible"
       variants={{
@@ -43,24 +45,28 @@ export function AnimatedList({
           },
         },
       }}
-      {...rest}
     >
       {children}
     </motion.div>
   )
 }
 
-interface AnimatedListItemProps extends HTMLAttributes<HTMLDivElement> {
+interface AnimatedListItemProps {
   children: ReactNode
   className?: string
+  'data-testid'?: string
 }
 
-export function AnimatedListItem({ children, className, ...rest }: AnimatedListItemProps) {
+export function AnimatedListItem({
+  children,
+  className,
+  'data-testid': testId,
+}: AnimatedListItemProps) {
   const prefersReducedMotion = useReducedMotion()
 
   if (prefersReducedMotion) {
     return (
-      <div className={className} {...rest}>
+      <div className={className} data-testid={testId}>
         {children}
       </div>
     )
@@ -69,9 +75,9 @@ export function AnimatedListItem({ children, className, ...rest }: AnimatedListI
   return (
     <motion.div
       className={className}
+      data-testid={testId}
       variants={itemVariants}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      {...rest}
     >
       {children}
     </motion.div>
