@@ -5,7 +5,8 @@ import { toast } from 'sonner'
 import { useUsage, formatFileSize } from '@/hooks/use-usage'
 import { useFileParser } from '@/hooks/use-file-parser'
 import { useLocale } from '@/lib/i18n'
-import { fetchWithResilience, FetchError, getCsrfToken } from '@/lib/fetch-client'
+import { fetchWithResilience, getCsrfToken } from '@/lib/fetch-client'
+import { toastFetchError } from '@/lib/toast-error'
 import { validateFile, validateFileContent, sanitizeFileName } from '@/lib/security'
 import { env } from '@/config/env'
 import { mergeSpreadsheets, canProcessClientSide, downloadBlob } from '@/lib/spreadsheet-merge'
@@ -190,48 +191,7 @@ export function useUploadFlow() {
     setPreviewRows([])
   }
 
-  const toastFetchError = (err: unknown, fallbackKey: string) => {
-    if (err instanceof FetchError) {
-      const errorKeyMap: Record<string, string> = {
-        offline: 'errors.offline',
-        timeout: 'errors.timeout',
-        server: 'errors.serverError',
-        'rate-limit': 'errors.rateLimited',
-      }
-      toast.error(t(errorKeyMap[err.type] ?? fallbackKey))
-      return
-    }
-
-    // Parse errors from use-file-parser have specific messages
-    const msg = err instanceof Error ? err.message : (err as { message?: string })?.message
-    if (msg) {
-      const rowLimitMatch = msg.match(/exceeds row limit: (\d+) rows \(max (\d+) for (\w+) plan\)/)
-      if (rowLimitMatch) {
-        toast.error(
-          t('errors.parseRowLimit', {
-            total: rowLimitMatch[1],
-            max: rowLimitMatch[2],
-            plan: rowLimitMatch[3].toUpperCase(),
-          }),
-        )
-        return
-      }
-      if (msg.includes('No columns found')) {
-        toast.error(t('errors.parseNoColumns'))
-        return
-      }
-      if (msg.includes('No sheets found')) {
-        toast.error(t('errors.parseNoSheets'))
-        return
-      }
-      if (msg.includes('Empty spreadsheet')) {
-        toast.error(t('errors.parseEmpty'))
-        return
-      }
-    }
-
-    toast.error(t(fallbackKey))
-  }
+  const showFetchError = (err: unknown, fallbackKey: string) => toastFetchError(t, err, fallbackKey)
 
   const handleProcess = async () => {
     if (selectedColumns.length === 0) {
@@ -270,7 +230,7 @@ export function useUploadFlow() {
           })
           return true
         } catch (err) {
-          toastFetchError(err, 'messages.processFailed')
+          showFetchError(err, 'messages.processFailed')
           return false
         }
       }
@@ -345,11 +305,22 @@ export function useUploadFlow() {
             if (response.status === 429) {
               toast.error(t('errors.rateLimited'))
             } else {
-              toast.error(
-                data.errorCode
-                  ? t(`messages.${data.errorCode}`, data)
-                  : t('messages.processFailed'),
-              )
+              // Server errorCodes: only interpolate when we can safely extract params.
+              // Backend may not send all fields i18n keys expect, so fallback is safe.
+              if (
+                (data.errorCode === 'LIMIT_EXCEEDED' || data.errorCode === 'PLAN_LIMIT_REACHED') &&
+                (data.usage?.current != null || data.current != null) &&
+                (data.usage?.max != null || data.max != null)
+              ) {
+                toast.error(
+                  t('messages.unificationLimitExceeded', {
+                    current: String(data.usage?.current ?? data.current),
+                    max: String(data.usage?.max ?? data.max),
+                  }),
+                )
+              } else {
+                toast.error(t('messages.processFailed'))
+              }
             }
             return
           }
@@ -363,7 +334,7 @@ export function useUploadFlow() {
           if (processErr instanceof DOMException && processErr.name === 'AbortError') {
             toast.error(t('errors.timeout'))
           } else {
-            toastFetchError(processErr, 'messages.processFailed')
+            showFetchError(processErr, 'messages.processFailed')
           }
           return
         }
@@ -381,7 +352,7 @@ export function useUploadFlow() {
       if (env.NODE_ENV !== 'production') {
         console.error('[handleProcess]', err)
       }
-      toastFetchError(err, 'messages.processFailed')
+      showFetchError(err, 'messages.processFailed')
     } finally {
       setIsProcessing(false)
       setProcessingPhase(null)
@@ -513,7 +484,7 @@ export function useUploadFlow() {
       if (env.NODE_ENV !== 'production') {
         console.error('[handleUpload]', err)
       }
-      toastFetchError(err, 'upload.error')
+      showFetchError(err, 'upload.error')
     } finally {
       if (files.length > 1) {
         toast.dismiss('parsing-progress')

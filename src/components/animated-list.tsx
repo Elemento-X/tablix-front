@@ -8,6 +8,7 @@ interface AnimatedListProps {
   children: ReactNode
   className?: string
   staggerDelay?: number
+  'data-testid'?: string
 }
 
 const itemVariants = {
@@ -15,16 +16,26 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 }
 
-export function AnimatedList({ children, className, staggerDelay = 0.05 }: AnimatedListProps) {
+export function AnimatedList({
+  children,
+  className,
+  staggerDelay = 0.05,
+  'data-testid': testId,
+}: AnimatedListProps) {
   const prefersReducedMotion = useReducedMotion()
 
   if (prefersReducedMotion) {
-    return <div className={className}>{children}</div>
+    return (
+      <div className={className} data-testid={testId}>
+        {children}
+      </div>
+    )
   }
 
   return (
     <motion.div
       className={className}
+      data-testid={testId}
       initial="hidden"
       animate="visible"
       variants={{
@@ -43,18 +54,28 @@ export function AnimatedList({ children, className, staggerDelay = 0.05 }: Anima
 interface AnimatedListItemProps {
   children: ReactNode
   className?: string
+  'data-testid'?: string
 }
 
-export function AnimatedListItem({ children, className }: AnimatedListItemProps) {
+export function AnimatedListItem({
+  children,
+  className,
+  'data-testid': testId,
+}: AnimatedListItemProps) {
   const prefersReducedMotion = useReducedMotion()
 
   if (prefersReducedMotion) {
-    return <div className={className}>{children}</div>
+    return (
+      <div className={className} data-testid={testId}>
+        {children}
+      </div>
+    )
   }
 
   return (
     <motion.div
       className={className}
+      data-testid={testId}
       variants={itemVariants}
       transition={{ duration: 0.2, ease: 'easeOut' }}
     >
