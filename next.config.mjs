@@ -4,7 +4,7 @@ import { withSentryConfig } from '@sentry/nextjs'
 const nextConfig = {
   compiler: {
     reactRemoveProperties:
-      process.env.NODE_ENV === 'production'
+      process.env.NODE_ENV === 'production' && !process.env.CI
         ? { properties: ['^data-testid$'] }
         : false,
   },
