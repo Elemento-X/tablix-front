@@ -26,6 +26,7 @@ const serverEnvSchema = z
   .refine(
     (data) =>
       data.NODE_ENV !== 'production' ||
+      !!process.env.CI ||
       (!!data.UPSTASH_REDIS_REST_URL && !!data.UPSTASH_REDIS_REST_TOKEN),
     {
       message: 'UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required in production',

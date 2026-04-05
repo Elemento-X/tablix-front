@@ -86,6 +86,7 @@ describe('config/env.server', () => {
     process.env.NODE_ENV = 'production'
     delete process.env.UPSTASH_REDIS_REST_URL
     delete process.env.UPSTASH_REDIS_REST_TOKEN
+    delete process.env.CI
 
     // In production mode, Proxy is not used — eager parse throws at import
     await expect(import('@/config/env.server')).rejects.toThrow(/required in production/)
