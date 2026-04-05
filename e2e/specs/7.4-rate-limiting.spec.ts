@@ -4,8 +4,9 @@ import { expectAnyToast } from '../helpers/toast.helper'
 test.describe('7.4 — Rate Limiting & Error Handling', () => {
   test.describe.configure({ mode: 'serial' })
 
-  // Rate limiter in-memory reseta no HMR do dev — teste real só funciona em CI (build de produção)
-  const isCI = !!process.env.CI
+  // Rate limiter real requer Redis — sem Redis no CI, in-memory não garante 429 consistente.
+  // Habilitar quando CI tiver Redis configurado (UPSTASH_REDIS_REST_URL secret no workflow).
+  const hasRedis = !!process.env.UPSTASH_REDIS_REST_URL
 
   test('shows error toast when preview API returns 429 (mocked)', async ({ uploadPage }) => {
     // Mock /api/preview para retornar 429
@@ -65,7 +66,7 @@ test.describe('7.4 — Rate Limiting & Error Handling', () => {
     await columnsPage.clickProcess()
     await expectAnyToast(uploadPage.page, /too many|muitas tentativas|tente novamente/i)
   })
-  ;(isCI ? test : test.skip)(
+  ;(hasRedis ? test : test.skip)(
     'real rate limit: preview returns 429 with Retry-After after rapid requests',
     async ({ page }) => {
       // Visita a página para obter cookies (fingerprint)
