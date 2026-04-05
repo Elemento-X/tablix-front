@@ -9,6 +9,7 @@ import { getServerLocale, getMessages, toOpenGraphLocale } from '@/lib/i18n/serv
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from 'sonner'
 import { CookieConsent } from '@/components/cookie-consent'
+import { MotionProvider } from '@/components/motion-provider'
 import { OfflineIndicator } from '@/components/offline-indicator'
 import { SkipLink } from '@/components/skip-link'
 import { SITE_URL } from '@/lib/constants'
@@ -93,14 +94,16 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem nonce={nonce}>
-          <LocaleProvider>
-            <SkipLink />
-            <OfflineIndicator />
-            {children}
-            <Analytics />
-            <Toaster position="top-right" richColors />
-            <CookieConsent />
-          </LocaleProvider>
+          <MotionProvider>
+            <LocaleProvider>
+              <SkipLink />
+              <OfflineIndicator />
+              {children}
+              <Analytics />
+              <Toaster position="top-right" richColors />
+              <CookieConsent />
+            </LocaleProvider>
+          </MotionProvider>
         </ThemeProvider>
       </body>
     </html>

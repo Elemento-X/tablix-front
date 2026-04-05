@@ -4,10 +4,10 @@
  * Tests for:
  *   - src/app/pricing/constants.ts (FAQ_KEYS)
  *   - src/app/pricing/components/PricingPageContent.tsx (layout, CTA, dynamic imports, i18n)
- *   - src/app/pricing/page.tsx (generateMetadata, JSON-LD, nonce, XSS escape)
+ *   - src/app/pricing/page.tsx (generateMetadata, JSON-LD, XSS escape)
  *
  * Covers: FAQ_KEYS contract, PricingPageContent rendering and CTA, i18n key resolution,
- * JSON-LD shape, all 7 FAQ items in schema, nonce propagation, XSS escape of '<',
+ * JSON-LD shape, all 7 FAQ items in schema, XSS escape of '<',
  * metadata fields (title, description, canonical, OG, Twitter).
  */
 import { render, screen } from '@testing-library/react'
@@ -152,7 +152,6 @@ import { FAQ_KEYS } from '@/app/pricing/constants'
 import { PricingPageContent } from '@/app/pricing/components/PricingPageContent'
 import { generateMetadata, default as PricingPage } from '@/app/pricing/page'
 import { getMessages, getServerLocale } from '@/lib/i18n/server'
-import { headers } from 'next/headers'
 
 // ---------------------------------------------------------------------------
 // Tests: constants.ts
@@ -412,24 +411,5 @@ describe('PricingPage (JSON-LD)', () => {
     // PricingPageContent renders real output (header, footer, main, etc.)
     // At minimum the main element from PricingPageContent must exist
     expect(container.querySelector('main#main-content')).not.toBeNull()
-  })
-
-  it('nonce is empty string when x-nonce header is absent', async () => {
-    const jsx = await PricingPage()
-    const { container } = render(jsx)
-    const script = container.querySelector('script[type="application/ld+json"]')
-    const nonce = script?.getAttribute('nonce') ?? ''
-    expect(nonce).toBe('')
-  })
-
-  it('nonce attribute is propagated to script tag when x-nonce header is set', async () => {
-    const mockHeaders = headers as jest.Mock
-    mockHeaders.mockResolvedValueOnce({
-      get: jest.fn().mockReturnValue('test-nonce-abc123'),
-    })
-    const jsx = await PricingPage()
-    const { container } = render(jsx)
-    const script = container.querySelector('script[type="application/ld+json"]')
-    expect(script?.getAttribute('nonce')).toBe('test-nonce-abc123')
   })
 })

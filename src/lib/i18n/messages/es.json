@@ -18,9 +18,10 @@
   },
   "hero": {
     "title": "Recupera las horas que pierdes en hojas de cálculo",
-    "subtitle": "Unifica archivos, queda solo con lo que importa y ten todo listo en segundos. Sin fórmulas, sin retrabajo.",
+    "subtitle": "Unificar hojas no debería consumir tu tarde. Sube los archivos, elige lo que importa y listo.",
     "cta": "Simplificar mis hojas",
-    "earlyAccess": "Early Access"
+    "ctaSecondary": "Cómo funciona en 4 pasos",
+    "earlyAccess": "Gratis para los primeros usuarios"
   },
   "howItWorks": {
     "title": "Cómo funciona",
@@ -141,7 +142,7 @@
     "dropzoneWithFiles": "archivo(s) seleccionado(s)",
     "or": "o",
     "selectFile": "Selecciona un archivo",
-    "maxSize": "CSV o XLSX • Máximo 10MB",
+    "maxSize": "CSV o XLSX • Máximo 1MB",
     "processing": "Procesando...",
     "continue": "Continuar",
     "error": "Error al procesar el archivo",
