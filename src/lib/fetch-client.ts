@@ -198,7 +198,7 @@ export async function fetchWithResilience<T = unknown>(
         throw error
       }
 
-      const data = (await response.json()) as T
+      const data = response.status === 204 ? ({} as T) : ((await response.json()) as T)
       return { data, response }
     } catch (err) {
       clearTimeout(timeoutId)

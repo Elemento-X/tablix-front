@@ -88,7 +88,10 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${geistSans.className} ${geistMono.className} font-sans antialiased`}>
+      <body
+        className={`${geistSans.className} ${geistMono.className} font-sans antialiased`}
+        suppressHydrationWarning
+      >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem nonce={nonce}>
           <LocaleProvider>
             <SkipLink />
