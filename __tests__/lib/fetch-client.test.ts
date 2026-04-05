@@ -628,6 +628,24 @@ describe('fetchWithResilience — retry', () => {
 // ── Success path ──────────────────────────────────────────────────────────────
 
 describe('fetchWithResilience — success path', () => {
+  it('returns empty object and response on 204 No Content without calling .json()', async () => {
+    const jsonSpy = jest.fn()
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 204,
+      headers: new Headers(),
+      json: jsonSpy,
+    } as unknown as Response)
+
+    const { data, response } = await fetchWithResilience('/api/unification/complete', {
+      method: 'POST',
+    })
+
+    expect(data).toEqual({})
+    expect(response.status).toBe(204)
+    expect(jsonSpy).not.toHaveBeenCalled()
+  })
+
   it('returns parsed data and response on 200', async () => {
     const body = { items: [1, 2, 3] }
     fetchMock.mockResolvedValueOnce(makeFetchResponse(true, 200, body))
