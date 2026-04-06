@@ -44,6 +44,23 @@
       }
     }
   },
+  "benefits": {
+    "title": "Basta de hojas de cálculo manuales",
+    "items": {
+      "item1": {
+        "pain": "Copiar y pegar entre decenas de pestañas",
+        "solution": "Sube los archivos y unifica de una vez"
+      },
+      "item2": {
+        "pain": "Columnas erradas, datos fuera de lugar",
+        "solution": "Selecciona visualmente lo que importa"
+      },
+      "item3": {
+        "pain": "Horas repitiendo el mismo proceso cada semana",
+        "solution": "Resultado listo en segundos con Tablix"
+      }
+    }
+  },
   "audience": {
     "title": "Para quién es",
     "roles": {

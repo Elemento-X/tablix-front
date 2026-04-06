@@ -68,7 +68,7 @@ export function PricingSection({
         <div
           role="radiogroup"
           aria-label={t('pricing.title')}
-          className="border-border bg-muted inline-flex flex-wrap justify-center rounded-lg border p-1"
+          className="border-border bg-muted dark:bg-muted/30 inline-flex flex-wrap justify-center rounded-lg border p-1"
         >
           <button
             type="button"

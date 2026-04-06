@@ -70,16 +70,10 @@ function ScrambleText({ text, className }: { text: string; className?: string })
     const el = spanRef.current
     if (!el) return
 
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          if (reducedMotion) {
-            setDisplayed(text)
-          } else {
-            timeoutRef.current = setTimeout(animate, 200)
-          }
+          timeoutRef.current = setTimeout(animate, 200)
           observer.disconnect()
         }
       },

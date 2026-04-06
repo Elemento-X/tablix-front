@@ -68,7 +68,7 @@ export function UploadStep({
             </div>
           )}
 
-          <div className="bg-muted rounded-full p-4">
+          <div className="bg-muted dark:bg-muted/30 rounded-full p-4">
             <FileSpreadsheet className="text-foreground/80 h-8 w-8" />
           </div>
 
@@ -90,7 +90,10 @@ export function UploadStep({
           )}
 
           {files.length > 0 && (
-            <div data-testid="file-list" className="bg-muted w-full space-y-2 rounded-lg p-4">
+            <div
+              data-testid="file-list"
+              className="bg-muted dark:bg-muted/30 w-full space-y-2 rounded-lg p-4"
+            >
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-foreground/80 text-sm font-medium">
                   {files.length} {t('columns.of')} {maxInputFiles} {t('status.files')}

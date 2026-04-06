@@ -41,9 +41,12 @@ export function UsageStatus({ usage, isLoading }: UsageStatusProps) {
     return null
   }
 
-  const progressPercent = Math.min(
-    100,
-    (usage.unifications.remaining / usage.unifications.max) * 100,
+  const progressPercent = Math.max(
+    0,
+    Math.min(
+      100,
+      ((usage.unifications.max - usage.unifications.remaining) / usage.unifications.max) * 100,
+    ),
   )
   const progressColor =
     usage.unifications.remaining === 0
@@ -70,7 +73,7 @@ export function UsageStatus({ usage, isLoading }: UsageStatusProps) {
             </div>
 
             <div
-              className="bg-muted h-2 w-full rounded-full"
+              className="bg-muted dark:bg-muted/30 h-2 w-full rounded-full"
               role="progressbar"
               aria-valuenow={usage.unifications.remaining}
               aria-valuemin={0}
