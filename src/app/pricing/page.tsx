@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { headers } from 'next/headers'
 import { getServerLocale, getMessages } from '@/lib/i18n/server'
 import { SITE_URL } from '@/lib/constants'
 import { PricingPageContent } from './components/PricingPageContent'
@@ -31,7 +30,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PricingPage() {
-  const nonce = (await headers()).get('x-nonce') ?? ''
   const locale = await getServerLocale()
   const messages = getMessages(locale)
 
@@ -52,7 +50,6 @@ export default async function PricingPage() {
     <>
       <script
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(faqJsonLd).replace(/</g, '\\u003c'),
         }}

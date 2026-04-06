@@ -18,9 +18,10 @@
   },
   "hero": {
     "title": "Get back the hours you lose on spreadsheets",
-    "subtitle": "Merge files, keep only what matters, and get a clean output in seconds. No formulas, no rework.",
+    "subtitle": "Merging spreadsheets shouldn't eat your afternoon. Upload, pick what matters, done.",
     "cta": "Simplify my spreadsheets",
-    "earlyAccess": "Early Access"
+    "ctaSecondary": "How it works in 4 steps",
+    "earlyAccess": "Free for early users"
   },
   "howItWorks": {
     "title": "How it works",
@@ -141,7 +142,7 @@
     "dropzoneWithFiles": "file(s) selected",
     "or": "or",
     "selectFile": "Select a file",
-    "maxSize": "CSV or XLSX • Maximum 10MB",
+    "maxSize": "CSV or XLSX • Maximum 1MB",
     "processing": "Processing...",
     "continue": "Continue",
     "error": "Error processing file",
