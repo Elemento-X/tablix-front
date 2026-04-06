@@ -171,3 +171,5 @@
 .prose-legal section {
   @apply scroll-mt-20;
 }
+
+/* Grid Vivo — all animations handled by framer-motion in grid-background.tsx */

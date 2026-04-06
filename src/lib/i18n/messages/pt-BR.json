@@ -18,9 +18,10 @@
   },
   "hero": {
     "title": "Recupere horas perdidas em planilhas",
-    "subtitle": "Unifique arquivos, selecione só o que importa e tenha tudo pronto em segundos. Sem fórmulas, sem retrabalho.",
+    "subtitle": "Unificar planilhas não deveria consumir sua tarde. Envie os arquivos, selecione o que importa e pronto.",
     "cta": "Simplificar minhas planilhas",
-    "earlyAccess": "Early Access"
+    "ctaSecondary": "Como funciona em 4 passos",
+    "earlyAccess": "Grátis para os primeiros usuários"
   },
   "howItWorks": {
     "title": "Como funciona",
@@ -141,7 +142,7 @@
     "dropzoneWithFiles": "arquivo(s) selecionado(s)",
     "or": "ou",
     "selectFile": "Selecione um arquivo",
-    "maxSize": "CSV ou XLSX • Máximo 10MB",
+    "maxSize": "CSV ou XLSX • Máximo 1MB",
     "processing": "Processando...",
     "continue": "Continuar",
     "error": "Erro ao processar arquivo",
