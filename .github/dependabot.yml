@@ -13,6 +13,43 @@ updates:
       - dependency-name: "*"
         update-types:
           - version-update:semver-major
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      tailwind:
+        patterns:
+          - "@tailwindcss/*"
+          - "tw-animate-css"
+          - "tailwind-merge"
+          - "tailwindcss-animate"
+      upstash:
+        patterns:
+          - "@upstash/*"
+      testing:
+        patterns:
+          - "@testing-library/*"
+          - "@types/jest"
+          - "jest"
+          - "jest-*"
+      vercel:
+        patterns:
+          - "@vercel/*"
+      eslint:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "@rocketseat/*"
+      playwright:
+        patterns:
+          - "@playwright/*"
+      types:
+        patterns:
+          - "@types/node"
+          - "@types/papaparse"
 
   - package-ecosystem: github-actions
     directory: /
@@ -26,3 +63,7 @@ updates:
       - dependency-name: "*"
         update-types:
           - version-update:semver-major
+    groups:
+      github-actions:
+        patterns:
+          - "*"
