@@ -40,7 +40,7 @@ export function ResultStep({ resultData, usage, onStartOver }: ResultStepProps) 
             </p>
           </div>
 
-          <div className="bg-muted w-full rounded-lg p-4">
+          <div className="bg-muted dark:bg-muted/30 w-full rounded-lg p-4">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="flex items-center gap-3 rounded-md p-2">
                 <FileSpreadsheet className="h-5 w-5 flex-shrink-0 text-teal-700 dark:text-teal-400" />

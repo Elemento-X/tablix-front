@@ -142,7 +142,7 @@ export function ColumnsStep({
             <div className="overflow-x-auto rounded-lg border">
               <table className="w-full text-left text-xs" aria-label={t('columns.previewHint')}>
                 <thead>
-                  <tr className="bg-muted">
+                  <tr className="bg-muted dark:bg-muted/30">
                     {selectedColumns.map((col) => (
                       <th
                         key={col}

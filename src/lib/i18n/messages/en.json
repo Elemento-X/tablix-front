@@ -44,6 +44,23 @@
       }
     }
   },
+  "benefits": {
+    "title": "No more manual spreadsheet work",
+    "items": {
+      "item1": {
+        "pain": "Copying and pasting across dozens of tabs",
+        "solution": "Upload your files and merge at once"
+      },
+      "item2": {
+        "pain": "Wrong columns, data all over the place",
+        "solution": "Visually pick only what matters"
+      },
+      "item3": {
+        "pain": "Hours repeating the same process every week",
+        "solution": "Results ready in seconds with Tablix"
+      }
+    }
+  },
   "audience": {
     "title": "Who it's for",
     "roles": {

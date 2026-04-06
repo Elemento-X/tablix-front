@@ -44,6 +44,23 @@
       }
     }
   },
+  "benefits": {
+    "title": "Chega de planilha manual",
+    "items": {
+      "item1": {
+        "pain": "Copiar e colar entre dezenas de abas",
+        "solution": "Envie os arquivos e unifique de uma vez"
+      },
+      "item2": {
+        "pain": "Colunas erradas, dados fora de lugar",
+        "solution": "Selecione visualmente o que importa"
+      },
+      "item3": {
+        "pain": "Horas repetindo o mesmo processo toda semana",
+        "solution": "Resultado pronto em segundos no Tablix"
+      }
+    }
+  },
   "audience": {
     "title": "Para quem é",
     "roles": {
