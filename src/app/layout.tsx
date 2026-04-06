@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { headers } from 'next/headers'
 import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import { LocaleProvider } from '@/lib/i18n'
 import { getServerLocale, getMessages, toOpenGraphLocale } from '@/lib/i18n/server'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -11,6 +12,7 @@ import { Toaster } from 'sonner'
 import { CookieConsent } from '@/components/cookie-consent'
 import { MotionProvider } from '@/components/motion-provider'
 import { OfflineIndicator } from '@/components/offline-indicator'
+import { PostHogProvider } from '@/components/posthog-provider'
 import { SkipLink } from '@/components/skip-link'
 import { SITE_URL } from '@/lib/constants'
 import './globals.css'
@@ -94,16 +96,19 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem nonce={nonce}>
-          <MotionProvider>
-            <LocaleProvider>
-              <SkipLink />
-              <OfflineIndicator />
-              {children}
-              <Analytics />
-              <Toaster position="top-right" richColors />
-              <CookieConsent />
-            </LocaleProvider>
-          </MotionProvider>
+          <PostHogProvider>
+            <MotionProvider>
+              <LocaleProvider>
+                <SkipLink />
+                <OfflineIndicator />
+                {children}
+                <Analytics />
+                <SpeedInsights />
+                <Toaster position="top-right" richColors />
+                <CookieConsent />
+              </LocaleProvider>
+            </MotionProvider>
+          </PostHogProvider>
         </ThemeProvider>
       </body>
     </html>

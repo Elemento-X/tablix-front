@@ -978,7 +978,7 @@ describe('useUploadFlow', () => {
       expect(hook.result.current.step).toBe('result')
       expect(hook.result.current.resultData).toEqual({
         fileCount: 1,
-        rowCount: 0,
+        rowCount: null,
         columnCount: 2,
       })
     })
@@ -1607,9 +1607,7 @@ describe('useUploadFlow', () => {
         await result.current.handleUpload()
       })
 
-      expect(mockToast.error).toHaveBeenCalledWith(
-        expect.stringContaining('errors.parseRowLimit'),
-      )
+      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('errors.parseRowLimit'))
     })
 
     it('maps noColumns parse error to parseNoColumns i18n key', async () => {

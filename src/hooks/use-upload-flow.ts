@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { useUsage, formatFileSize } from '@/hooks/use-usage'
 import { useFileParser } from '@/hooks/use-file-parser'
 import { useLocale } from '@/lib/i18n'
+import { trackEvent } from '@/lib/analytics/events'
 import { fetchWithResilience, getCsrfToken } from '@/lib/fetch-client'
 import { toastFetchError } from '@/lib/toast-error'
 import { validateFile, validateFileContent, sanitizeFileName } from '@/lib/security'
@@ -17,7 +18,7 @@ export type ProcessingPhase = 'consuming-quota' | 'merging' | 'generating' | 'do
 
 export interface ResultData {
   fileCount: number
-  rowCount: number
+  rowCount: number | null
   columnCount: number
 }
 
@@ -78,6 +79,7 @@ export function useUploadFlow() {
 
     const totalFilesAfterAdd = files.length + selectedFiles.length
     if (totalFilesAfterAdd > maxInputFiles) {
+      trackEvent('plan_limit_reached', { limitType: 'fileCount', usageBucket: 'at_limit' })
       toast.error(
         t('messages.tooManyFiles', {
           max: maxInputFiles,
@@ -96,6 +98,7 @@ export function useUploadFlow() {
       }
 
       if (usage && file.size > usage.limits.maxFileSize) {
+        trackEvent('plan_limit_reached', { limitType: 'fileSize', usageBucket: 'at_limit' })
         toast.error(
           t('messages.fileTooLarge', {
             name: safeName,
@@ -108,6 +111,7 @@ export function useUploadFlow() {
 
       const newTotalSize = currentTotalSize + newFiles.reduce((s, f) => s + f.size, 0) + file.size
       if (newTotalSize > maxTotalSize) {
+        trackEvent('plan_limit_reached', { limitType: 'totalSize', usageBucket: 'at_limit' })
         toast.error(
           t('messages.totalSizeExceeded', {
             plan: usage?.plan.toUpperCase() ?? 'FREE',
@@ -159,6 +163,7 @@ export function useUploadFlow() {
       }
       const maxColumns = usage?.limits.maxColumns ?? 3
       if (prev.length >= maxColumns) {
+        trackEvent('plan_limit_reached', { limitType: 'columns', usageBucket: 'at_limit' })
         toast.error(
           t('messages.tooManyColumns', {
             max: maxColumns,
@@ -217,8 +222,17 @@ export function useUploadFlow() {
     setIsProcessing(true)
     setProcessingPhase('consuming-quota')
 
+    const processingMode = canProcessClientSide(files, usage?.plan ?? 'free') ? 'client' : 'server'
+    trackEvent('download_started', {
+      fileCount: files.length,
+      selectedColumns: selectedColumns.length,
+      processingMode,
+    })
+
+    const processStartTime = performance.now()
+
     try {
-      const useClientSide = canProcessClientSide(files, usage?.plan ?? 'free')
+      const useClientSide = processingMode === 'client'
       const addWatermark = usage?.plan === 'free'
 
       const consumeQuota = async () => {
@@ -269,6 +283,14 @@ export function useUploadFlow() {
           fileCount: files.length,
           rowCount: result.rowCount,
           columnCount: selectedColumns.length,
+        })
+
+        trackEvent('download_completed', {
+          fileCount: files.length,
+          rowCount: result.rowCount,
+          selectedColumns: selectedColumns.length,
+          processingMode: 'client',
+          processTimeMs: Math.round(performance.now() - processStartTime),
         })
 
         refetchUsage()
@@ -341,8 +363,16 @@ export function useUploadFlow() {
 
         setResultData({
           fileCount: files.length,
-          rowCount: 0,
+          rowCount: null,
           columnCount: selectedColumns.length,
+        })
+
+        trackEvent('download_completed', {
+          fileCount: files.length,
+          rowCount: null,
+          selectedColumns: selectedColumns.length,
+          processingMode: 'server',
+          processTimeMs: Math.round(performance.now() - processStartTime),
         })
 
         refetchUsage()
@@ -366,6 +396,7 @@ export function useUploadFlow() {
     }
 
     if (usage && usage.unifications.remaining <= 0) {
+      trackEvent('plan_limit_reached', { limitType: 'unifications', usageBucket: 'at_limit' })
       toast.error(
         t('messages.unificationLimitExceeded', {
           current: usage.unifications.current,
@@ -376,6 +407,11 @@ export function useUploadFlow() {
     }
 
     setIsUploading(true)
+
+    const totalSizeMB = files.reduce((sum, f) => sum + f.size, 0) / (1024 * 1024)
+    trackEvent('upload_started', { fileCount: files.length, totalSizeMB })
+
+    const uploadStartTime = performance.now()
 
     try {
       const allColumns: Set<string>[] = []
@@ -411,6 +447,7 @@ export function useUploadFlow() {
       }
 
       if (usage && totalRowCount > usage.limits.maxRows) {
+        trackEvent('plan_limit_reached', { limitType: 'rows', usageBucket: 'at_limit' })
         toast.error(
           t('messages.rowsExceedLimit', {
             total: totalRowCount,
@@ -480,10 +517,27 @@ export function useUploadFlow() {
       const maxSelectable = usage?.limits.maxColumns ?? 3
       setSelectedColumns(commonColumns.slice(0, maxSelectable))
       setStep('columns')
+
+      const fileTypes = [...new Set(files.map((f) => f.name.split('.').pop()?.toLowerCase() ?? ''))]
+      trackEvent('upload_completed', {
+        fileCount: files.length,
+        totalSizeMB,
+        fileTypes,
+        parseTimeMs: Math.round(performance.now() - uploadStartTime),
+        columnCount: commonColumns.length,
+      })
+      trackEvent('preview_generated', {
+        columnCount: commonColumns.length,
+        selectedColumns: Math.min(commonColumns.length, maxSelectable),
+      })
     } catch (err) {
       if (env.NODE_ENV !== 'production') {
         console.error('[handleUpload]', err)
       }
+      trackEvent('upload_error', {
+        errorType: err instanceof Error ? err.name : 'unknown',
+        fileCount: files.length,
+      })
       showFetchError(err, 'upload.error')
     } finally {
       if (files.length > 1) {
