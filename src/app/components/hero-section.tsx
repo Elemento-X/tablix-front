@@ -23,6 +23,11 @@ function ScrambleText({ text, className }: { text: string; className?: string })
   const spanRef = useRef<HTMLSpanElement>(null)
   const hasAnimated = useRef(false)
 
+  useEffect(() => {
+    hasAnimated.current = false
+    setDisplayed(text)
+  }, [text])
+
   const animate = useCallback(() => {
     if (hasAnimated.current) return
     hasAnimated.current = true
