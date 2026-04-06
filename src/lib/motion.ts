@@ -18,6 +18,7 @@ export const TIMING = {
 export const EASING = {
   enter: [0.25, 0.46, 0.45, 0.94] as const,
   exit: [0.55, 0.06, 0.68, 0.19] as const,
+  easeOutStrong: [0.22, 1, 0.36, 1] as const,
 }
 
 /** Spring physics presets for framer-motion */

@@ -1,5 +1,6 @@
 'use client'
 
+import { BenefitsSection } from '@/components/benefits-section'
 import { LandingFooter } from '@/components/landing-footer'
 import { LandingHeader } from '@/components/landing-header'
 import { Card } from '@/components/card'
@@ -34,6 +35,8 @@ export function LandingPageContent() {
       <main id="main-content">
         <HeroSection />
 
+        <BenefitsSection />
+
         {/* How it Works — sequential card fill */}
         <section
           id="how-it-works"
@@ -59,29 +62,33 @@ export function LandingPageContent() {
           <div className="grid gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-4 md:gap-8">
             {[
               {
+                id: 'upload',
                 icon: FileSpreadsheet,
                 title: t('howItWorks.steps.upload.title'),
                 description: t('howItWorks.steps.upload.description'),
               },
               {
+                id: 'visualize',
                 icon: Eye,
                 title: t('howItWorks.steps.visualize.title'),
                 description: t('howItWorks.steps.visualize.description'),
               },
               {
+                id: 'choose',
                 icon: CircleCheck,
                 title: t('howItWorks.steps.choose.title'),
                 description: t('howItWorks.steps.choose.description'),
               },
               {
+                id: 'generate',
                 icon: Download,
                 title: t('howItWorks.steps.generate.title'),
                 description: t('howItWorks.steps.generate.description'),
               },
             ].map((step, index) => (
               <MotionCard
-                key={step.title}
-                className="border-border bg-muted relative overflow-hidden p-6"
+                key={step.id}
+                className="border-border bg-muted dark:bg-muted/30 relative overflow-hidden p-6"
                 initial={
                   prefersReducedMotion
                     ? false
@@ -132,7 +139,7 @@ export function LandingPageContent() {
         </section>
 
         {/* Audience — spotlight reveal */}
-        <section id="audience" className="bg-muted scroll-mt-20 py-12 sm:py-20">
+        <section id="audience" className="bg-muted dark:bg-muted/30 scroll-mt-20 py-12 sm:py-20">
           <div className="mx-auto max-w-4xl px-4 sm:px-6">
             <motion.div
               initial={prefersReducedMotion ? false : { opacity: 0 }}
@@ -154,23 +161,26 @@ export function LandingPageContent() {
             <div className="grid gap-10 md:grid-cols-3 md:gap-8">
               {[
                 {
+                  id: 'analysts',
                   icon: BarChart3,
                   title: t('audience.roles.analysts.title'),
                   description: t('audience.roles.analysts.description'),
                 },
                 {
+                  id: 'admins',
                   icon: Users,
                   title: t('audience.roles.admins.title'),
                   description: t('audience.roles.admins.description'),
                 },
                 {
+                  id: 'recurring',
                   icon: RefreshCw,
                   title: t('audience.roles.recurring.title'),
                   description: t('audience.roles.recurring.description'),
                 },
               ].map((role, index) => (
                 <motion.div
-                  key={role.title}
+                  key={role.id}
                   className="group text-center"
                   initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}

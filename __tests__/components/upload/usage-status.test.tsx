@@ -98,23 +98,23 @@ describe('UsageStatus', () => {
     expect(inner.className).toContain('bg-success')
   })
 
-  it('sets progress bar width based on remaining percentage', () => {
+  it('sets progress bar width based on usage percentage', () => {
+    // remaining=2, max=3 → used = (3-2)/3 * 100 ≈ 33.33%
     render(<UsageStatus usage={createUsage()} isLoading={false} />)
     const progressbar = screen.getByRole('progressbar')
     const inner = progressbar.firstChild as HTMLElement
-    // 2/3 * 100 ≈ 66.67%
-    expect(inner.style.width).toMatch(/66\.6/)
+    expect(inner.style.width).toMatch(/33\.3/)
   })
 
-  it('clamps progress bar width to 100% when remaining exceeds max', () => {
-    // Covers the Math.min(100, ...) branch — remaining > max
+  it('clamps progress bar width to 0% when remaining exceeds max', () => {
+    // remaining=5, max=3 → used = (3-5)/3 = negative → clamped to 0%
     const usage = createUsage({
       unifications: { current: 0, remaining: 5, max: 3 },
     })
     render(<UsageStatus usage={usage} isLoading={false} />)
     const progressbar = screen.getByRole('progressbar')
     const inner = progressbar.firstChild as HTMLElement
-    expect(inner.style.width).toBe('100%')
+    expect(inner.style.width).toBe('0%')
   })
 
   it('renders maxRowsLabel and maxColumnsLabel i18n keys', () => {

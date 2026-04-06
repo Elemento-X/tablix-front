@@ -21,7 +21,7 @@ export function LandingFooter() {
   ]
 
   return (
-    <footer className="bg-muted border-border border-t">
+    <footer className="bg-muted dark:bg-muted/30 border-border border-t">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
         <div className="grid gap-8 md:grid-cols-4 md:gap-12">
           <div className="md:col-span-2">
