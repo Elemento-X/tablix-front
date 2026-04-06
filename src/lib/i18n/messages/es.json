@@ -497,6 +497,26 @@
       }
     }
   },
+  "ctaBanner": {
+    "afterHowItWorks": {
+      "title": "Así de simple. Ahora es tu turno.",
+      "cta": "Empezar gratis"
+    },
+    "afterAudience": {
+      "title": "Si llegaste hasta aquí, Tablix es para ti.",
+      "subtitle": "Sin registro, sin tarjeta. Prueba ahora con tu propia hoja de cálculo.",
+      "cta": "Probar con mi hoja de cálculo"
+    },
+    "final": {
+      "title": "Tu próxima hoja de cálculo no tiene que ser un problema.",
+      "subtitle": "Gratis para los primeros usuarios. Comienza en segundos.",
+      "cta": "Simplificar mis hojas de cálculo"
+    }
+  },
+  "paymentBadges": {
+    "label": "Formas de pago",
+    "aria": "Métodos de pago aceptados"
+  },
   "securityBadges": {
     "title": "Seguridad que puedes verificar",
     "local": {

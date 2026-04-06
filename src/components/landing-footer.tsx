@@ -5,6 +5,8 @@ import { useLocale } from '@/lib/i18n'
 import { CONTACT_EMAIL } from '@/lib/constants'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import { scrollToSection } from '@/components/landing-header-nav'
+import { PaymentBadges } from '@/components/payment-badges'
+import { TablixLogo } from '@/components/tablix-logo'
 
 export function LandingFooter() {
   const { t } = useLocale()
@@ -25,10 +27,11 @@ export function LandingFooter() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
         <div className="grid gap-8 md:grid-cols-4 md:gap-12">
           <div className="md:col-span-2">
-            <span className="text-foreground text-lg font-semibold">{t('header.brand')}</span>
+            <TablixLogo symbolSize={24} />
             <p className="text-muted-foreground mt-2 max-w-xs text-sm leading-relaxed">
               {t('footer.tagline')}
             </p>
+            <PaymentBadges />
           </div>
 
           <nav aria-label={t('footer.nav.product')}>

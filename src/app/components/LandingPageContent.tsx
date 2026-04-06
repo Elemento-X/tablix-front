@@ -1,6 +1,7 @@
 'use client'
 
 import { BenefitsSection } from '@/components/benefits-section'
+import { CtaBanner } from '@/components/cta-banner'
 import { LandingFooter } from '@/components/landing-footer'
 import { LandingHeader } from '@/components/landing-header'
 import { Card } from '@/components/card'
@@ -138,6 +139,13 @@ export function LandingPageContent() {
           </div>
         </section>
 
+        {/* CTA 1 — inline after How it Works */}
+        <CtaBanner
+          variant="inline"
+          title={t('ctaBanner.afterHowItWorks.title')}
+          ctaLabel={t('ctaBanner.afterHowItWorks.cta')}
+        />
+
         {/* Audience — spotlight reveal */}
         <section id="audience" className="bg-muted dark:bg-muted/30 scroll-mt-20 py-12 sm:py-20">
           <div className="mx-auto max-w-4xl px-4 sm:px-6">
@@ -196,7 +204,8 @@ export function LandingPageContent() {
                     whileInView={prefersReducedMotion ? undefined : { scale: [0, 1.1, 1] }}
                     viewport={{ once: true }}
                     transition={{
-                      ...SPRING.pop,
+                      duration: 0.4,
+                      ease: EASING.enter,
                       delay: index * 0.2 + 0.1,
                     }}
                   >
@@ -212,9 +221,25 @@ export function LandingPageContent() {
           </div>
         </section>
 
+        {/* CTA 2 — card after Audience */}
+        <CtaBanner
+          variant="card"
+          title={t('ctaBanner.afterAudience.title')}
+          subtitle={t('ctaBanner.afterAudience.subtitle')}
+          ctaLabel={t('ctaBanner.afterAudience.cta')}
+        />
+
         <PricingSection id="pricing" className="scroll-mt-20" />
 
         <SecurityBadges />
+
+        {/* CTA Final — closing section */}
+        <CtaBanner
+          variant="final"
+          title={t('ctaBanner.final.title')}
+          subtitle={t('ctaBanner.final.subtitle')}
+          ctaLabel={t('ctaBanner.final.cta')}
+        />
       </main>
 
       <LandingFooter />
