@@ -19,8 +19,19 @@ const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123
 function ScrambleText({ text, className }: { text: string; className?: string }) {
   const [displayed, setDisplayed] = useState(text)
   const rafRef = useRef<number>(0)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const spanRef = useRef<HTMLSpanElement>(null)
+  const hasAnimated = useRef(false)
+
+  useEffect(() => {
+    hasAnimated.current = false
+    setDisplayed(text)
+  }, [text])
 
   const animate = useCallback(() => {
+    if (hasAnimated.current) return
+    hasAnimated.current = true
+
     const speed = 30
     const charsPerTick = 0.4
     let iteration = 0
@@ -56,14 +67,38 @@ function ScrambleText({ text, className }: { text: string; className?: string })
   }, [text])
 
   useEffect(() => {
-    const delay = setTimeout(animate, 200)
+    const el = spanRef.current
+    if (!el) return
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          if (reducedMotion) {
+            setDisplayed(text)
+          } else {
+            timeoutRef.current = setTimeout(animate, 200)
+          }
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.1 },
+    )
+    observer.observe(el)
+
     return () => {
-      clearTimeout(delay)
+      observer.disconnect()
+      clearTimeout(timeoutRef.current)
       cancelAnimationFrame(rafRef.current)
     }
-  }, [animate])
+  }, [animate, text])
 
-  return <span className={className}>{displayed}</span>
+  return (
+    <span ref={spanRef} className={className}>
+      {displayed}
+    </span>
+  )
 }
 
 export function HeroSection() {
@@ -131,7 +166,7 @@ export function HeroSection() {
                 whileHover={{ x: 4 }}
                 transition={SPRING.button}
               >
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </motion.span>
             </Button>
           </MotionLink>
@@ -147,7 +182,7 @@ export function HeroSection() {
           >
             <Button variant="ghost" size="lg" className="text-muted-foreground h-12 px-8 text-base">
               {t('hero.ctaSecondary')}
-              <ChevronDown className="ml-2 h-4 w-4" />
+              <ChevronDown className="ml-2 h-4 w-4" aria-hidden="true" />
             </Button>
           </motion.a>
         </div>
