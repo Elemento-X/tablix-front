@@ -30,7 +30,7 @@ describe('proxy', () => {
       const request = createRequest()
       const response = proxy(request)
 
-      expect(response.headers.get('X-Frame-Options')).toBe('SAMEORIGIN')
+      expect(response.headers.get('X-Frame-Options')).toBe('DENY')
     })
 
     it('should set X-Content-Type-Options header', () => {
@@ -184,7 +184,7 @@ describe('proxy', () => {
       const response = proxy(request)
 
       const csp = response.headers.get('Content-Security-Policy')
-      expect(csp).toContain("frame-ancestors 'self'")
+      expect(csp).toContain("frame-ancestors 'none'")
     })
 
     it('should have base-uri directive', () => {
@@ -225,7 +225,7 @@ describe('proxy', () => {
         const request = createRequest(path)
         const response = proxy(request)
 
-        expect(response.headers.get('X-Frame-Options')).toBe('SAMEORIGIN')
+        expect(response.headers.get('X-Frame-Options')).toBe('DENY')
         expect(response.headers.get('Content-Security-Policy')).toBeDefined()
       }
     })
@@ -560,7 +560,7 @@ describe('proxy', () => {
       const request = createRequest()
       const response = proxy(request)
 
-      expect(response.headers.get('X-Frame-Options')).toBe('SAMEORIGIN')
+      expect(response.headers.get('X-Frame-Options')).toBe('DENY')
     })
 
     it('should prevent MIME type sniffing', () => {

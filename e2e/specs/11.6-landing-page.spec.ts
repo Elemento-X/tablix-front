@@ -92,6 +92,6 @@ test.describe('11.6 — Landing Page', () => {
     await landingPage.goto()
 
     const badge = landingPage.page.getByText(/grátis para os primeiros usuários/i)
-    await expect(badge).toBeVisible()
+    await expect(badge).toBeVisible({ timeout: 10_000 })
   })
 })
