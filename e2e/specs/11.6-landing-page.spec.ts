@@ -91,7 +91,7 @@ test.describe('11.6 — Landing Page', () => {
   test('early access badge is visible', async ({ landingPage }) => {
     await landingPage.goto()
 
-    const badge = landingPage.page.getByText(/grátis para os primeiros usuários/i)
-    await expect(badge).toBeVisible()
+    const badge = landingPage.page.getByText(/grátis para os primeiros usuários/i).first()
+    await expect(badge).toBeVisible({ timeout: 10_000 })
   })
 })

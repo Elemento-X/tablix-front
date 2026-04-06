@@ -13,7 +13,7 @@ const nextConfig = {
     remotePatterns: [],
   },
   experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
+    optimizePackageImports: ['lucide-react', 'framer-motion', 'posthog-js'],
   },
 }
 

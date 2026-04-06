@@ -71,7 +71,7 @@ export default async function OGImage() {
         }}
       />
 
-      {/* Brand */}
+      {/* Brand — Confluência logo */}
       <div
         style={{
           display: 'flex',
@@ -80,22 +80,28 @@ export default async function OGImage() {
           marginBottom: '32px',
         }}
       >
-        <div
-          style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontSize: '28px',
-            fontWeight: 700,
-          }}
-        >
-          T
-        </div>
+        <svg viewBox="0 0 32 32" fill="none" width="56" height="56">
+          <rect
+            x="4"
+            y="7"
+            width="16"
+            height="3"
+            rx="1.5"
+            fill="#14b8a6"
+            transform="rotate(-8 20 8.5)"
+          />
+          <rect x="4" y="14.5" width="20" height="3" rx="1.5" fill="#14b8a6" />
+          <rect
+            x="4"
+            y="22"
+            width="16"
+            height="3"
+            rx="1.5"
+            fill="#14b8a6"
+            transform="rotate(8 20 23.5)"
+          />
+          <circle cx="26" cy="16" r="3" fill="#14b8a6" />
+        </svg>
         <span
           style={{
             fontSize: '48px',

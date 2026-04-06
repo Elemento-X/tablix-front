@@ -24,9 +24,13 @@ test.describe('11.5 — Acessibilidade', () => {
       await uploadPage.goto()
       await uploadPage.uploadFixture('valid-3col-5row.csv')
 
-      // Focus no botão continuar via keyboard (Tab para ativar :focus-visible)
-      await uploadPage.page.keyboard.press('Tab')
-      await uploadPage.continueButton.focus()
+      // Tab até o botão continuar receber foco (keyboard navigation ativa :focus-visible)
+      for (let i = 0; i < 20; i++) {
+        await uploadPage.page.keyboard.press('Tab')
+        if (await uploadPage.continueButton.evaluate((el) => el === document.activeElement)) {
+          break
+        }
+      }
 
       // Verificar indicador visual de foco (outline ou box-shadow, não borda genérica)
       const hasFocusIndicator = await uploadPage.continueButton.evaluate((el) => {

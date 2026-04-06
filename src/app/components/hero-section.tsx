@@ -6,6 +6,7 @@ import { Badge } from '@/components/badge'
 import { Button } from '@/components/button'
 import { GridBackground } from '@/components/grid-background'
 import { useLocale } from '@/lib/i18n'
+import { trackEvent } from '@/lib/analytics/events'
 import { EASING, SPRING, TIMING } from '@/lib/motion'
 import { motion } from 'framer-motion'
 import { ArrowRight, ChevronDown } from 'lucide-react'
@@ -96,7 +97,11 @@ function ScrambleText({ text, className }: { text: string; className?: string })
 }
 
 export function HeroSection() {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
+
+  const handleCtaClick = () => {
+    trackEvent('landing_cta_click', { locale })
+  }
 
   const handleScrollToHowItWorks = (e: MouseEvent) => {
     e.preventDefault()
@@ -143,6 +148,7 @@ export function HeroSection() {
           <MotionLink
             href="/upload"
             data-testid="cta-upload"
+            onClick={handleCtaClick}
             initial={{ opacity: 0, y: 24, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             whileHover={{ scale: 1.03, y: -1 }}

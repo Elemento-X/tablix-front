@@ -67,6 +67,12 @@ jest.mock('@/hooks/use-reduced-motion', () => ({
   useReducedMotion: () => mockReducedMotion,
 }))
 
+const mockOptInCapturing = jest.fn().mockResolvedValue(undefined)
+
+jest.mock('@/lib/analytics/posthog', () => ({
+  optInCapturing: () => mockOptInCapturing(),
+}))
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = 'tablix-cookie-consent'
@@ -81,6 +87,7 @@ beforeEach(() => {
   jest.useFakeTimers()
   localStorage.clear()
   mockReducedMotion = false
+  mockOptInCapturing.mockClear()
 })
 
 afterEach(() => {
@@ -96,7 +103,9 @@ describe('CookieConsent — visibility', () => {
     renderConsent()
 
     // Advance timers to ensure no late render
-    act(() => { jest.advanceTimersByTime(2000) })
+    act(() => {
+      jest.advanceTimersByTime(2000)
+    })
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
@@ -108,27 +117,35 @@ describe('CookieConsent — visibility', () => {
 
   it('renders the dialog after 1500 ms when no consent is stored', () => {
     renderConsent()
-    act(() => { jest.advanceTimersByTime(1500) })
+    act(() => {
+      jest.advanceTimersByTime(1500)
+    })
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 
   it('does not render before the 1500 ms threshold', () => {
     renderConsent()
-    act(() => { jest.advanceTimersByTime(1499) })
+    act(() => {
+      jest.advanceTimersByTime(1499)
+    })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('renders immediately (0 ms delay) when prefers-reduced-motion is active', () => {
     mockReducedMotion = true
     renderConsent()
-    act(() => { jest.advanceTimersByTime(0) })
+    act(() => {
+      jest.advanceTimersByTime(0)
+    })
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 
   it('still requires 1500 ms when prefers-reduced-motion is false', () => {
     mockReducedMotion = false
     renderConsent()
-    act(() => { jest.advanceTimersByTime(0) })
+    act(() => {
+      jest.advanceTimersByTime(0)
+    })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })
@@ -137,7 +154,9 @@ describe('CookieConsent — accept action', () => {
   function showBanner() {
     mockReducedMotion = true
     renderConsent()
-    act(() => { jest.advanceTimersByTime(0) })
+    act(() => {
+      jest.advanceTimersByTime(0)
+    })
   }
 
   it('hides the dialog after clicking the accept button', () => {
@@ -164,7 +183,9 @@ describe('CookieConsent — accessibility', () => {
   function showBanner() {
     mockReducedMotion = true
     renderConsent()
-    act(() => { jest.advanceTimersByTime(0) })
+    act(() => {
+      jest.advanceTimersByTime(0)
+    })
   }
 
   it('dialog has role="dialog"', () => {
@@ -174,10 +195,7 @@ describe('CookieConsent — accessibility', () => {
 
   it('dialog has aria-label from i18n key', () => {
     showBanner()
-    expect(screen.getByRole('dialog')).toHaveAttribute(
-      'aria-label',
-      'cookieConsent.ariaLabel',
-    )
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-label', 'cookieConsent.ariaLabel')
   })
 
   it('dialog has aria-describedby attribute', () => {
@@ -209,7 +227,9 @@ describe('CookieConsent — content', () => {
   function showBanner() {
     mockReducedMotion = true
     renderConsent()
-    act(() => { jest.advanceTimersByTime(0) })
+    act(() => {
+      jest.advanceTimersByTime(0)
+    })
   }
 
   it('renders the Cookie icon', () => {
@@ -229,9 +249,7 @@ describe('CookieConsent — content', () => {
 
   it('renders the accept button with i18n label', () => {
     showBanner()
-    expect(
-      screen.getByRole('button', { name: 'cookieConsent.accept' }),
-    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'cookieConsent.accept' })).toBeInTheDocument()
   })
 
   it('renders the "learn more" link with i18n label', () => {
@@ -246,13 +264,50 @@ describe('CookieConsent — content', () => {
   })
 })
 
+describe('CookieConsent — analytics integration', () => {
+  function showBanner() {
+    mockReducedMotion = true
+    renderConsent()
+    act(() => {
+      jest.advanceTimersByTime(0)
+    })
+  }
+
+  it('calls optInCapturing when accept button is clicked', () => {
+    showBanner()
+    fireEvent.click(screen.getByRole('button', { name: 'cookieConsent.accept' }))
+    expect(mockOptInCapturing).toHaveBeenCalledTimes(1)
+  })
+
+  it('re-applies consent on reload when localStorage has accepted', () => {
+    localStorage.setItem(STORAGE_KEY, 'accepted')
+    renderConsent()
+    act(() => {
+      jest.advanceTimersByTime(0)
+    })
+    expect(mockOptInCapturing).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not call optInCapturing when no consent in localStorage', () => {
+    renderConsent()
+    act(() => {
+      jest.advanceTimersByTime(2000)
+    })
+    expect(mockOptInCapturing).not.toHaveBeenCalled()
+  })
+})
+
 describe('CookieConsent — timer cleanup', () => {
   it('does not show the banner if the component unmounts before the timer fires', () => {
     const { unmount } = renderConsent()
-    act(() => { jest.advanceTimersByTime(1000) })
+    act(() => {
+      jest.advanceTimersByTime(1000)
+    })
     unmount()
     // Advancing past the 1500 ms threshold after unmount must not throw
-    act(() => { jest.advanceTimersByTime(1000) })
+    act(() => {
+      jest.advanceTimersByTime(1000)
+    })
     // No dialog in the document after unmount
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })

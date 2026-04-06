@@ -7,6 +7,7 @@ import { Cookie } from 'lucide-react'
 import { useLocale } from '@/lib/i18n'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import { Button } from '@/components/button'
+import { optInCapturing } from '@/lib/analytics/posthog'
 
 const STORAGE_KEY = 'tablix-cookie-consent'
 const APPEAR_DELAY_MS = 1500
@@ -20,7 +21,10 @@ export function CookieConsent() {
 
   useEffect(() => {
     const consent = localStorage.getItem(STORAGE_KEY)
-    if (consent) return
+    if (consent === 'accepted') {
+      optInCapturing().catch(() => {})
+      return
+    }
 
     const timer = setTimeout(() => setVisible(true), reducedMotion ? 0 : APPEAR_DELAY_MS)
     return () => clearTimeout(timer)
@@ -28,6 +32,7 @@ export function CookieConsent() {
 
   function handleAccept() {
     localStorage.setItem(STORAGE_KEY, 'accepted')
+    optInCapturing().catch(() => {})
     setVisible(false)
   }
 

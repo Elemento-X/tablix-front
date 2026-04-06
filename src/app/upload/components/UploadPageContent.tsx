@@ -6,6 +6,7 @@ import { Badge } from '@/components/badge'
 import { GridBackground } from '@/components/grid-background'
 import { StepIndicator } from '@/components/step-indicator'
 import { StepTransition } from '@/components/step-transition'
+import { TablixLogo } from '@/components/tablix-logo'
 import { useUploadFlow } from '@/hooks/use-upload-flow'
 import { useLocale } from '@/lib/i18n'
 import { ArrowLeft, TriangleAlert } from 'lucide-react'
@@ -82,8 +83,8 @@ export function UploadPageContent() {
               <span className="text-sm font-medium">{t('upload.back')}</span>
             </Link>
 
-            <Link href="/" className="text-foreground text-xl font-semibold">
-              {t('header.brand')}
+            <Link href="/" className="flex items-center">
+              <TablixLogo symbolSize={24} />
             </Link>
 
             <div className="flex items-center gap-2">
@@ -96,7 +97,7 @@ export function UploadPageContent() {
       </header>
 
       <main id="main-content" className="relative mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-16">
-        <GridBackground />
+        <GridBackground animated />
 
         <StepIndicator currentStep={step} />
 

@@ -9,6 +9,7 @@ import { LanguageSelector } from '@/components/language-selector'
 import { LandingHeaderNav } from '@/components/landing-header-nav'
 import { LandingHeaderMobile } from '@/components/landing-header-mobile'
 import { Button } from '@/components/button'
+import { TablixLogo } from '@/components/tablix-logo'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 
@@ -27,11 +28,8 @@ export function LandingHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-8">
           <motion.div style={prefersReducedMotion ? undefined : { scale: headerScale }}>
-            <Link
-              href="/"
-              className="text-foreground flex items-center gap-2 text-xl font-semibold"
-            >
-              {t('header.brand')}
+            <Link href="/" className="flex items-center">
+              <TablixLogo />
             </Link>
           </motion.div>
           <LandingHeaderNav activeSection={activeSection} />
@@ -42,7 +40,7 @@ export function LandingHeader() {
           <Link href="/upload" className="hidden lg:inline-flex">
             <Button variant="brand" size="default">
               {t('header.cta')}
-              <ArrowRight className="ml-1 h-4 w-4" />
+              <ArrowRight className="ml-1 h-4 w-4" aria-hidden="true" />
             </Button>
           </Link>
           <LandingHeaderMobile activeSection={activeSection} />

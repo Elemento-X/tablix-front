@@ -51,7 +51,7 @@ export function ResultStep({ resultData, usage, onStartOver }: ResultStepProps) 
                 </div>
               </div>
 
-              {resultData.rowCount > 0 && (
+              {resultData.rowCount !== null && resultData.rowCount > 0 && (
                 <div className="flex items-center gap-3 rounded-md p-2">
                   <Rows3 className="h-5 w-5 flex-shrink-0 text-teal-700 dark:text-teal-400" />
                   <div>

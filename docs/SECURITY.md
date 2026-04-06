@@ -24,7 +24,7 @@ Todos os headers sao aplicados via funcao `proxy()` exportada de `src/proxy.ts`,
 | Header | Valor |
 |--------|-------|
 | Strict-Transport-Security | `max-age=63072000; includeSubDomains; preload` |
-| X-Frame-Options | `SAMEORIGIN` |
+| X-Frame-Options | `DENY` |
 | X-Content-Type-Options | `nosniff` |
 | Referrer-Policy | `strict-origin-when-cross-origin` |
 | X-DNS-Prefetch-Control | `on` |
@@ -38,11 +38,11 @@ Desabilita APIs desnecessarias: camera, microphone, geolocation, accelerometer, 
 **Producao:**
 - `script-src 'self' 'nonce-{random}' 'strict-dynamic' https://vercel.live https://*.vercel-scripts.com` — nonce gerado por request, propagado via request headers (invisivel ao browser)
 - `style-src 'self' 'unsafe-inline'` — necessario para Framer Motion (inline style attributes) e componentes com style={} dinamico
-- `connect-src 'self' https://vercel.live https://*.vercel-insights.com https://*.vercel-scripts.com https://*.ingest.sentry.io`
+- `connect-src 'self' https://vercel.live https://*.vercel-insights.com https://*.vercel-scripts.com https://*.ingest.sentry.io <NEXT_PUBLIC_POSTHOG_HOST>` (PostHog host injetado dinamicamente via `process.env.NEXT_PUBLIC_POSTHOG_HOST`; padrão `https://us.i.posthog.com`)
 - `worker-src 'self'`
 - `frame-src 'self' https://vercel.live`
 - `default-src 'self'`, `img-src 'self' data: blob: https:`, `font-src 'self' data:`
-- `frame-ancestors 'self'`, `base-uri 'self'`, `form-action 'self'`
+- `frame-ancestors 'none'`, `base-uri 'self'`, `form-action 'self'`
 - `upgrade-insecure-requests` (somente producao)
 
 **Desenvolvimento:**
@@ -293,4 +293,4 @@ Logging estruturado em JSON para acoes de seguranca:
 
 ---
 
-**Atualizado em:** 2026-04-05
+**Atualizado em:** 2026-04-06

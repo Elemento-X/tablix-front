@@ -21,6 +21,16 @@ const envSchema = z.object({
     (val) => (val === '' ? undefined : val),
     z.string().url().optional(),
   ),
+
+  // PostHog — public analytics key, optional (disabled when missing)
+  NEXT_PUBLIC_POSTHOG_KEY: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.string().min(1).optional(),
+  ),
+  NEXT_PUBLIC_POSTHOG_HOST: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.string().url().optional(),
+  ),
 })
 
 export type Env = z.infer<typeof envSchema>
@@ -34,6 +44,8 @@ function parseRawEnv(): Env {
   const raw: Record<string, string | undefined> = {
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
   }
 
   for (const key of Object.keys(raw)) {

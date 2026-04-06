@@ -78,6 +78,19 @@
       }
     }
   },
+  "socialProof": {
+    "heading": "Why trust Tablix",
+    "ariaLabel": "Tablix trust metrics",
+    "metrics": {
+      "zeroStorage": { "label": "bytes stored" },
+      "localProcessing": { "label": "local processing" },
+      "formats": { "label": "formats: XLSX, CSV & XLS" }
+    }
+  },
+  "comparisonMini": {
+    "title": "Free vs Pro",
+    "seeAll": "See full comparison"
+  },
   "pricing": {
     "title": "Plans",
     "subtitle": "Choose the ideal plan for your needs",
@@ -496,6 +509,26 @@
         "address": "Address: São Paulo - SP, Brazil"
       }
     }
+  },
+  "ctaBanner": {
+    "afterHowItWorks": {
+      "title": "That simple. Now it's your turn.",
+      "cta": "Start free"
+    },
+    "afterAudience": {
+      "title": "If you've read this far, Tablix is for you.",
+      "subtitle": "No signup, no credit card. Try it now with your own spreadsheet.",
+      "cta": "Try with my spreadsheet"
+    },
+    "final": {
+      "title": "Your next spreadsheet doesn't have to be a problem.",
+      "subtitle": "Free for early users. Start in seconds.",
+      "cta": "Simplify my spreadsheets"
+    }
+  },
+  "paymentBadges": {
+    "label": "Payment methods",
+    "aria": "Accepted payment methods"
   },
   "securityBadges": {
     "title": "Security you can verify",
