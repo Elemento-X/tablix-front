@@ -20,22 +20,22 @@ function TablixSymbol({ size = 28 }: { size?: number }) {
         x="4"
         y="7"
         width="16"
-        height="2.5"
-        rx="1.25"
+        height="3"
+        rx="1.5"
         className="fill-teal-500"
-        transform="rotate(-8 20 8.25)"
+        transform="rotate(-8 20 8.5)"
       />
-      <rect x="4" y="14.75" width="20" height="2.5" rx="1.25" className="fill-teal-500" />
+      <rect x="4" y="14.5" width="20" height="3" rx="1.5" className="fill-teal-500" />
       <rect
         x="4"
-        y="22.5"
+        y="22"
         width="16"
-        height="2.5"
-        rx="1.25"
+        height="3"
+        rx="1.5"
         className="fill-teal-500"
-        transform="rotate(8 20 23.75)"
+        transform="rotate(8 20 23.5)"
       />
-      <circle cx="26" cy="16" r="2.5" className="fill-teal-500" />
+      <circle cx="26" cy="16" r="3" className="fill-teal-500" />
     </svg>
   )
 }

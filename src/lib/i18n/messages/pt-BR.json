@@ -78,6 +78,19 @@
       }
     }
   },
+  "socialProof": {
+    "heading": "Por que confiar no Tablix",
+    "ariaLabel": "Métricas de confiança do Tablix",
+    "metrics": {
+      "zeroStorage": { "label": "bytes armazenados" },
+      "localProcessing": { "label": "processamento local" },
+      "formats": { "label": "formatos: XLSX, CSV e XLS" }
+    }
+  },
+  "comparisonMini": {
+    "title": "Free vs Pro",
+    "seeAll": "Ver comparação completa"
+  },
   "pricing": {
     "title": "Planos",
     "subtitle": "Escolha o plano ideal para suas necessidades",

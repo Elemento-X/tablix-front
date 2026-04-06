@@ -40,7 +40,7 @@ export function LandingHeader() {
           <Link href="/upload" className="hidden lg:inline-flex">
             <Button variant="brand" size="default">
               {t('header.cta')}
-              <ArrowRight className="ml-1 h-4 w-4" />
+              <ArrowRight className="ml-1 h-4 w-4" aria-hidden="true" />
             </Button>
           </Link>
           <LandingHeaderMobile activeSection={activeSection} />

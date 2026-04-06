@@ -1,6 +1,7 @@
 'use client'
 
 import { useLocale } from '@/lib/i18n'
+import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import { EASING, SPRING, TIMING } from '@/lib/motion'
 import { motion } from 'framer-motion'
 import { Check, ClipboardCopy, Columns3, Timer } from 'lucide-react'
@@ -17,12 +18,13 @@ const ICON_CLASSES = 'flex h-11 w-11 shrink-0 items-center justify-center rounde
 
 export function BenefitsSection() {
   const { t } = useLocale()
+  const prefersReducedMotion = useReducedMotion()
 
   return (
     <section className="bg-muted dark:bg-muted/30 py-12 sm:py-20">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={prefersReducedMotion ? false : { opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: TIMING.slow, ease: EASING.enter }}
@@ -45,7 +47,7 @@ export function BenefitsSection() {
               <motion.div
                 key={item.key}
                 className="group relative grid grid-cols-[2.75rem_1fr] gap-x-3 gap-y-3 rounded-xl p-6"
-                initial={{ opacity: 0, y: 20, filter: 'blur(6px)' }}
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 20, filter: 'blur(6px)' }}
                 whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 viewport={{ once: true, margin: '-60px' }}
                 transition={{
@@ -57,18 +59,22 @@ export function BenefitsSection() {
                 {/* Pain icon */}
                 <motion.div
                   className={`${ICON_CLASSES} border-red-500/20 bg-red-500/10`}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{
-                    opacity: 1,
-                    scale: 1,
-                    x: [0, -3, 3, -2, 1, 0],
-                  }}
-                  viewport={{ once: true }}
-                  transition={{
-                    opacity: { duration: 0.2, delay: base + 0.15 },
-                    scale: { ...SPRING.pop, delay: base + 0.15 },
-                    x: { duration: 0.4, ease: EASING.enter, delay: base + 0.25 },
-                  }}
+                  {...(prefersReducedMotion
+                    ? {}
+                    : {
+                        initial: { opacity: 0, scale: 0.8 },
+                        whileInView: {
+                          opacity: 1,
+                          scale: 1,
+                          x: [0, -3, 3, -2, 1, 0],
+                        },
+                        viewport: { once: true },
+                        transition: {
+                          opacity: { duration: TIMING.fast, delay: base + 0.15 },
+                          scale: { ...SPRING.pop, delay: base + 0.15 },
+                          x: { duration: TIMING.slow, ease: EASING.enter, delay: base + 0.25 },
+                        },
+                      })}
                 >
                   <item.painIcon
                     className="h-5 w-5 text-red-500 dark:text-red-400"
@@ -85,13 +91,17 @@ export function BenefitsSection() {
                 <div className="col-span-2 flex justify-center">
                   <motion.div
                     className="text-teal-500"
-                    whileInView={{ y: [0, 6, 0] }}
-                    viewport={{ once: true }}
-                    transition={{
-                      duration: 0.6,
-                      ease: EASING.easeOutStrong,
-                      delay: base + 0.9,
-                    }}
+                    {...(prefersReducedMotion
+                      ? {}
+                      : {
+                          whileInView: { y: [0, 6, 0] },
+                          viewport: { once: true },
+                          transition: {
+                            duration: 0.6,
+                            ease: EASING.easeOutStrong,
+                            delay: base + 0.9,
+                          },
+                        })}
                   >
                     <motion.svg
                       width="20"
@@ -106,17 +116,21 @@ export function BenefitsSection() {
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        initial={{ pathLength: 0, opacity: 0 }}
-                        whileInView={{ pathLength: 1, opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{
-                          pathLength: {
-                            duration: 0.5,
-                            ease: EASING.enter,
-                            delay: base + 0.45,
-                          },
-                          opacity: { duration: 0.15, delay: base + 0.4 },
-                        }}
+                        {...(prefersReducedMotion
+                          ? {}
+                          : {
+                              initial: { pathLength: 0, opacity: 0 },
+                              whileInView: { pathLength: 1, opacity: 1 },
+                              viewport: { once: true },
+                              transition: {
+                                pathLength: {
+                                  duration: TIMING.reveal,
+                                  ease: EASING.enter,
+                                  delay: base + 0.45,
+                                },
+                                opacity: { duration: TIMING.fast, delay: base + 0.4 },
+                              },
+                            })}
                       />
                     </motion.svg>
                   </motion.div>
@@ -125,22 +139,26 @@ export function BenefitsSection() {
                 {/* Solution icon */}
                 <motion.div
                   className={`${ICON_CLASSES} border-teal-500/20 bg-teal-500/10`}
-                  initial={{ opacity: 0, scale: 0 }}
-                  whileInView={{
-                    opacity: 1,
-                    scale: 1,
-                    boxShadow: '0 0 12px 4px rgba(20, 184, 166, 0.15)',
-                  }}
-                  viewport={{ once: true }}
-                  transition={{
-                    opacity: { ...SPRING.pop, delay: base + 1.0 },
-                    scale: { ...SPRING.pop, delay: base + 1.0 },
-                    boxShadow: {
-                      duration: 0.8,
-                      ease: EASING.enter,
-                      delay: base + 1.15,
-                    },
-                  }}
+                  {...(prefersReducedMotion
+                    ? {}
+                    : {
+                        initial: { opacity: 0, scale: 0 },
+                        whileInView: {
+                          opacity: 1,
+                          scale: 1,
+                          boxShadow: '0 0 12px 4px rgba(20, 184, 166, 0.15)',
+                        },
+                        viewport: { once: true },
+                        transition: {
+                          opacity: { ...SPRING.pop, delay: base + 1.0 },
+                          scale: { ...SPRING.pop, delay: base + 1.0 },
+                          boxShadow: {
+                            duration: 0.8,
+                            ease: EASING.enter,
+                            delay: base + 1.15,
+                          },
+                        },
+                      })}
                 >
                   <Check className="h-5 w-5 text-teal-500 dark:text-teal-400" aria-hidden="true" />
                 </motion.div>
@@ -148,14 +166,18 @@ export function BenefitsSection() {
                 {/* Solution text */}
                 <motion.p
                   className="text-foreground self-center text-sm leading-snug font-medium"
-                  initial={{ opacity: 0, x: -8 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{
-                    duration: 0.3,
-                    ease: EASING.enter,
-                    delay: base + 1.1,
-                  }}
+                  {...(prefersReducedMotion
+                    ? {}
+                    : {
+                        initial: { opacity: 0, x: -8 },
+                        whileInView: { opacity: 1, x: 0 },
+                        viewport: { once: true },
+                        transition: {
+                          duration: TIMING.normal,
+                          ease: EASING.enter,
+                          delay: base + 1.1,
+                        },
+                      })}
                 >
                   {t(`benefits.items.${item.key}.solution`)}
                 </motion.p>

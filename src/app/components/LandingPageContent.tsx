@@ -1,7 +1,9 @@
 'use client'
 
 import { BenefitsSection } from '@/components/benefits-section'
+import { ComparisonMini } from '@/components/comparison-mini'
 import { CtaBanner } from '@/components/cta-banner'
+import { SocialProof } from '@/components/social-proof'
 import { LandingFooter } from '@/components/landing-footer'
 import { LandingHeader } from '@/components/landing-header'
 import { Card } from '@/components/card'
@@ -37,6 +39,8 @@ export function LandingPageContent() {
         <HeroSection />
 
         <BenefitsSection />
+
+        <SocialProof />
 
         {/* How it Works — sequential card fill */}
         <section
@@ -228,6 +232,8 @@ export function LandingPageContent() {
           subtitle={t('ctaBanner.afterAudience.subtitle')}
           ctaLabel={t('ctaBanner.afterAudience.cta')}
         />
+
+        <ComparisonMini />
 
         <PricingSection id="pricing" className="scroll-mt-20" />
 
