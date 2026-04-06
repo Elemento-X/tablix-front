@@ -85,7 +85,7 @@ importers:
         specifier: ^3.0.12
         version: 3.0.12(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
       '@tailwindcss/postcss':
-        specifier: ^4.1.9
+        specifier: ^4.2.2
         version: 4.2.2
       '@testing-library/jest-dom':
         specifier: ^6.9.1
