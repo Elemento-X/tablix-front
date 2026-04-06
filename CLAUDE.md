@@ -28,7 +28,7 @@
 
 - Toda entrada de usuário (upload, form, query param, header) DEVE ser validada e sanitizada
 - Validação de arquivos: MIME type + extensão + magic numbers + zip bomb check (`src/lib/security/file-validator.ts`)
-- CSP, HSTS, X-Frame-Options e demais headers de segurança via `src/middleware.ts`
+- CSP, HSTS, X-Frame-Options e demais headers de segurança via `src/proxy.ts` (exportado como `proxy()`, invocado pelo middleware do Next.js)
 - Rate limiting obrigatório em toda API route (Upstash Redis + fallback in-memory)
 - Nunca logar dados sensíveis (tokens, fingerprints, IPs completos em produção)
 - Nunca expor stack traces ou detalhes internos em respostas de erro para o cliente
@@ -44,7 +44,7 @@
 
 - Frontend: Next.js 16 (App Router) + React 19 + TypeScript strict
 - Backend: Fastify 5 (repositório separado: tablix-back) — fonte de verdade para auth, billing e processamento Pro
-- Processamento Free: 100% client-side (< 10MB, XLSX + PapaParse)
+- Processamento Free: 100% client-side (< 10MB; leitura: xlsx + PapaParse; geração: ExcelJS)
 - Processamento Pro: server-side via Fastify (`/process/sync`)
 - Auth: token-based (Stripe checkout → email com token → JWT session) — sem tela de login
 - Redis Upstash: compartilhado entre front e back (prefixos `front:` e `tablix:ratelimit:`)

@@ -1,119 +1,228 @@
 /**
  * @jest-environment jsdom
- *
- * Tests for src/components/security-badges.tsx
- * Covers: aria-hidden on icons, section semantics, title rendering,
- * badge count, and reduced-motion conditional spread.
  */
+import React from 'react'
 import { render, screen } from '@testing-library/react'
 import { SecurityBadges } from '@/components/security-badges'
+import { LocaleProvider } from '@/lib/i18n'
 
-// Mock framer-motion — the spread conditional is what we're testing indirectly
-jest.mock('framer-motion', () => ({
-  motion: {
-    div: ({
-      children,
-      initial: _initial,
-      whileInView: _whileInView,
-      viewport: _viewport,
-      transition: _transition,
+// ---------------------------------------------------------------------------
+// Mocks
+// ---------------------------------------------------------------------------
+
+jest.mock('framer-motion', () => {
+  const React = require('react')
+
+  const stripMotionProps = (props: Record<string, unknown>) => {
+    const {
+      initial,
+      animate,
+      exit,
+      whileInView,
+      whileHover,
+      whileTap,
+      transition,
+      variants,
+      viewport,
       ...rest
-    }: React.HTMLAttributes<HTMLDivElement> & Record<string, unknown>) => (
-      <div {...rest}>{children}</div>
+    } = props
+    void initial
+    void animate
+    void exit
+    void whileInView
+    void whileHover
+    void whileTap
+    void transition
+    void variants
+    void viewport
+    return rest
+  }
+
+  return {
+    motion: new Proxy(
+      {},
+      {
+        get:
+          (_: unknown, tag: string) =>
+          ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
+            React.createElement(tag, stripMotionProps(props), children),
+      },
     ),
-  },
+    AnimatePresence: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+  }
+})
+
+// Mock lucide-react: renderiza svgs com data-testid para assertividade
+jest.mock('lucide-react', () => ({
+  Monitor: (props: Record<string, unknown>) =>
+    React.createElement('svg', { 'data-testid': 'icon-monitor', ...props }),
+  Trash2: (props: Record<string, unknown>) =>
+    React.createElement('svg', { 'data-testid': 'icon-trash2', ...props }),
+  Lock: (props: Record<string, unknown>) =>
+    React.createElement('svg', { 'data-testid': 'icon-lock', ...props }),
+  ShieldCheck: (props: Record<string, unknown>) =>
+    React.createElement('svg', { 'data-testid': 'icon-shieldcheck', ...props }),
+  // Outros ícones usados em outros componentes (ArrowRight etc)
+  ArrowRight: (props: Record<string, unknown>) =>
+    React.createElement('svg', { 'data-testid': 'icon-arrowright', ...props }),
 }))
 
-const mockUseReducedMotion = jest.fn()
-
+const mockUseReducedMotion = jest.fn().mockReturnValue(false)
 jest.mock('@/hooks/use-reduced-motion', () => ({
   useReducedMotion: () => mockUseReducedMotion(),
 }))
 
-jest.mock('@/lib/i18n', () => ({
-  useLocale: () => ({
-    locale: 'pt-BR',
-    t: (key: string) => {
-      const map: Record<string, string> = {
-        'securityBadges.title': 'Sua privacidade é nossa prioridade',
-        'securityBadges.local.title': 'Processamento local',
-        'securityBadges.local.subtitle': 'No seu navegador',
-        'securityBadges.noStorage.title': 'Sem armazenamento',
-        'securityBadges.noStorage.subtitle': 'Arquivos não são salvos',
-        'securityBadges.tls.title': 'TLS/HTTPS',
-        'securityBadges.tls.subtitle': 'Tráfego criptografado',
-        'securityBadges.validation.title': 'Validação rigorosa',
-        'securityBadges.validation.subtitle': 'Tipos e conteúdo verificados',
-      }
-      return map[key] ?? key
-    },
-  }),
-}))
+// ---------------------------------------------------------------------------
+// Helper
+// ---------------------------------------------------------------------------
+
+function renderSecurityBadges() {
+  return render(
+    <LocaleProvider>
+      <SecurityBadges />
+    </LocaleProvider>,
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Testes
+// ---------------------------------------------------------------------------
 
 describe('SecurityBadges', () => {
-  beforeEach(() => {
-    mockUseReducedMotion.mockReturnValue(false)
+  describe('estrutura e acessibilidade', () => {
+    it('renderiza elemento <section>', () => {
+      const { container } = renderSecurityBadges()
+      expect(container.querySelector('section')).toBeInTheDocument()
+    })
+
+    it('renderiza título da seção via i18n', () => {
+      renderSecurityBadges()
+      const heading = screen.getByRole('heading', { level: 2 })
+      expect(heading).toBeInTheDocument()
+      expect(heading.textContent).not.toBe('securityBadges.title')
+      expect(heading.textContent!.length).toBeGreaterThan(0)
+    })
   })
 
-  describe('structure and semantics', () => {
-    it('renders a <section> element', () => {
-      const { container } = render(<SecurityBadges />)
-      expect(container.querySelector('section')).not.toBeNull()
+  describe('4 badges obrigatórios', () => {
+    it('renderiza exatamente 4 badges', () => {
+      const { container } = renderSecurityBadges()
+      // Cada badge é um motion.div (renderizado como div) com flex-col
+      const grid = container.querySelector('.grid')
+      expect(grid?.children).toHaveLength(4)
     })
 
-    it('renders the section title', () => {
-      render(<SecurityBadges />)
-      expect(
-        screen.getByText('Sua privacidade é nossa prioridade'),
-      ).toBeInTheDocument()
-    })
-
-    it('renders all 4 badge titles', () => {
-      render(<SecurityBadges />)
+    it('badge "Processamento local" está presente', () => {
+      renderSecurityBadges()
+      // pt-BR: "Processamento local"
       expect(screen.getByText('Processamento local')).toBeInTheDocument()
+    })
+
+    it('badge "Sem armazenamento" está presente', () => {
+      renderSecurityBadges()
       expect(screen.getByText('Sem armazenamento')).toBeInTheDocument()
-      expect(screen.getByText('TLS/HTTPS')).toBeInTheDocument()
+    })
+
+    it('badge "Criptografia TLS" está presente', () => {
+      renderSecurityBadges()
+      expect(screen.getByText('Criptografia TLS')).toBeInTheDocument()
+    })
+
+    it('badge "Validação rigorosa" está presente', () => {
+      renderSecurityBadges()
       expect(screen.getByText('Validação rigorosa')).toBeInTheDocument()
     })
+  })
 
-    it('renders all 4 badge subtitles', () => {
-      render(<SecurityBadges />)
-      expect(screen.getByText('No seu navegador')).toBeInTheDocument()
-      expect(screen.getByText('Arquivos não são salvos')).toBeInTheDocument()
-      expect(screen.getByText('Tráfego criptografado')).toBeInTheDocument()
-      expect(screen.getByText('Tipos e conteúdo verificados')).toBeInTheDocument()
+  describe('subtítulos dos badges', () => {
+    it('subtítulo do badge local está presente', () => {
+      renderSecurityBadges()
+      expect(screen.getByText('Seus dados nunca saem do navegador')).toBeInTheDocument()
+    })
+
+    it('subtítulo do badge noStorage está presente', () => {
+      renderSecurityBadges()
+      expect(screen.getByText('Arquivos não ficam em nossos servidores')).toBeInTheDocument()
+    })
+
+    it('subtítulo do badge TLS está presente', () => {
+      renderSecurityBadges()
+      expect(screen.getByText('Toda comunicação protegida por HTTPS')).toBeInTheDocument()
+    })
+
+    it('subtítulo do badge validation está presente', () => {
+      renderSecurityBadges()
+      expect(screen.getByText('Cada arquivo verificado antes do processamento')).toBeInTheDocument()
     })
   })
 
-  describe('icon accessibility — aria-hidden', () => {
-    it('all lucide icons have aria-hidden="true"', () => {
-      const { container } = render(<SecurityBadges />)
-      // Lucide icons render as <svg> elements
-      const svgs = container.querySelectorAll('svg')
-      expect(svgs.length).toBeGreaterThanOrEqual(4)
-      svgs.forEach((svg) => {
-        expect(svg.getAttribute('aria-hidden')).toBe('true')
+  describe('ícones Lucide', () => {
+    it('ícone Monitor (processamento local) está presente', () => {
+      renderSecurityBadges()
+      expect(screen.getByTestId('icon-monitor')).toBeInTheDocument()
+    })
+
+    it('ícone Trash2 (sem armazenamento) está presente', () => {
+      renderSecurityBadges()
+      expect(screen.getByTestId('icon-trash2')).toBeInTheDocument()
+    })
+
+    it('ícone Lock (TLS) está presente', () => {
+      renderSecurityBadges()
+      expect(screen.getByTestId('icon-lock')).toBeInTheDocument()
+    })
+
+    it('ícone ShieldCheck (validação) está presente', () => {
+      renderSecurityBadges()
+      expect(screen.getByTestId('icon-shieldcheck')).toBeInTheDocument()
+    })
+
+    it('todos os ícones têm aria-hidden="true" (decorativos)', () => {
+      renderSecurityBadges()
+      const icons = ['icon-monitor', 'icon-trash2', 'icon-lock', 'icon-shieldcheck']
+      icons.forEach((testId) => {
+        expect(screen.getByTestId(testId)).toHaveAttribute('aria-hidden', 'true')
       })
     })
   })
 
-  describe('reduced motion', () => {
-    it('renders correctly when reduced motion is preferred', () => {
-      mockUseReducedMotion.mockReturnValue(true)
-      render(<SecurityBadges />)
-      // Component should still render all content with no animation props
+  describe('grid responsivo', () => {
+    it('grid tem classes responsivas sm:grid-cols-2 e md:grid-cols-4', () => {
+      const { container } = renderSecurityBadges()
+      const grid = container.querySelector('.grid')
+      expect(grid?.className).toMatch(/sm:grid-cols-2/)
+      expect(grid?.className).toMatch(/md:grid-cols-4/)
+    })
+  })
+
+  describe('stagger individual (atualização Fase 12)', () => {
+    it('renderiza corretamente com reduced-motion desativado (stagger ativo)', () => {
+      mockUseReducedMotion.mockReturnValue(false)
+      renderSecurityBadges()
+      // Com reduced-motion=false, os props de animação são passados mas o componente ainda renderiza
       expect(
-        screen.getByText('Sua privacidade é nossa prioridade'),
-      ).toBeInTheDocument()
-      expect(screen.getByText('Processamento local')).toBeInTheDocument()
+        screen.getAllByText(/processamento local|sem armazenamento|criptografia|validação/i),
+      ).toHaveLength(4)
     })
 
-    it('renders correctly when reduced motion is not preferred', () => {
+    it('renderiza corretamente com reduced-motion ativo (sem animações)', () => {
+      mockUseReducedMotion.mockReturnValue(true)
+      renderSecurityBadges()
+      // Com reduced-motion=true, spread de animação é vazio — 4 badges ainda presentes
+      expect(screen.getByText('Processamento local')).toBeInTheDocument()
+      expect(screen.getByText('Sem armazenamento')).toBeInTheDocument()
+      expect(screen.getByText('Criptografia TLS')).toBeInTheDocument()
+      expect(screen.getByText('Validação rigorosa')).toBeInTheDocument()
       mockUseReducedMotion.mockReturnValue(false)
-      render(<SecurityBadges />)
-      expect(
-        screen.getByText('Sua privacidade é nossa prioridade'),
-      ).toBeInTheDocument()
+    })
+  })
+
+  describe('edge cases', () => {
+    it('não vaza chaves i18n cruas no DOM', () => {
+      const { container } = renderSecurityBadges()
+      const allText = container.textContent ?? ''
+      expect(allText).not.toMatch(/securityBadges\./)
     })
   })
 })

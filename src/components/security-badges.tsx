@@ -4,6 +4,9 @@ import { Monitor, Trash2, Lock, ShieldCheck } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useLocale } from '@/lib/i18n'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
+import { EASING, TIMING } from '@/lib/motion'
+
+const STAGGER_DELAY = 0.07
 
 export function SecurityBadges() {
   const { t } = useLocale()
@@ -33,30 +36,35 @@ export function SecurityBadges() {
   ]
 
   return (
-    <section className="bg-background py-16 md:py-20">
+    <section className="bg-background py-16 md:py-20" aria-label={t('securityBadges.title')}>
       <div className="mx-auto max-w-3xl px-6">
         <h2 className="text-foreground text-center text-2xl font-semibold tracking-tight">
           {t('securityBadges.title')}
         </h2>
-        <motion.div
-          className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-4 md:gap-8"
-          {...(prefersReducedMotion
-            ? {}
-            : {
-                initial: { opacity: 0, y: 12 },
-                whileInView: { opacity: 1, y: 0 },
-                viewport: { once: true, amount: 0.3 },
-                transition: { duration: 0.4, ease: 'easeOut' as const },
-              })}
-        >
-          {badges.map((badge) => (
-            <div key={badge.title} className="flex flex-col items-center text-center">
+        <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4 md:gap-8">
+          {badges.map((badge, index) => (
+            <motion.div
+              key={badge.title}
+              className="flex flex-col items-center text-center"
+              {...(prefersReducedMotion
+                ? {}
+                : {
+                    initial: { opacity: 0, y: 12 },
+                    whileInView: { opacity: 1, y: 0 },
+                    viewport: { once: true, amount: 0.3 },
+                    transition: {
+                      duration: TIMING.slow,
+                      ease: EASING.enter,
+                      delay: index * STAGGER_DELAY,
+                    },
+                  })}
+            >
               {badge.icon}
               <span className="text-foreground mt-2 text-sm font-medium">{badge.title}</span>
               <span className="text-muted-foreground mt-0.5 text-xs">{badge.subtitle}</span>
-            </div>
+            </motion.div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   )

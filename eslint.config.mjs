@@ -34,6 +34,20 @@ export default [
     },
   },
 
+  // Unit test files — Jest globals and relaxed rules
+  {
+    files: ['src/__tests__/**/*.{ts,tsx}', '**/*.test.{ts,tsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-void': 'off',
+    },
+  },
+
   // E2E test files — Playwright's use() is not a React hook
   {
     files: ['e2e/**/*.ts'],

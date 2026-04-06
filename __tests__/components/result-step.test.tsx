@@ -125,8 +125,8 @@ describe('ResultStep', () => {
     expect(screen.getByText(/result\.rowsProcessed/)).toBeInTheDocument()
   })
 
-  it('does NOT render row count stat when rowCount is 0 (server-side path)', () => {
-    const serverData: ResultData = { fileCount: 2, rowCount: 0, columnCount: 3 }
+  it('does NOT render row count stat when rowCount is null (server-side path)', () => {
+    const serverData: ResultData = { fileCount: 2, rowCount: null, columnCount: 3 }
     render(<ResultStep {...defaultProps} resultData={serverData} />)
     expect(screen.queryByTestId('rows3')).toBeNull()
     expect(screen.queryByText(/result\.rowsProcessed/)).toBeNull()

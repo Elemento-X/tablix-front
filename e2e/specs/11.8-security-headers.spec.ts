@@ -4,10 +4,10 @@ test.describe('11.8 — Security Headers', () => {
   const routes = ['/', '/upload', '/terms', '/privacy-policy']
 
   for (const route of routes) {
-    test(`${route} returns X-Frame-Options: SAMEORIGIN`, async ({ page }) => {
+    test(`${route} returns X-Frame-Options: DENY`, async ({ page }) => {
       const res = await page.request.get(route)
       const header = res.headers()['x-frame-options']
-      expect(header).toBe('SAMEORIGIN')
+      expect(header).toBe('DENY')
     })
 
     test(`${route} returns X-Content-Type-Options: nosniff`, async ({ page }) => {

@@ -3,7 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Check } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useLocale } from '@/lib/i18n'
+import { useReducedMotion } from '@/hooks/use-reduced-motion'
+import { TIMING } from '@/lib/motion'
 import { CONTACT_EMAIL } from '@/lib/constants'
 import { Badge } from '@/components/badge'
 import { Button } from '@/components/button'
@@ -26,6 +29,7 @@ export function PricingSection({
 }: PricingSectionProps) {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly')
   const { t } = useLocale()
+  const prefersReducedMotion = useReducedMotion()
 
   const getProPrice = () => {
     const period = t('billingPeriods.month')
@@ -159,7 +163,7 @@ export function PricingSection({
           </CardContent>
         </Card>
 
-        <Card className="border-foreground relative shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl">
+        <Card className="border-foreground relative order-first shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl md:order-none">
           <div className="absolute -top-4 left-1/2 -translate-x-1/2">
             <Badge className="bg-foreground text-background hover:bg-foreground">
               {t('pricing.plans.pro.badge')}
@@ -173,19 +177,46 @@ export function PricingSection({
                   {t('pricing.plans.pro.oldPrice')}
                 </span>
               </div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-foreground text-3xl font-bold sm:text-4xl">
-                  {t('proPricing.currencySymbol')} {proPrice.price}
-                </span>
-                <span className="text-muted-foreground">/{t('pricing.plans.pro.period')}</span>
-              </div>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={billingPeriod}
+                  className="flex items-baseline gap-1"
+                  {...(prefersReducedMotion
+                    ? {}
+                    : {
+                        initial: { opacity: 0, filter: 'blur(4px)' },
+                        animate: { opacity: 1, filter: 'blur(0px)' },
+                        exit: { opacity: 0, filter: 'blur(4px)' },
+                        transition: { duration: TIMING.normal },
+                      })}
+                >
+                  <span className="text-foreground text-3xl font-bold sm:text-4xl">
+                    {t('proPricing.currencySymbol')} {proPrice.price}
+                  </span>
+                  <span className="text-muted-foreground">/{t('pricing.plans.pro.period')}</span>
+                </motion.div>
+              </AnimatePresence>
             </div>
             <p className="mt-2 text-sm font-medium text-teal-700 dark:text-teal-400">
               {t('pricing.plans.pro.launchPrice')}
             </p>
-            {billingPeriod !== 'monthly' && (
-              <p className="text-muted-foreground mt-1 text-xs">{proPrice.total}</p>
-            )}
+            <AnimatePresence>
+              {billingPeriod !== 'monthly' && (
+                <motion.p
+                  className="text-muted-foreground mt-1 text-xs"
+                  {...(prefersReducedMotion
+                    ? {}
+                    : {
+                        initial: { opacity: 0, height: 0 },
+                        animate: { opacity: 1, height: 'auto' },
+                        exit: { opacity: 0, height: 0 },
+                        transition: { duration: TIMING.normal },
+                      })}
+                >
+                  {proPrice.total}
+                </motion.p>
+              )}
+            </AnimatePresence>
 
             <div className="mt-8 space-y-3">
               <div className="flex items-start gap-3">

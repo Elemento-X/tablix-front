@@ -79,6 +79,24 @@ Isso garante que a quota so e consumida apos processamento real, nao no preview.
 
 ## Endpoints da API
 
+### GET /api/health
+
+Health check do servico.
+
+**Response shallow (200):**
+```json
+{ "status": "ok", "timestamp": "<ISO>" }
+```
+
+**Response deep com `?deep=true` + `X-Health-Secret` (200):**
+```json
+{ "status": "ok|degraded", "timestamp": "<ISO>", "checks": { "redis": "ok|error" } }
+```
+
+**Rate limiting:** 100 req/min (rateLimiters.api)
+
+---
+
 ### GET /api/usage
 
 Retorna estatisticas de uso do usuario.
@@ -170,4 +188,4 @@ Headers na resposta: `X-RateLimit-Remaining`, `Retry-After: 60` (em 429)
 
 ---
 
-**Atualizado em:** 2026-04-05
+**Atualizado em:** 2026-04-06
