@@ -303,6 +303,8 @@
     "parseEmpty": "The spreadsheet is empty.",
     "parseFailed": "Error reading the file. Please check the format is valid.",
     "parseGeneric": "Error parsing the file: {detail}",
+    "parseCorrupt": "We couldn't read the file. It may be corrupted or in an unsupported format.",
+    "parseUnsupported": "Unsupported file format. Use CSV, XLS or XLSX.",
     "fileValidation": "Invalid file type. Use CSV, XLS or XLSX.",
     "fileContentValidation": "File content does not match the expected format."
   },

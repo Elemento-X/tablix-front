@@ -3,6 +3,7 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import { useUploadFlow } from '@/hooks/use-upload-flow'
+import { SpreadsheetParseError } from '@/lib/spreadsheet-errors'
 
 // --- Mocks ---
 
@@ -1594,10 +1595,13 @@ describe('useUploadFlow', () => {
 
     // Lines 236-255: toastFetchError branches for safe parse error messages
     it('maps rowLimit parse error to parseRowLimit i18n key', async () => {
-      mockParseFile.mockRejectedValue({
-        message: 'File exceeds row limit: 501 rows (max 500 for Free plan)',
-        code: 'PARSE_ERROR',
-      })
+      mockParseFile.mockRejectedValue(
+        new SpreadsheetParseError(
+          'ROW_LIMIT',
+          'File exceeds row limit: 501 rows (max 500 for Free plan)',
+          { total: '501', max: '500', plan: 'FREE' },
+        ),
+      )
       const { result } = renderHook(() => useUploadFlow())
 
       await act(async () => {
@@ -1611,10 +1615,9 @@ describe('useUploadFlow', () => {
     })
 
     it('maps noColumns parse error to parseNoColumns i18n key', async () => {
-      mockParseFile.mockRejectedValue({
-        message: 'No columns found in first row',
-        code: 'PARSE_ERROR',
-      })
+      mockParseFile.mockRejectedValue(
+        new SpreadsheetParseError('NO_COLUMNS', 'No columns found in first row'),
+      )
       const { result } = renderHook(() => useUploadFlow())
 
       await act(async () => {
@@ -1628,10 +1631,9 @@ describe('useUploadFlow', () => {
     })
 
     it('maps noSheets parse error to parseNoSheets i18n key', async () => {
-      mockParseFile.mockRejectedValue({
-        message: 'No sheets found in workbook',
-        code: 'PARSE_ERROR',
-      })
+      mockParseFile.mockRejectedValue(
+        new SpreadsheetParseError('NO_SHEETS', 'No sheets found in workbook'),
+      )
       const { result } = renderHook(() => useUploadFlow())
 
       await act(async () => {
@@ -1645,10 +1647,7 @@ describe('useUploadFlow', () => {
     })
 
     it('maps empty spreadsheet parse error to parseEmpty i18n key', async () => {
-      mockParseFile.mockRejectedValue({
-        message: 'Empty spreadsheet',
-        code: 'PARSE_ERROR',
-      })
+      mockParseFile.mockRejectedValue(new SpreadsheetParseError('EMPTY_SHEET', 'Empty spreadsheet'))
       const { result } = renderHook(() => useUploadFlow())
 
       await act(async () => {
