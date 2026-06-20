@@ -3,44 +3,32 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import { useFileParser, type ParseResult } from '@/hooks/use-file-parser'
+import { SpreadsheetParseError } from '@/lib/spreadsheet-errors'
 import Papa from 'papaparse'
 
-// Mock excel-utils module
-const mockWorksheetToArray = jest.fn()
-const mockWorksheetToJsonWithHeaders = jest.fn()
-const mockWorkbook = {
-  worksheets: [{ name: 'Sheet1' }],
-  xlsx: {
-    load: jest.fn(),
-  },
-}
-const mockExcelJS = {
-  Workbook: jest.fn(() => mockWorkbook),
-}
+/**
+ * SpreadsheetParseError is NOT mocked — must be the real class so that
+ * `err instanceof SpreadsheetParseError` inside the hook works correctly.
+ *
+ * @/lib/excel-utils is NOT mocked — it is no longer imported by use-file-parser.
+ * All Excel paths (.xls / .xlsx / .xlsm) now go through parseXls (worker).
+ */
 
-jest.mock('@/lib/excel-utils', () => ({
-  getExcelJS: jest.fn(() => Promise.resolve(mockExcelJS)),
-  worksheetToArray: (...args: unknown[]) => mockWorksheetToArray(...args),
-  worksheetToJsonWithHeaders: (...args: unknown[]) => mockWorksheetToJsonWithHeaders(...args),
-}))
+// ── Mocks ─────────────────────────────────────────────────────────────────────
 
-// Mock xls-parser (Web Worker not available in jsdom)
 const mockParseXls = jest.fn()
 jest.mock('@/lib/xls-parser', () => ({
   parseXls: (...args: unknown[]) => mockParseXls(...args),
 }))
 
-// Mock papaparse
 jest.mock('papaparse', () => ({
   parse: jest.fn(),
 }))
 
-// Mock fetch for server-side parsing
 global.fetch = jest.fn()
 
-/**
- * Polyfill arrayBuffer for jsdom's File/Blob (not available in older jsdom).
- */
+// ── arrayBuffer polyfill ──────────────────────────────────────────────────────
+
 function arrayBufferPolyfill(this: Blob): Promise<ArrayBuffer> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -52,333 +40,487 @@ function arrayBufferPolyfill(this: Blob): Promise<ArrayBuffer> {
 Blob.prototype.arrayBuffer = arrayBufferPolyfill
 File.prototype.arrayBuffer = arrayBufferPolyfill
 
-describe('useFileParser hook', () => {
-  const MAX_CLIENT_PARSE_SIZE = 10 * 1024 * 1024 // 10MB
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
+function makeFile(name: string, type: string, sizeBytes = 1024): File {
+  const file = new File([''], name, { type })
+  Object.defineProperty(file, 'size', { value: sizeBytes })
+  return file
+}
+
+const MAX_CLIENT_PARSE_SIZE = 10 * 1024 * 1024
+
+// ── Suite ─────────────────────────────────────────────────────────────────────
+
+describe('useFileParser hook', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    jest.spyOn(console, 'log').mockImplementation(() => {})
-
-    // Reset Excel mocks
-    mockWorkbook.worksheets = [{ name: 'Sheet1' }]
-    mockWorksheetToArray.mockReturnValue([])
-    mockWorksheetToJsonWithHeaders.mockReturnValue([])
+    jest.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   afterEach(() => {
     jest.restoreAllMocks()
   })
 
-  describe('initial state', () => {
-    it('should have correct initial state', () => {
-      const { result } = renderHook(() => useFileParser())
+  // ── Initial state ─────────────────────────────────────────────────────────
 
+  describe('initial state', () => {
+    it('has isLoading=false, error=null and exposes parseFile', () => {
+      const { result } = renderHook(() => useFileParser())
       expect(result.current.isLoading).toBe(false)
       expect(result.current.error).toBeNull()
       expect(typeof result.current.parseFile).toBe('function')
     })
   })
 
-  describe('client-side parsing (small files < 10MB)', () => {
-    describe('CSV files', () => {
-      it('should parse CSV file in browser', async () => {
-        const mockParsedData = {
-          data: [
-            { Name: 'John', Email: 'john@test.com' },
-            { Name: 'Jane', Email: 'jane@test.com' },
-          ],
-          errors: [],
-          meta: { fields: ['Name', 'Email'] },
-        }
+  // ── CSV — happy path ──────────────────────────────────────────────────────
 
-        ;(Papa.parse as jest.Mock).mockReturnValue(mockParsedData)
-
-        const file = new File(['Name,Email\nJohn,john@test.com'], 'test.csv', {
-          type: 'text/csv',
-        })
-        Object.defineProperty(file, 'size', { value: 1024 }) // 1KB
-
-        const { result } = renderHook(() => useFileParser())
-
-        let parseResult: ParseResult | undefined
-        await act(async () => {
-          parseResult = await result.current.parseFile(file)
-        })
-
-        expect(parseResult!.columns).toEqual(['Name', 'Email'])
-        expect(parseResult!.rowCount).toBe(2)
-        expect(parseResult!.preview).toEqual(mockParsedData.data)
-        expect(result.current.isLoading).toBe(false)
-        expect(result.current.error).toBeNull()
-      })
-
-      it('should handle CSV parse errors', async () => {
-        ;(Papa.parse as jest.Mock).mockReturnValue({
-          data: [],
-          errors: [{ message: 'Invalid CSV format' }],
-          meta: { fields: [] },
-        })
-
-        const file = new File(['invalid,csv,data'], 'test.csv', {
-          type: 'text/csv',
-        })
-        Object.defineProperty(file, 'size', { value: 1024 })
-
-        const { result } = renderHook(() => useFileParser())
-
-        await act(async () => {
-          await expect(result.current.parseFile(file)).rejects.toEqual({
-            message: 'Parse failed',
-            code: 'PARSE_ERROR',
-          })
-        })
-
-        expect(result.current.error).toEqual({
-          message: 'Parse failed',
-          code: 'PARSE_ERROR',
-        })
-      })
-    })
-
-    describe('Excel files', () => {
-      it('should parse XLSX file in browser via ExcelJS', async () => {
-        mockWorksheetToArray.mockReturnValue([
-          ['Name', 'Email'],
-          ['John', 'john@test.com'],
-          ['Jane', 'jane@test.com'],
-        ])
-        mockWorksheetToJsonWithHeaders.mockReturnValue([
+  describe('CSV — happy path', () => {
+    it('returns columns, rowCount and preview on success', async () => {
+      const mockData = {
+        data: [
           { Name: 'John', Email: 'john@test.com' },
           { Name: 'Jane', Email: 'jane@test.com' },
-        ])
+        ],
+        errors: [],
+        meta: { fields: ['Name', 'Email'] },
+      }
+      ;(Papa.parse as jest.Mock).mockReturnValue(mockData)
 
-        const file = new File([''], 'test.xlsx', {
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        })
-        Object.defineProperty(file, 'size', { value: 1024 })
+      const { result } = renderHook(() => useFileParser())
+      let parseResult: ParseResult | undefined
 
-        const { result } = renderHook(() => useFileParser())
-
-        let parseResult: ParseResult | undefined
-        await act(async () => {
-          parseResult = await result.current.parseFile(file)
-        })
-
-        expect(parseResult!.columns).toEqual(['Name', 'Email'])
-        expect(parseResult!.rowCount).toBe(2) // 3 rows - 1 header
+      await act(async () => {
+        parseResult = await result.current.parseFile(makeFile('test.csv', 'text/csv'))
       })
 
-      it('should throw error when no sheets found', async () => {
-        mockWorkbook.worksheets = []
+      expect(parseResult!.columns).toEqual(['Name', 'Email'])
+      expect(parseResult!.rowCount).toBe(2)
+      expect(parseResult!.preview).toEqual(mockData.data)
+      expect(result.current.isLoading).toBe(false)
+      expect(result.current.error).toBeNull()
+    })
 
-        const file = new File([''], 'test.xlsx', {
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        })
-        Object.defineProperty(file, 'size', { value: 1024 })
-
-        const { result } = renderHook(() => useFileParser())
-
-        await act(async () => {
-          await expect(result.current.parseFile(file)).rejects.toEqual({
-            message: 'No sheets found in workbook',
-            code: 'PARSE_ERROR',
-          })
-        })
+    it('accepts files at exactly the free plan row limit (500)', async () => {
+      const rows = Array.from({ length: 500 }, (_, i) => ({ Name: `Row${i}` }))
+      ;(Papa.parse as jest.Mock).mockReturnValue({
+        data: rows,
+        errors: [],
+        meta: { fields: ['Name'] },
       })
 
-      it('should throw error for empty spreadsheet', async () => {
-        mockWorksheetToArray.mockReturnValue([])
+      const { result } = renderHook(() => useFileParser())
+      let parseResult: ParseResult | undefined
 
-        const file = new File([''], 'test.xlsx', {
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        })
-        Object.defineProperty(file, 'size', { value: 1024 })
-
-        const { result } = renderHook(() => useFileParser())
-
-        await act(async () => {
-          await expect(result.current.parseFile(file)).rejects.toEqual({
-            message: 'Empty spreadsheet',
-            code: 'PARSE_ERROR',
-          })
-        })
+      await act(async () => {
+        parseResult = await result.current.parseFile(makeFile('ok.csv', 'text/csv'), 'free')
       })
 
-      it('should throw error when no columns found in first row', async () => {
-        mockWorksheetToArray.mockReturnValue([
-          [null, null, ''], // Empty first row
-          ['Data1', 'Data2'],
-        ])
+      expect(parseResult!.rowCount).toBe(500)
+    })
 
-        const file = new File([''], 'test.xlsx', {
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        })
-        Object.defineProperty(file, 'size', { value: 1024 })
-
-        const { result } = renderHook(() => useFileParser())
-
-        await act(async () => {
-          await expect(result.current.parseFile(file)).rejects.toEqual({
-            message: 'No columns found in first row',
-            code: 'PARSE_ERROR',
-          })
-        })
+    it('allows more rows with pro plan', async () => {
+      const rows = Array.from({ length: 1000 }, (_, i) => ({ Name: `Row${i}` }))
+      ;(Papa.parse as jest.Mock).mockReturnValue({
+        data: rows,
+        errors: [],
+        meta: { fields: ['Name'] },
       })
 
-      it('should filter out empty and null column names', async () => {
-        mockWorksheetToArray.mockReturnValue([
-          ['Name', null, 'Email', '', '  ', 'Phone'],
-          ['John', null, 'john@test.com', '', '', '123'],
-        ])
-        mockWorksheetToJsonWithHeaders.mockReturnValue([
-          { Name: 'John', Email: 'john@test.com', Phone: '123' },
-        ])
+      const { result } = renderHook(() => useFileParser())
+      let parseResult: ParseResult | undefined
 
-        const file = new File([''], 'test.xlsx', {
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        })
-        Object.defineProperty(file, 'size', { value: 1024 })
-
-        const { result } = renderHook(() => useFileParser())
-
-        let parseResult: ParseResult | undefined
-        await act(async () => {
-          parseResult = await result.current.parseFile(file)
-        })
-
-        expect(parseResult!.columns).toContain('Name')
-        expect(parseResult!.columns).toContain('Email')
-        expect(parseResult!.columns).toContain('Phone')
-        expect(parseResult!.columns).not.toContain(null)
-        expect(parseResult!.columns).not.toContain(undefined)
+      await act(async () => {
+        parseResult = await result.current.parseFile(makeFile('ok.csv', 'text/csv'), 'pro')
       })
 
-      it('should parse XLS file via Web Worker (parseXls)', async () => {
-        mockParseXls.mockResolvedValue({
-          columns: ['Name'],
-          rows: [{ Name: 'John' }],
-          rowCount: 1,
-        })
+      expect(parseResult!.rowCount).toBe(1000)
+    })
+  })
 
-        const file = new File([''], 'test.xls', {
-          type: 'application/vnd.ms-excel',
-        })
-        Object.defineProperty(file, 'size', { value: 1024 })
+  // ── CSV — error paths ─────────────────────────────────────────────────────
 
-        const { result } = renderHook(() => useFileParser())
-
-        let parseResult: ParseResult | undefined
-        await act(async () => {
-          parseResult = await result.current.parseFile(file)
-        })
-
-        expect(parseResult!.columns).toEqual(['Name'])
-        expect(parseResult!.rowCount).toBe(1)
-        expect(mockParseXls).toHaveBeenCalled()
+  describe('CSV — error paths', () => {
+    it('throws SpreadsheetParseError(CORRUPT_FILE) on PapaParse errors', async () => {
+      ;(Papa.parse as jest.Mock).mockReturnValue({
+        data: [],
+        errors: [{ message: 'Invalid CSV format' }],
+        meta: { fields: [] },
       })
 
-      it('should throw error when XLS worker returns empty columns', async () => {
-        // Worker strips empty/null columns — if all are empty, columns array is empty
-        mockParseXls.mockResolvedValue({
-          columns: [],
-          rows: [],
-          rowCount: 0,
-        })
+      const { result } = renderHook(() => useFileParser())
+      let caughtErr: unknown
 
-        const file = new File([''], 'empty-cols.xls', {
-          type: 'application/vnd.ms-excel',
-        })
-        Object.defineProperty(file, 'size', { value: 1024 })
-
-        const { result } = renderHook(() => useFileParser())
-
-        await act(async () => {
-          await expect(result.current.parseFile(file)).rejects.toEqual({
-            message: 'No columns found in first row',
-            code: 'PARSE_ERROR',
-          })
-        })
+      await act(async () => {
+        try {
+          await result.current.parseFile(makeFile('test.csv', 'text/csv'))
+        } catch (e) {
+          caughtErr = e
+        }
       })
 
-      it('should reject XLS files exceeding free plan row limit', async () => {
-        mockParseXls.mockResolvedValue({
-          columns: ['Name'],
-          rows: Array.from({ length: 501 }, (_, i) => ({ Name: `Row${i}` })),
-          rowCount: 501,
-        })
+      expect(caughtErr).toBeInstanceOf(SpreadsheetParseError)
+      expect((caughtErr as SpreadsheetParseError).code).toBe('CORRUPT_FILE')
+      expect((caughtErr as SpreadsheetParseError).message).toBe('Invalid CSV format')
+      expect(result.current.error).toEqual({ message: 'Invalid CSV format', code: 'CORRUPT_FILE' })
+    })
 
-        const file = new File([''], 'big.xls', {
-          type: 'application/vnd.ms-excel',
-        })
-        Object.defineProperty(file, 'size', { value: 1024 })
-
-        const { result } = renderHook(() => useFileParser())
-
-        await act(async () => {
-          await expect(result.current.parseFile(file, 'free')).rejects.toEqual({
-            message: 'File exceeds row limit: 501 rows (max 500 for Free plan)',
-            code: 'PARSE_ERROR',
-          })
-        })
+    it('throws SpreadsheetParseError(NO_COLUMNS) when CSV fields are empty after sanitization', async () => {
+      ;(Papa.parse as jest.Mock).mockReturnValue({
+        data: [],
+        errors: [],
+        meta: { fields: [] },
       })
 
-      it('should reject XLS files when worker itself throws', async () => {
-        mockParseXls.mockRejectedValue(new Error('Worker crashed'))
+      const { result } = renderHook(() => useFileParser())
+      let caughtErr: unknown
 
-        const file = new File([''], 'crash.xls', {
-          type: 'application/vnd.ms-excel',
-        })
-        Object.defineProperty(file, 'size', { value: 1024 })
+      await act(async () => {
+        try {
+          await result.current.parseFile(makeFile('empty.csv', 'text/csv'))
+        } catch (e) {
+          caughtErr = e
+        }
+      })
 
-        const { result } = renderHook(() => useFileParser())
+      expect(caughtErr).toBeInstanceOf(SpreadsheetParseError)
+      expect((caughtErr as SpreadsheetParseError).code).toBe('NO_COLUMNS')
+    })
 
-        await act(async () => {
-          await expect(result.current.parseFile(file)).rejects.toEqual({
-            message: 'Parse failed',
-            code: 'PARSE_ERROR',
-          })
-        })
+    it('throws SpreadsheetParseError(ROW_LIMIT) with params for CSV exceeding free plan limit (501 rows)', async () => {
+      const rows = Array.from({ length: 501 }, (_, i) => ({ Name: `Row${i}` }))
+      ;(Papa.parse as jest.Mock).mockReturnValue({
+        data: rows,
+        errors: [],
+        meta: { fields: ['Name'] },
+      })
+
+      const { result } = renderHook(() => useFileParser())
+      let caughtErr: unknown
+
+      await act(async () => {
+        try {
+          await result.current.parseFile(makeFile('big.csv', 'text/csv'), 'free')
+        } catch (e) {
+          caughtErr = e
+        }
+      })
+
+      expect(caughtErr).toBeInstanceOf(SpreadsheetParseError)
+      expect((caughtErr as SpreadsheetParseError).code).toBe('ROW_LIMIT')
+      expect((caughtErr as SpreadsheetParseError).params).toEqual({
+        total: '501',
+        max: '500',
+        plan: 'FREE',
+      })
+      expect(result.current.error).toMatchObject({ code: 'ROW_LIMIT' })
+    })
+  })
+
+  // ── Excel (.xls / .xlsx / .xlsm) via parseXls ────────────────────────────
+
+  describe('Excel files — all extensions routed through parseXls', () => {
+    it('parses .xlsx via parseXls and returns columns/rowCount/preview', async () => {
+      mockParseXls.mockResolvedValue({
+        columns: ['Name', 'Email'],
+        rows: [
+          { Name: 'John', Email: 'john@test.com' },
+          { Name: 'Jane', Email: 'jane@test.com' },
+        ],
+        rowCount: 2,
+      })
+
+      const { result } = renderHook(() => useFileParser())
+      let parseResult: ParseResult | undefined
+
+      await act(async () => {
+        parseResult = await result.current.parseFile(
+          makeFile(
+            'test.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          ),
+        )
+      })
+
+      expect(parseResult!.columns).toEqual(['Name', 'Email'])
+      expect(parseResult!.rowCount).toBe(2)
+      expect(mockParseXls).toHaveBeenCalledTimes(1)
+    })
+
+    it('parses .xls via parseXls', async () => {
+      mockParseXls.mockResolvedValue({
+        columns: ['Name'],
+        rows: [{ Name: 'John' }],
+        rowCount: 1,
+      })
+
+      const { result } = renderHook(() => useFileParser())
+      let parseResult: ParseResult | undefined
+
+      await act(async () => {
+        parseResult = await result.current.parseFile(
+          makeFile('test.xls', 'application/vnd.ms-excel'),
+        )
+      })
+
+      expect(parseResult!.columns).toEqual(['Name'])
+      expect(parseResult!.rowCount).toBe(1)
+      expect(mockParseXls).toHaveBeenCalledTimes(1)
+    })
+
+    it('parses .xlsm via parseXls', async () => {
+      mockParseXls.mockResolvedValue({
+        columns: ['ID', 'Value'],
+        rows: [{ ID: '1', Value: 'x' }],
+        rowCount: 1,
+      })
+
+      const { result } = renderHook(() => useFileParser())
+      let parseResult: ParseResult | undefined
+
+      await act(async () => {
+        parseResult = await result.current.parseFile(
+          makeFile('test.xlsm', 'application/vnd.ms-excel.sheet.macroEnabled.12'),
+        )
+      })
+
+      expect(parseResult!.columns).toEqual(['ID', 'Value'])
+      expect(mockParseXls).toHaveBeenCalledTimes(1)
+    })
+
+    it('throws SpreadsheetParseError(NO_COLUMNS) when parseXls returns empty columns array', async () => {
+      mockParseXls.mockResolvedValue({ columns: [], rows: [], rowCount: 0 })
+
+      const { result } = renderHook(() => useFileParser())
+      let caughtErr: unknown
+
+      await act(async () => {
+        try {
+          await result.current.parseFile(
+            makeFile(
+              'empty-cols.xlsx',
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ),
+          )
+        } catch (e) {
+          caughtErr = e
+        }
+      })
+
+      expect(caughtErr).toBeInstanceOf(SpreadsheetParseError)
+      expect((caughtErr as SpreadsheetParseError).code).toBe('NO_COLUMNS')
+    })
+
+    it('throws SpreadsheetParseError(ROW_LIMIT) with params for xlsx exceeding free plan limit', async () => {
+      mockParseXls.mockResolvedValue({
+        columns: ['Name'],
+        rows: Array.from({ length: 501 }, (_, i) => ({ Name: `Row${i}` })),
+        rowCount: 501,
+      })
+
+      const { result } = renderHook(() => useFileParser())
+      let caughtErr: unknown
+
+      await act(async () => {
+        try {
+          await result.current.parseFile(
+            makeFile(
+              'big.xlsx',
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ),
+            'free',
+          )
+        } catch (e) {
+          caughtErr = e
+        }
+      })
+
+      expect(caughtErr).toBeInstanceOf(SpreadsheetParseError)
+      expect((caughtErr as SpreadsheetParseError).code).toBe('ROW_LIMIT')
+      expect((caughtErr as SpreadsheetParseError).params).toEqual({
+        total: '501',
+        max: '500',
+        plan: 'FREE',
       })
     })
 
-    describe('file read errors', () => {
-      it('should handle arrayBuffer failure', async () => {
-        const file = new File([''], 'test.csv', { type: 'text/csv' })
-        Object.defineProperty(file, 'size', { value: 1024 })
-        file.arrayBuffer = () => Promise.reject(new Error('Read failed'))
+    it('re-throws SpreadsheetParseError from parseXls unchanged — same reference (CORRUPT_FILE)', async () => {
+      const originalErr = new SpreadsheetParseError('CORRUPT_FILE', 'Bad file data')
+      mockParseXls.mockRejectedValue(originalErr)
 
-        const { result } = renderHook(() => useFileParser())
+      const { result } = renderHook(() => useFileParser())
+      let caughtErr: unknown
 
-        await act(async () => {
-          await expect(result.current.parseFile(file)).rejects.toEqual({
-            message: 'Parse failed',
-            code: 'PARSE_ERROR',
-          })
-        })
+      await act(async () => {
+        try {
+          await result.current.parseFile(
+            makeFile(
+              'corrupt.xlsx',
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ),
+          )
+        } catch (e) {
+          caughtErr = e
+        }
+      })
+
+      expect(caughtErr).toBe(originalErr)
+      expect((caughtErr as SpreadsheetParseError).code).toBe('CORRUPT_FILE')
+      expect(result.current.error).toEqual({ message: 'Bad file data', code: 'CORRUPT_FILE' })
+    })
+
+    it('re-throws SpreadsheetParseError(NO_SHEETS) from parseXls unchanged', async () => {
+      mockParseXls.mockRejectedValue(new SpreadsheetParseError('NO_SHEETS', 'No sheets found'))
+
+      const { result } = renderHook(() => useFileParser())
+      let caughtErr: unknown
+
+      await act(async () => {
+        try {
+          await result.current.parseFile(
+            makeFile(
+              'empty.xlsx',
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ),
+          )
+        } catch (e) {
+          caughtErr = e
+        }
+      })
+
+      expect(caughtErr).toBeInstanceOf(SpreadsheetParseError)
+      expect((caughtErr as SpreadsheetParseError).code).toBe('NO_SHEETS')
+    })
+
+    it('wraps unexpected Error from parseXls as SpreadsheetParseError(UNKNOWN)', async () => {
+      mockParseXls.mockRejectedValue(new Error('Worker crashed unexpectedly'))
+
+      const { result } = renderHook(() => useFileParser())
+      let caughtErr: unknown
+
+      await act(async () => {
+        try {
+          await result.current.parseFile(
+            makeFile(
+              'crash.xlsx',
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ),
+          )
+        } catch (e) {
+          caughtErr = e
+        }
+      })
+
+      expect(caughtErr).toBeInstanceOf(SpreadsheetParseError)
+      expect((caughtErr as SpreadsheetParseError).code).toBe('UNKNOWN')
+      expect((caughtErr as SpreadsheetParseError).message).toBe('Worker crashed unexpectedly')
+      expect(result.current.error).toEqual({
+        message: 'Worker crashed unexpectedly',
+        code: 'UNKNOWN',
       })
     })
   })
 
-  describe('server-side parsing (large files >= 10MB)', () => {
-    it('should parse large file on server', async () => {
-      const mockServerResponse = {
-        columns: ['Name', 'Email'],
-        rowCount: 10000,
-      }
+  // ── Unsupported format ────────────────────────────────────────────────────
 
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockServerResponse),
+  describe('unsupported format', () => {
+    it('throws SpreadsheetParseError(UNSUPPORTED_FORMAT) for .pdf', async () => {
+      const { result } = renderHook(() => useFileParser())
+      let caughtErr: unknown
+
+      await act(async () => {
+        try {
+          await result.current.parseFile(makeFile('document.pdf', 'application/pdf'))
+        } catch (e) {
+          caughtErr = e
+        }
       })
 
-      const file = new File([''], 'large.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: 15 * 1024 * 1024 }) // 15MB
+      expect(caughtErr).toBeInstanceOf(SpreadsheetParseError)
+      expect((caughtErr as SpreadsheetParseError).code).toBe('UNSUPPORTED_FORMAT')
+    })
+
+    it('throws SpreadsheetParseError(UNSUPPORTED_FORMAT) for .doc', async () => {
+      const { result } = renderHook(() => useFileParser())
+      let caughtErr: unknown
+
+      await act(async () => {
+        try {
+          await result.current.parseFile(makeFile('document.doc', 'application/msword'))
+        } catch (e) {
+          caughtErr = e
+        }
+      })
+
+      expect(caughtErr).toBeInstanceOf(SpreadsheetParseError)
+      expect((caughtErr as SpreadsheetParseError).code).toBe('UNSUPPORTED_FORMAT')
+    })
+  })
+
+  // ── UNKNOWN wrap — non-Error throws ──────────────────────────────────────
+
+  describe('UNKNOWN wrap for non-Error thrown values', () => {
+    it('wraps thrown string as SpreadsheetParseError(UNKNOWN) with generic message', async () => {
+      ;(Papa.parse as jest.Mock).mockImplementation(() => {
+        // eslint-disable-next-line no-throw-literal
+        throw 'String error'
+      })
 
       const { result } = renderHook(() => useFileParser())
 
-      let parseResult: ParseResult | undefined
       await act(async () => {
-        parseResult = await result.current.parseFile(file)
+        try {
+          await result.current.parseFile(makeFile('test.csv', 'text/csv'))
+        } catch {
+          // expected
+        }
+      })
+
+      expect(result.current.error?.code).toBe('UNKNOWN')
+      expect(result.current.error?.message).toBe('Unknown parsing error')
+    })
+  })
+
+  // ── arrayBuffer failure ───────────────────────────────────────────────────
+
+  describe('file read failure', () => {
+    it('wraps arrayBuffer rejection as SpreadsheetParseError(UNKNOWN)', async () => {
+      const file = makeFile('test.csv', 'text/csv')
+      file.arrayBuffer = () => Promise.reject(new Error('Read failed'))
+
+      const { result } = renderHook(() => useFileParser())
+      let caughtErr: unknown
+
+      await act(async () => {
+        try {
+          await result.current.parseFile(file)
+        } catch (e) {
+          caughtErr = e
+        }
+      })
+
+      expect(caughtErr).toBeInstanceOf(SpreadsheetParseError)
+      expect((caughtErr as SpreadsheetParseError).code).toBe('UNKNOWN')
+      expect((caughtErr as SpreadsheetParseError).message).toBe('Read failed')
+    })
+  })
+
+  // ── Server-side parsing (large files >= 10MB) ─────────────────────────────
+
+  describe('server-side parsing (files >= 10MB)', () => {
+    it('calls /api/preview for large files and returns result', async () => {
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ columns: ['Name', 'Email'], rowCount: 10000 }),
+      })
+
+      const { result } = renderHook(() => useFileParser())
+      let parseResult: ParseResult | undefined
+
+      await act(async () => {
+        parseResult = await result.current.parseFile(
+          makeFile('large.csv', 'text/csv', 15 * 1024 * 1024),
+        )
       })
 
       expect(parseResult!.columns).toEqual(['Name', 'Email'])
@@ -389,76 +531,83 @@ describe('useFileParser hook', () => {
       })
     })
 
-    it('should handle server error', async () => {
+    it('wraps server HTTP error as SpreadsheetParseError(UNKNOWN)', async () => {
       ;(global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
         status: 500,
         json: () => Promise.resolve({ error: 'Server processing failed' }),
       })
 
-      const file = new File([''], 'large.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: 15 * 1024 * 1024 })
-
       const { result } = renderHook(() => useFileParser())
+      let caughtErr: unknown
 
       await act(async () => {
-        await expect(result.current.parseFile(file)).rejects.toEqual({
-          message: 'Parse failed',
-          code: 'PARSE_ERROR',
-        })
+        try {
+          await result.current.parseFile(makeFile('large.csv', 'text/csv', 15 * 1024 * 1024))
+        } catch (e) {
+          caughtErr = e
+        }
       })
+
+      expect(caughtErr).toBeInstanceOf(SpreadsheetParseError)
+      expect((caughtErr as SpreadsheetParseError).code).toBe('UNKNOWN')
+      expect((caughtErr as SpreadsheetParseError).message).toBe('Server processing failed')
     })
 
-    it('should handle server error without error message', async () => {
+    it('wraps server error without body message as SpreadsheetParseError(UNKNOWN)', async () => {
       ;(global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
         status: 500,
         json: () => Promise.resolve({}),
       })
 
-      const file = new File([''], 'large.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: 15 * 1024 * 1024 })
-
       const { result } = renderHook(() => useFileParser())
+      let caughtErr: unknown
 
       await act(async () => {
-        await expect(result.current.parseFile(file)).rejects.toEqual({
-          message: 'Parse failed',
-          code: 'PARSE_ERROR',
-        })
+        try {
+          await result.current.parseFile(makeFile('large.csv', 'text/csv', 15 * 1024 * 1024))
+        } catch (e) {
+          caughtErr = e
+        }
       })
+
+      expect(caughtErr).toBeInstanceOf(SpreadsheetParseError)
+      expect((caughtErr as SpreadsheetParseError).code).toBe('UNKNOWN')
     })
 
-    it('should handle network failure', async () => {
+    it('wraps network failure as SpreadsheetParseError(UNKNOWN)', async () => {
       ;(global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'))
 
-      const file = new File([''], 'large.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: 15 * 1024 * 1024 })
-
       const { result } = renderHook(() => useFileParser())
+      let caughtErr: unknown
 
       await act(async () => {
-        await expect(result.current.parseFile(file)).rejects.toEqual({
-          message: 'Parse failed',
-          code: 'PARSE_ERROR',
-        })
+        try {
+          await result.current.parseFile(makeFile('large.csv', 'text/csv', 15 * 1024 * 1024))
+        } catch (e) {
+          caughtErr = e
+        }
       })
+
+      expect(caughtErr).toBeInstanceOf(SpreadsheetParseError)
+      expect((caughtErr as SpreadsheetParseError).code).toBe('UNKNOWN')
+      expect((caughtErr as SpreadsheetParseError).message).toBe('Network error')
     })
 
-    it('should handle missing columns in server response', async () => {
+    it('handles missing columns/rowCount in server response (defaults to empty)', async () => {
       ;(global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({}),
       })
 
-      const file = new File([''], 'large.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: 15 * 1024 * 1024 })
-
       const { result } = renderHook(() => useFileParser())
-
       let parseResult: ParseResult | undefined
+
       await act(async () => {
-        parseResult = await result.current.parseFile(file)
+        parseResult = await result.current.parseFile(
+          makeFile('large.csv', 'text/csv', 15 * 1024 * 1024),
+        )
       })
 
       expect(parseResult!.columns).toEqual([])
@@ -466,90 +615,74 @@ describe('useFileParser hook', () => {
     })
   })
 
-  describe('smart parsing threshold', () => {
-    it('should use client-side for files just under 10MB', async () => {
+  // ── Smart parsing threshold ───────────────────────────────────────────────
+
+  describe('smart parsing threshold (10MB)', () => {
+    it('uses client-side for files just under 10MB (no fetch call)', async () => {
       ;(Papa.parse as jest.Mock).mockReturnValue({
         data: [{ Name: 'John' }],
         errors: [],
         meta: { fields: ['Name'] },
       })
 
-      const file = new File([''], 'test.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', {
-        value: MAX_CLIENT_PARSE_SIZE - 1,
-      }) // Just under 10MB
-
       const { result } = renderHook(() => useFileParser())
 
       await act(async () => {
-        await result.current.parseFile(file)
+        await result.current.parseFile(makeFile('test.csv', 'text/csv', MAX_CLIENT_PARSE_SIZE - 1))
       })
 
-      // Should NOT call fetch (client-side parsing)
       expect(global.fetch).not.toHaveBeenCalled()
     })
 
-    it('should use server-side for files at exactly 10MB', async () => {
+    it('uses server-side for files at exactly 10MB (fetch is called)', async () => {
       ;(global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ columns: ['Name'], rowCount: 1 }),
       })
 
-      const file = new File([''], 'test.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: MAX_CLIENT_PARSE_SIZE }) // Exactly 10MB
-
       const { result } = renderHook(() => useFileParser())
 
       await act(async () => {
-        await result.current.parseFile(file)
+        await result.current.parseFile(makeFile('test.csv', 'text/csv', MAX_CLIENT_PARSE_SIZE))
       })
 
-      // Should call fetch (server-side parsing)
-      expect(global.fetch).toHaveBeenCalled()
+      expect(global.fetch).toHaveBeenCalledTimes(1)
     })
   })
 
+  // ── Loading state ─────────────────────────────────────────────────────────
+
   describe('loading state', () => {
-    it('should set loading true during parsing', async () => {
+    it('resets isLoading to false after successful parse', async () => {
       ;(Papa.parse as jest.Mock).mockReturnValue({
         data: [{ Name: 'John' }],
         errors: [],
         meta: { fields: ['Name'] },
       })
 
-      const file = new File([''], 'test.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: 1024 })
-
       const { result } = renderHook(() => useFileParser())
 
-      expect(result.current.isLoading).toBe(false)
-
-      const parsePromise = act(async () => {
-        await result.current.parseFile(file)
+      await act(async () => {
+        await result.current.parseFile(makeFile('test.csv', 'text/csv'))
       })
-
-      await parsePromise
 
       expect(result.current.isLoading).toBe(false)
     })
 
-    it('should reset loading on error', async () => {
+    it('resets isLoading to false after an error', async () => {
       ;(Papa.parse as jest.Mock).mockReturnValue({
         data: [],
         errors: [{ message: 'Parse error' }],
         meta: { fields: [] },
       })
 
-      const file = new File([''], 'test.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: 1024 })
-
       const { result } = renderHook(() => useFileParser())
 
       await act(async () => {
         try {
-          await result.current.parseFile(file)
+          await result.current.parseFile(makeFile('test.csv', 'text/csv'))
         } catch {
-          // Expected to throw
+          // expected
         }
       })
 
@@ -557,31 +690,28 @@ describe('useFileParser hook', () => {
     })
   })
 
+  // ── Error state ───────────────────────────────────────────────────────────
+
   describe('error state', () => {
-    it('should clear error on successful parse', async () => {
-      // First, trigger an error
+    it('clears error on a subsequent successful parse', async () => {
       ;(Papa.parse as jest.Mock).mockReturnValueOnce({
         data: [],
         errors: [{ message: 'First error' }],
         meta: { fields: [] },
       })
 
-      const file = new File([''], 'test.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: 1024 })
-
+      const file = makeFile('test.csv', 'text/csv')
       const { result } = renderHook(() => useFileParser())
 
       await act(async () => {
         try {
           await result.current.parseFile(file)
         } catch {
-          // Expected
+          // expected
         }
       })
 
       expect(result.current.error).not.toBeNull()
-
-      // Now successful parse
       ;(Papa.parse as jest.Mock).mockReturnValueOnce({
         data: [{ Name: 'John' }],
         errors: [],
@@ -595,237 +725,161 @@ describe('useFileParser hook', () => {
       expect(result.current.error).toBeNull()
     })
 
-    it('should handle non-Error thrown objects', async () => {
-      ;(Papa.parse as jest.Mock).mockImplementation(() => {
-        // eslint-disable-next-line no-throw-literal
-        throw 'String error'
+    it('error.code reflects the specific ParseErrorCode (not a generic PARSE_ERROR)', async () => {
+      ;(Papa.parse as jest.Mock).mockReturnValue({
+        data: [],
+        errors: [{ message: 'bad csv' }],
+        meta: { fields: [] },
       })
-
-      const file = new File([''], 'test.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: 1024 })
 
       const { result } = renderHook(() => useFileParser())
 
       await act(async () => {
         try {
-          await result.current.parseFile(file)
+          await result.current.parseFile(makeFile('test.csv', 'text/csv'))
         } catch {
-          // Expected
+          // expected
         }
       })
 
-      expect(result.current.error?.message).toBe('Parse failed')
+      expect(result.current.error?.code).toBe('CORRUPT_FILE')
     })
   })
 
-  describe('row limit enforcement', () => {
-    it('should reject CSV files exceeding free plan row limit (500)', async () => {
-      const rows = Array.from({ length: 501 }, (_, i) => ({ Name: `Row${i}` }))
-      ;(Papa.parse as jest.Mock).mockReturnValue({
-        data: rows,
-        errors: [],
-        meta: { fields: ['Name'] },
-      })
-
-      const file = new File([''], 'big.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: 1024 })
-
-      const { result } = renderHook(() => useFileParser())
-
-      await act(async () => {
-        await expect(result.current.parseFile(file, 'free')).rejects.toEqual({
-          message: 'File exceeds row limit: 501 rows (max 500 for Free plan)',
-          code: 'PARSE_ERROR',
-        })
-      })
-    })
-
-    it('should accept CSV files within free plan row limit', async () => {
-      const rows = Array.from({ length: 500 }, (_, i) => ({ Name: `Row${i}` }))
-      ;(Papa.parse as jest.Mock).mockReturnValue({
-        data: rows,
-        errors: [],
-        meta: { fields: ['Name'] },
-      })
-
-      const file = new File([''], 'ok.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: 1024 })
-
-      const { result } = renderHook(() => useFileParser())
-
-      let parseResult: ParseResult | undefined
-      await act(async () => {
-        parseResult = await result.current.parseFile(file, 'free')
-      })
-
-      expect(parseResult!.rowCount).toBe(500)
-    })
-
-    it('should reject XLSX files exceeding free plan row limit', async () => {
-      // 502 rows: 1 header + 501 data rows
-      const arrayData = [['Name'], ...Array.from({ length: 501 }, (_, i) => [`Row${i}`])]
-      mockWorksheetToArray.mockReturnValue(arrayData)
-
-      const file = new File([''], 'big.xlsx', {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      })
-      Object.defineProperty(file, 'size', { value: 1024 })
-
-      const { result } = renderHook(() => useFileParser())
-
-      await act(async () => {
-        await expect(result.current.parseFile(file, 'free')).rejects.toEqual({
-          message: 'File exceeds row limit: 501 rows (max 500 for Free plan)',
-          code: 'PARSE_ERROR',
-        })
-      })
-    })
-
-    it('should allow more rows with pro plan', async () => {
-      const rows = Array.from({ length: 1000 }, (_, i) => ({ Name: `Row${i}` }))
-      ;(Papa.parse as jest.Mock).mockReturnValue({
-        data: rows,
-        errors: [],
-        meta: { fields: ['Name'] },
-      })
-
-      const file = new File([''], 'ok.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: 1024 })
-
-      const { result } = renderHook(() => useFileParser())
-
-      let parseResult: ParseResult | undefined
-      await act(async () => {
-        parseResult = await result.current.parseFile(file, 'pro')
-      })
-
-      expect(parseResult!.rowCount).toBe(1000)
-    })
-  })
+  // ── Column name sanitization ──────────────────────────────────────────────
 
   describe('column name sanitization', () => {
-    it('should sanitize column names with special characters', async () => {
+    it('strips XSS tags from CSV column names', async () => {
       ;(Papa.parse as jest.Mock).mockReturnValue({
         data: [{ '<script>alert(1)</script>': 'val' }],
         errors: [],
         meta: { fields: ['<script>alert(1)</script>'] },
       })
 
-      const file = new File([''], 'xss.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: 1024 })
-
       const { result } = renderHook(() => useFileParser())
-
       let parseResult: ParseResult | undefined
+
       await act(async () => {
-        parseResult = await result.current.parseFile(file)
+        parseResult = await result.current.parseFile(makeFile('xss.csv', 'text/csv'))
       })
 
-      // sanitizeString removes < and >
+      expect(parseResult!.columns[0]).not.toContain('<')
+      expect(parseResult!.columns[0]).not.toContain('>')
+    })
+
+    it('strips XSS tags from XLSX column names returned by parseXls', async () => {
+      mockParseXls.mockResolvedValue({
+        columns: ['<script>xss</script>', 'Safe'],
+        rows: [],
+        rowCount: 0,
+      })
+
+      const { result } = renderHook(() => useFileParser())
+      let parseResult: ParseResult | undefined
+
+      await act(async () => {
+        parseResult = await result.current.parseFile(
+          makeFile('xss.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+        )
+      })
+
       expect(parseResult!.columns[0]).not.toContain('<')
       expect(parseResult!.columns[0]).not.toContain('>')
     })
   })
 
+  // ── Preview row sanitization ──────────────────────────────────────────────
+
   describe('sanitizePreviewRows — cell value sanitization', () => {
-    it('should sanitize XSS payloads in CSV preview cell values', async () => {
+    it('strips XSS tags from CSV preview cell values', async () => {
       ;(Papa.parse as jest.Mock).mockReturnValue({
-        data: [
-          { Name: '<script>alert(1)</script>', Email: 'safe@test.com' },
-          { Name: 'Normal', Email: 'foo@bar.com' },
-        ],
+        data: [{ Name: '<script>alert(1)</script>', Email: 'safe@test.com' }],
         errors: [],
         meta: { fields: ['Name', 'Email'] },
       })
 
-      const file = new File([''], 'xss-values.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: 1024 })
-
       const { result } = renderHook(() => useFileParser())
-
       let parseResult: ParseResult | undefined
+
       await act(async () => {
-        parseResult = await result.current.parseFile(file)
+        parseResult = await result.current.parseFile(makeFile('xss.csv', 'text/csv'))
       })
 
-      // Cell values in preview must have < and > stripped
-      const preview = parseResult!.preview!
-      expect(preview[0].Name).not.toContain('<')
-      expect(preview[0].Name).not.toContain('>')
+      expect(parseResult!.preview![0].Name).not.toContain('<')
+      expect(parseResult!.preview![0].Name).not.toContain('>')
     })
 
-    it('should sanitize XSS payloads in XLSX preview cell values', async () => {
-      mockWorksheetToArray.mockReturnValue([
-        ['Name', 'Value'],
-        ['<img onerror=alert(1)>', 'safe'],
-      ])
-      mockWorksheetToJsonWithHeaders.mockReturnValue([
-        { Name: '<img onerror=alert(1)>', Value: 'safe' },
-      ])
-
-      const file = new File([''], 'xss.xlsx', {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    it('strips XSS tags from xlsx preview cell values (via parseXls mock)', async () => {
+      mockParseXls.mockResolvedValue({
+        columns: ['Name', 'Value'],
+        rows: [{ Name: '<img onerror=alert(1)>', Value: 'safe' }],
+        rowCount: 1,
       })
-      Object.defineProperty(file, 'size', { value: 1024 })
 
       const { result } = renderHook(() => useFileParser())
-
       let parseResult: ParseResult | undefined
+
       await act(async () => {
-        parseResult = await result.current.parseFile(file)
+        parseResult = await result.current.parseFile(
+          makeFile('xss.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+        )
       })
 
-      const preview = parseResult!.preview!
-      expect(preview[0].Name).not.toContain('<')
-      expect(preview[0].Name).not.toContain('>')
+      expect(parseResult!.preview![0].Name).not.toContain('<')
+      expect(parseResult!.preview![0].Name).not.toContain('>')
     })
 
-    it('should sanitize XSS payloads in XLS preview cell values', async () => {
+    it('strips XSS tags from xls preview cell values', async () => {
       mockParseXls.mockResolvedValue({
         columns: ['Name'],
         rows: [{ Name: '<script>xss</script>' }, { Name: 'clean' }],
         rowCount: 2,
       })
 
-      const file = new File([''], 'xss.xls', {
-        type: 'application/vnd.ms-excel',
-      })
-      Object.defineProperty(file, 'size', { value: 1024 })
-
       const { result } = renderHook(() => useFileParser())
-
       let parseResult: ParseResult | undefined
+
       await act(async () => {
-        parseResult = await result.current.parseFile(file)
+        parseResult = await result.current.parseFile(
+          makeFile('xss.xls', 'application/vnd.ms-excel'),
+        )
       })
 
-      const preview = parseResult!.preview!
-      expect(preview[0].Name).not.toContain('<')
-      expect(preview[0].Name).not.toContain('>')
+      expect(parseResult!.preview![0].Name).not.toContain('<')
+      expect(parseResult!.preview![0].Name).not.toContain('>')
     })
 
-    it('should preserve non-string values (numbers, booleans, null) in preview rows', async () => {
+    it('preserves non-string values (number, boolean, null) in preview rows', async () => {
       ;(Papa.parse as jest.Mock).mockReturnValue({
         data: [{ Count: 42, Active: true, Note: null }],
         errors: [],
         meta: { fields: ['Count', 'Active', 'Note'] },
       })
 
-      const file = new File([''], 'types.csv', { type: 'text/csv' })
-      Object.defineProperty(file, 'size', { value: 1024 })
-
       const { result } = renderHook(() => useFileParser())
-
       let parseResult: ParseResult | undefined
+
       await act(async () => {
-        parseResult = await result.current.parseFile(file)
+        parseResult = await result.current.parseFile(makeFile('types.csv', 'text/csv'))
       })
 
-      const preview = parseResult!.preview!
-      // Non-string values must not be altered by sanitizePreviewRows
-      expect(preview[0].Count).toBe(42)
-      expect(preview[0].Active).toBe(true)
-      expect(preview[0].Note).toBeNull()
+      expect(parseResult!.preview![0].Count).toBe(42)
+      expect(parseResult!.preview![0].Active).toBe(true)
+      expect(parseResult!.preview![0].Note).toBeNull()
+    })
+
+    it('limits preview to at most 5 rows', async () => {
+      const data = Array.from({ length: 10 }, (_, i) => ({ Name: `Row${i}` }))
+      ;(Papa.parse as jest.Mock).mockReturnValue({ data, errors: [], meta: { fields: ['Name'] } })
+
+      const { result } = renderHook(() => useFileParser())
+      let parseResult: ParseResult | undefined
+
+      await act(async () => {
+        parseResult = await result.current.parseFile(makeFile('big.csv', 'text/csv'))
+      })
+
+      expect(parseResult!.preview!.length).toBeLessThanOrEqual(5)
     })
   })
 })

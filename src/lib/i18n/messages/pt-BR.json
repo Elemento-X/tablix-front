@@ -303,6 +303,8 @@
     "parseEmpty": "A planilha está vazia.",
     "parseFailed": "Erro ao ler o arquivo. Verifique se o formato é válido.",
     "parseGeneric": "Erro ao analisar o arquivo: {detail}",
+    "parseCorrupt": "Não foi possível ler o arquivo. Ele pode estar corrompido ou em um formato não suportado.",
+    "parseUnsupported": "Formato de arquivo não suportado. Use CSV, XLS ou XLSX.",
     "fileValidation": "Tipo de arquivo inválido. Use CSV, XLS ou XLSX.",
     "fileContentValidation": "O conteúdo do arquivo não corresponde ao formato esperado."
   },

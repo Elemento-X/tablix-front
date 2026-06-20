@@ -1,5 +1,6 @@
 import { toast } from 'sonner'
 import { FetchError } from '@/lib/fetch-client'
+import { SpreadsheetParseError, type ParseErrorCode } from '@/lib/spreadsheet-errors'
 
 const FETCH_ERROR_KEY_MAP: Record<string, string> = {
   offline: 'errors.offline',
@@ -9,10 +10,28 @@ const FETCH_ERROR_KEY_MAP: Record<string, string> = {
 }
 
 /**
+ * Map each parse error code to a descriptive i18n key. Every code resolves to a
+ * message that reflects what actually happened — never a generic "parse failed".
+ * UNKNOWN/WORKER_ERROR fall back to a safe message that does not leak internals.
+ */
+const PARSE_CODE_KEY_MAP: Record<ParseErrorCode, string> = {
+  CORRUPT_FILE: 'errors.parseCorrupt',
+  NO_SHEETS: 'errors.parseNoSheets',
+  EMPTY_SHEET: 'errors.parseEmpty',
+  NO_COLUMNS: 'errors.parseNoColumns',
+  ROW_LIMIT: 'errors.parseRowLimit',
+  UNSUPPORTED_FORMAT: 'errors.parseUnsupported',
+  TIMEOUT: 'errors.timeout',
+  INVALID_INPUT: 'errors.parseFailed',
+  WORKER_ERROR: 'errors.parseFailed',
+  UNKNOWN: 'errors.parseFailed',
+}
+
+/**
  * Show a toast for fetch/parse errors with i18n-aware messages.
  *
  * Handles FetchError types (offline, timeout, server, rate-limit) and
- * common parse errors from use-file-parser (row limit, no columns, no sheets, empty).
+ * SpreadsheetParseError codes (corrupt, no columns, no sheets, empty, row limit…).
  *
  * @param t - i18n translation function
  * @param err - the caught error
@@ -28,32 +47,10 @@ export function toastFetchError(
     return
   }
 
-  const msg = err instanceof Error ? err.message : (err as { message?: string })?.message
-  if (msg) {
-    const rowLimitMatch = msg.match(/exceeds row limit: (\d+) rows \(max (\d+) for (\w+) plan\)/)
-    const validPlans = ['free', 'pro', 'enterprise']
-    if (rowLimitMatch && validPlans.includes(rowLimitMatch[3].toLowerCase())) {
-      toast.error(
-        t('errors.parseRowLimit', {
-          total: rowLimitMatch[1],
-          max: rowLimitMatch[2],
-          plan: rowLimitMatch[3].toUpperCase(),
-        }),
-      )
-      return
-    }
-    if (msg.includes('No columns found')) {
-      toast.error(t('errors.parseNoColumns'))
-      return
-    }
-    if (msg.includes('No sheets found')) {
-      toast.error(t('errors.parseNoSheets'))
-      return
-    }
-    if (msg.includes('Empty spreadsheet')) {
-      toast.error(t('errors.parseEmpty'))
-      return
-    }
+  if (err instanceof SpreadsheetParseError) {
+    const key = PARSE_CODE_KEY_MAP[err.code] ?? fallbackKey
+    toast.error(t(key, err.params))
+    return
   }
 
   toast.error(t(fallbackKey))
