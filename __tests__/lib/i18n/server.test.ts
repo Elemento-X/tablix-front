@@ -42,6 +42,20 @@ describe('getServerLocale()', () => {
     expect(result).toBe('es')
   })
 
+  it('returns zh when cookie is "zh"', async () => {
+    mockGet.mockReturnValue({ value: 'zh' })
+    const { getServerLocale } = await import('@/lib/i18n/server')
+    const result = await getServerLocale()
+    expect(result).toBe('zh')
+  })
+
+  it('returns fr when cookie is "fr"', async () => {
+    mockGet.mockReturnValue({ value: 'fr' })
+    const { getServerLocale } = await import('@/lib/i18n/server')
+    const result = await getServerLocale()
+    expect(result).toBe('fr')
+  })
+
   it('returns defaultLocale when cookie is missing (undefined)', async () => {
     mockGet.mockReturnValue(undefined)
     const { getServerLocale } = await import('@/lib/i18n/server')
@@ -57,7 +71,7 @@ describe('getServerLocale()', () => {
   })
 
   it('returns defaultLocale when cookie value is invalid locale', async () => {
-    mockGet.mockReturnValue({ value: 'fr' })
+    mockGet.mockReturnValue({ value: 'xx' })
     const { getServerLocale } = await import('@/lib/i18n/server')
     const result = await getServerLocale()
     expect(result).toBe(defaultLocale)
@@ -117,16 +131,34 @@ describe('getMessages()', () => {
     expect(messages.meta.title.length).toBeGreaterThan(0)
   })
 
+  it('returns zh messages for zh locale', async () => {
+    const { getMessages } = await import('@/lib/i18n/server')
+    const messages = getMessages('zh')
+    expect(messages).toBeDefined()
+    expect(typeof messages.meta.title).toBe('string')
+    expect(messages.meta.title.length).toBeGreaterThan(0)
+  })
+
+  it('returns fr messages for fr locale', async () => {
+    const { getMessages } = await import('@/lib/i18n/server')
+    const messages = getMessages('fr')
+    expect(messages).toBeDefined()
+    expect(typeof messages.meta.title).toBe('string')
+    expect(messages.meta.title.length).toBeGreaterThan(0)
+  })
+
   it('each locale returns distinct meta.title (no cross-contamination)', async () => {
     const { getMessages } = await import('@/lib/i18n/server')
     const ptBR = getMessages('pt-BR')
     const en = getMessages('en')
     const es = getMessages('es')
+    const zh = getMessages('zh')
+    const fr = getMessages('fr')
 
-    const titles = [ptBR.meta.title, en.meta.title, es.meta.title]
+    const titles = [ptBR.meta.title, en.meta.title, es.meta.title, zh.meta.title, fr.meta.title]
     const uniqueTitles = new Set(titles)
-    // All three should be different strings (sanity check — they are distinct translations)
-    expect(uniqueTitles.size).toBe(3)
+    // All five should be different strings (sanity check — they are distinct translations)
+    expect(uniqueTitles.size).toBe(5)
   })
 
   it('returns object with meta.description for all locales', async () => {
@@ -153,6 +185,16 @@ describe('toOpenGraphLocale()', () => {
   it('returns "es" unchanged (no hyphen)', async () => {
     const { toOpenGraphLocale } = await import('@/lib/i18n/server')
     expect(toOpenGraphLocale('es')).toBe('es')
+  })
+
+  it('returns "zh" unchanged (no hyphen)', async () => {
+    const { toOpenGraphLocale } = await import('@/lib/i18n/server')
+    expect(toOpenGraphLocale('zh')).toBe('zh')
+  })
+
+  it('returns "fr" unchanged (no hyphen)', async () => {
+    const { toOpenGraphLocale } = await import('@/lib/i18n/server')
+    expect(toOpenGraphLocale('fr')).toBe('fr')
   })
 
   it('returns a string for every supported locale', async () => {

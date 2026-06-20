@@ -5,11 +5,15 @@ import { type Locale, defaultLocale } from './config'
 import ptBR from './messages/pt-BR.json'
 import en from './messages/en.json'
 import es from './messages/es.json'
+import zh from './messages/zh.json'
+import fr from './messages/fr.json'
 
 const messages = {
   'pt-BR': ptBR,
   en,
   es,
+  zh,
+  fr,
 }
 
 type Messages = typeof ptBR

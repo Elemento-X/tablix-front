@@ -243,7 +243,8 @@
     "aboutTotalRows": "Total de linhas",
     "aboutFilesUnified": "Arquivos unificados",
     "aboutUpgradeToPro": "Upgrade para Pro",
-    "aboutUpgradeMessage": "Remova marca d'água e aumente os limites!"
+    "aboutUpgradeMessage": "Remova marca d'água e aumente os limites!",
+    "fileName": "tablix-unificado"
   },
   "steps": {
     "upload": "Upload",
