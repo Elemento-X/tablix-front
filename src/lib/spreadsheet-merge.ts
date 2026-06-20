@@ -15,11 +15,13 @@ export interface MergeLabels {
   aboutGeneratedBy: string
   aboutWebsite: string
   aboutPlan: string
+  aboutPlanValue: string
   aboutGeneratedAt: string
   aboutTotalRows: string
   aboutFilesUnified: string
   aboutUpgradeToPro: string
   aboutUpgradeMessage: string
+  fileName: string
 }
 
 const DEFAULT_LABELS: MergeLabels = {
@@ -32,11 +34,13 @@ const DEFAULT_LABELS: MergeLabels = {
   aboutGeneratedBy: 'Arquivo gerado por',
   aboutWebsite: 'Website',
   aboutPlan: 'Plano',
+  aboutPlanValue: 'Free',
   aboutGeneratedAt: 'Data de geração',
   aboutTotalRows: 'Total de linhas',
   aboutFilesUnified: 'Arquivos unificados',
   aboutUpgradeToPro: 'Upgrade para Pro',
   aboutUpgradeMessage: "Remova marca d'água e aumente os limites!",
+  fileName: 'tablix-unificado',
 }
 
 export interface MergeOptions {
@@ -184,7 +188,7 @@ export async function mergeSpreadsheets(options: MergeOptions): Promise<MergeRes
         [l.aboutHeaderInfo]: l.aboutWebsite,
         [l.aboutHeaderValue]: 'https://tablix.me',
       },
-      { [l.aboutHeaderInfo]: l.aboutPlan, [l.aboutHeaderValue]: 'Free' },
+      { [l.aboutHeaderInfo]: l.aboutPlan, [l.aboutHeaderValue]: l.aboutPlanValue },
       {
         [l.aboutHeaderInfo]: l.aboutGeneratedAt,
         [l.aboutHeaderValue]: new Date().toLocaleDateString(),
@@ -215,7 +219,7 @@ export async function mergeSpreadsheets(options: MergeOptions): Promise<MergeRes
   })
 
   const timestamp = new Date().toISOString().split('T')[0]
-  const filename = `tablix-unificado-${timestamp}.xlsx`
+  const filename = `${l.fileName}-${timestamp}.xlsx`
 
   return {
     blob,

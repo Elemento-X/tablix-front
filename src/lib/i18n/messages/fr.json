@@ -1,0 +1,651 @@
+{
+  "meta": {
+    "title": "Tablix — Transformez des feuilles de calcul complexes en fichiers prêts à l'emploi",
+    "description": "Importez votre feuille de calcul, sélectionnez les colonnes nécessaires et générez un nouveau fichier en quelques secondes. Outil en ligne de traitement et de génération de feuilles de calcul sur mesure.",
+    "privacyTitle": "Politique de confidentialité — Tablix",
+    "privacyDescription": "Découvrez comment Tablix collecte, utilise et protège vos données. Politique de confidentialité conforme à la LGPD.",
+    "termsTitle": "Conditions d'utilisation — Tablix",
+    "termsDescription": "Lisez les conditions générales d'utilisation de la plateforme de traitement de feuilles de calcul Tablix."
+  },
+  "header": {
+    "brand": "Tablix",
+    "cta": "Commencer gratuitement",
+    "nav": {
+      "howItWorks": "Comment ça marche",
+      "audience": "Pour qui",
+      "pricing": "Tarifs"
+    }
+  },
+  "hero": {
+    "title": "Récupérez les heures perdues sur vos feuilles de calcul",
+    "subtitle": "Fusionner des feuilles de calcul ne devrait pas vous prendre tout l'après-midi. Importez, choisissez l'essentiel, c'est fait.",
+    "cta": "Simplifier mes feuilles de calcul",
+    "ctaSecondary": "Comment ça marche en 4 étapes",
+    "earlyAccess": "Gratuit pour les premiers utilisateurs"
+  },
+  "howItWorks": {
+    "title": "Comment ça marche",
+    "steps": {
+      "upload": {
+        "title": "Importez votre feuille de calcul",
+        "description": "Importez votre fichier CSV ou XLSX"
+      },
+      "visualize": {
+        "title": "Visualisez les colonnes détectées",
+        "description": "Le système identifie automatiquement toutes les colonnes"
+      },
+      "choose": {
+        "title": "Choisissez ce qu'il faut garder",
+        "description": "Sélectionnez uniquement les colonnes nécessaires"
+      },
+      "generate": {
+        "title": "Générez le nouveau fichier",
+        "description": "Téléchargez votre feuille de calcul propre et prête à l'emploi"
+      }
+    }
+  },
+  "benefits": {
+    "title": "Fini le travail manuel sur les feuilles de calcul",
+    "items": {
+      "item1": {
+        "pain": "Copier-coller à travers des dizaines d'onglets",
+        "solution": "Importez vos fichiers et fusionnez-les en une seule fois"
+      },
+      "item2": {
+        "pain": "Mauvaises colonnes, données éparpillées partout",
+        "solution": "Choisissez visuellement uniquement l'essentiel"
+      },
+      "item3": {
+        "pain": "Des heures à répéter le même processus chaque semaine",
+        "solution": "Des résultats prêts en quelques secondes avec Tablix"
+      }
+    }
+  },
+  "audience": {
+    "title": "Pour qui",
+    "roles": {
+      "analysts": {
+        "title": "Analystes",
+        "description": "Consolidez des rapports issus de plusieurs sources sans copier-coller entre les onglets."
+      },
+      "admins": {
+        "title": "Équipes administratives",
+        "description": "Fusionnez les registres, contrôles et listes en quelques clics."
+      },
+      "recurring": {
+        "title": "Feuilles de calcul récurrentes",
+        "description": "Automatisez la fusion que vous faites chaque semaine — toujours la même, toujours fastidieuse."
+      }
+    }
+  },
+  "socialProof": {
+    "heading": "Pourquoi faire confiance à Tablix",
+    "ariaLabel": "Indicateurs de confiance Tablix",
+    "metrics": {
+      "zeroStorage": { "label": "octets stockés" },
+      "localProcessing": { "label": "traitement local" },
+      "formats": { "label": "formats : XLSX, CSV et XLS" }
+    }
+  },
+  "comparisonMini": {
+    "title": "Gratuit vs Pro",
+    "seeAll": "Voir la comparaison complète"
+  },
+  "pricing": {
+    "title": "Forfaits",
+    "subtitle": "Choisissez le forfait idéal pour vos besoins",
+    "billingPeriod": {
+      "monthly": "Mensuel",
+      "semester": "Semestriel",
+      "annual": "Annuel",
+      "annualBadge": "Meilleur prix"
+    },
+    "plans": {
+      "free": {
+        "name": "Gratuit",
+        "price": "0 $",
+        "period": "Pour toujours",
+        "features": {
+          "sheetsPerMonth": "1 feuille de calcul par mois",
+          "maxRows": "jusqu'à 500 lignes",
+          "maxColumns": "jusqu'à 3 colonnes"
+        },
+        "description": "Idéal pour tester le flux de travail et voir si Tablix résout votre problème.",
+        "cta": "Commencer gratuitement"
+      },
+      "pro": {
+        "name": "Pro",
+        "badge": "Recommandé",
+        "oldPrice": "9,90 $",
+        "period": "mois",
+        "launchPrice": "Prix de lancement garanti tant que l'abonnement est actif",
+        "features": {
+          "sheetsPerMonth": "jusqu'à 40 feuilles de calcul par mois",
+          "maxRows": "jusqu'à 5 000 lignes par feuille de calcul",
+          "maxColumns": "jusqu'à 10 colonnes",
+          "priorityProcessing": "traitement prioritaire",
+          "noWatermark": "sans filigrane",
+          "fileHistory": "historique des fichiers pendant 30 jours"
+        },
+        "cta": "S'abonner à Pro"
+      },
+      "enterprise": {
+        "name": "Entreprise",
+        "price": "Sur mesure",
+        "period": "Contactez-nous",
+        "features": {
+          "customLimits": "Limites personnalisées",
+          "sla": "SLA garanti",
+          "prioritySupport": "Support prioritaire",
+          "dedicatedInfra": "Infrastructure dédiée"
+        },
+        "description": "Pour les entreprises à fort volume ou aux besoins spécifiques.",
+        "cta": "Contacter notre équipe"
+      }
+    }
+  },
+  "footer": {
+    "tagline": "Vos fichiers sont traités en toute sécurité puis supprimés après usage.",
+    "product": {
+      "title": "Produit",
+      "howItWorks": "Comment ça marche",
+      "audience": "Pour qui",
+      "pricing": "Tarifs",
+      "cta": "Commencer gratuitement"
+    },
+    "legal": {
+      "title": "Mentions légales & Contact"
+    },
+    "nav": {
+      "product": "Navigation produit",
+      "legal": "Mentions légales et contact"
+    },
+    "privacyPolicy": "Politique de confidentialité",
+    "terms": "Conditions d'utilisation",
+    "copyright": "© {year} Tablix Tecnologia. Tous droits réservés."
+  },
+  "upload": {
+    "title": "Importez votre feuille de calcul",
+    "subtitle": "Forfait gratuit : jusqu'à 500 lignes et 3 colonnes",
+    "back": "Retour",
+    "dropzone": "Cliquez pour sélectionner ou glissez vos fichiers",
+    "dropzoneWithFiles": "fichier(s) sélectionné(s)",
+    "or": "ou",
+    "selectFile": "Sélectionner un fichier",
+    "maxSize": "CSV ou XLSX • Maximum 1 Mo",
+    "processing": "Traitement en cours…",
+    "continue": "Continuer",
+    "error": "Erreur lors du traitement du fichier",
+    "securityNote": "Vos fichiers sont traités de manière temporaire et sécurisée.",
+    "selectAtLeastOne": "Sélectionnez au moins un fichier"
+  },
+  "columns": {
+    "title": "Sélectionner les colonnes",
+    "subtitle": "Choisissez les colonnes à inclure dans votre fichier traité",
+    "detected": "Colonnes détectées",
+    "selected": "sélectionnée(s)",
+    "max": "max",
+    "of": "sur",
+    "startOver": "Recommencer",
+    "deselectAll": "Tout désélectionner",
+    "selectAll": "Tout sélectionner",
+    "processAndDownload": "Traiter et télécharger",
+    "previewHint": "Aperçu des premières lignes de votre premier fichier"
+  },
+  "status": {
+    "plan": "Forfait",
+    "unificationsRemaining": "fusions restantes",
+    "files": "fichiers",
+    "maxFiles": "Max",
+    "maxTotalSize": "Taille totale max",
+    "maxRows": "lignes",
+    "maxColumns": "colonnes",
+    "maxRowsLabel": "Max",
+    "maxColumnsLabel": "Max",
+    "clickToAddMore": "Cliquez ci-dessus pour ajouter d'autres fichiers",
+    "loading": "Chargement des informations du forfait…",
+    "quotaExhausted": "Quota mensuel épuisé",
+    "quotaExhaustedHint": "Votre quota de fusions pour ce mois est épuisé. Attendez le prochain cycle ou passez à un forfait supérieur."
+  },
+  "messages": {
+    "tooManyFiles": "Trop de fichiers. Maximum {max} fichiers pour le forfait {plan}.",
+    "fileAlreadyAdded": "Le fichier « {name} » a déjà été ajouté",
+    "fileTooLarge": "« {name} » est trop volumineux. La taille maximale par fichier pour le forfait {plan} est de {size}.",
+    "totalSizeExceeded": "Taille totale dépassée. La taille totale maximale pour le forfait {plan} est de {size}.",
+    "fileAdded": "Fichier ajouté avec succès",
+    "filesAdded": "{count} fichiers ajoutés avec succès",
+    "selectAtLeastOneColumn": "Veuillez sélectionner au moins une colonne",
+    "tooManyColumns": "Trop de colonnes sélectionnées. Maximum {max} colonnes pour le forfait {plan}.",
+    "processingFiles": "Traitement des fichiers…",
+    "unifiedSuccess": "{count} fichier(s) fusionné(s) avec {rows} lignes !",
+    "processingOnServer": "Les fichiers sont volumineux, traitement sur le serveur…",
+    "processFailed": "Échec du traitement du fichier",
+    "processSuccess": "Fichier traité avec succès !",
+    "unificationLimitExceeded": "Limite de fusions dépassée. Vous avez utilisé {current}/{max} fusions ce mois-ci.",
+    "parsingFile": "Analyse du fichier {current}/{total} : {name}",
+    "rowsExceedLimit": "Le nombre total de lignes ({total}) dépasse la limite. Maximum {max} lignes pour le forfait {plan}.",
+    "noCommonColumns": "Aucune colonne commune trouvée dans tous les fichiers. Les fichiers doivent avoir au moins une colonne en commun.",
+    "foundCommonColumns": "{count} colonnes communes trouvées. Vous pouvez en sélectionner jusqu'à {max} pour votre forfait {plan}.",
+    "parsedSuccessSingle": "Analyse réussie ! {columns} colonnes et {rows} lignes trouvées.",
+    "parsedSuccessMultiple": "{files} fichiers analysés ! {columns} colonnes communes et {rows} lignes au total trouvées."
+  },
+  "export": {
+    "sheetName": "Données fusionnées",
+    "watermarkColumn": "Généré par Tablix",
+    "watermarkValue": "tablix.me",
+    "aboutSheetName": "À propos",
+    "aboutHeaderInfo": "Info",
+    "aboutHeaderValue": "Valeur",
+    "aboutGeneratedBy": "Généré par",
+    "aboutWebsite": "Site web",
+    "aboutPlan": "Forfait",
+    "aboutGeneratedAt": "Généré le",
+    "aboutTotalRows": "Total de lignes",
+    "aboutFilesUnified": "Fichiers fusionnés",
+    "aboutUpgradeToPro": "Passer à Pro",
+    "aboutUpgradeMessage": "Supprimez le filigrane et augmentez vos limites !",
+    "fileName": "tablix-fusionne"
+  },
+  "steps": {
+    "upload": "Importer",
+    "columns": "Colonnes",
+    "result": "Résultat"
+  },
+  "result": {
+    "title": "Terminé !",
+    "subtitle": "Votre feuille de calcul a été générée avec succès",
+    "filesUnified": "{count} fichier(s) fusionné(s)",
+    "rowsProcessed": "{count} lignes traitées",
+    "columnsSelected": "{count} colonne(s) sélectionnée(s)",
+    "newUnification": "Nouvelle fusion",
+    "upgradePro": "Passer à Pro",
+    "upgradeMessage": "Supprimez le filigrane, traitez jusqu'à 5 000 lignes et 10 colonnes.",
+    "remainingQuota": "{remaining} fusion(s) restantes sur {max}"
+  },
+  "onboarding": {
+    "tipUpload": "Importez vos fichiers CSV ou XLSX. Nous détecterons les colonnes automatiquement.",
+    "tipColumns": "Sélectionnez les colonnes que vous souhaitez conserver dans le fichier final.",
+    "gotIt": "Compris"
+  },
+  "quotaGate": {
+    "title": "Limite atteinte",
+    "description": "Vous avez utilisé toutes vos fusions ce mois-ci."
+  },
+  "processing": {
+    "consumingQuota": "Réservation de votre fusion…",
+    "mergingFiles": "Fusion des fichiers…",
+    "generatingFile": "Génération de la feuille de calcul…",
+    "downloading": "Démarrage du téléchargement…"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "description": "La page que vous recherchez n'existe pas ou a été déplacée.",
+    "goHome": "Retour à l'accueil"
+  },
+  "errorBoundary": {
+    "title": "Une erreur s'est produite",
+    "description": "Une erreur inattendue est survenue. Réessayez ou revenez à la page d'accueil.",
+    "tryAgain": "Réessayer",
+    "goHome": "Retour à l'accueil",
+    "uploadTitle": "Erreur de traitement",
+    "uploadDescription": "Une erreur s'est produite lors de l'importation ou du traitement du fichier. Veuillez réessayer."
+  },
+  "errors": {
+    "offline": "Vous êtes hors ligne. Vérifiez votre connexion Internet et réessayez.",
+    "offlineShort": "Aucune connexion Internet",
+    "timeout": "L'opération a pris trop de temps. Veuillez réessayer.",
+    "serverError": "Erreur du serveur. Veuillez réessayer dans un instant.",
+    "rateLimited": "Trop de tentatives. Veuillez patienter un instant avant de réessayer.",
+    "networkGeneric": "Erreur de connexion. Vérifiez votre connexion Internet.",
+    "retryingConnection": "Reconnexion…",
+    "parseRowLimit": "Le fichier dépasse la limite de {total} lignes (maximum {max} pour le forfait {plan}).",
+    "parseNoColumns": "Aucune colonne trouvée dans la première ligne du fichier.",
+    "parseNoSheets": "Aucune feuille trouvée dans le classeur.",
+    "parseEmpty": "La feuille de calcul est vide.",
+    "parseFailed": "Erreur lors de la lecture du fichier. Veuillez vérifier que le format est valide.",
+    "parseGeneric": "Erreur lors de l'analyse du fichier : {detail}",
+    "parseCorrupt": "Impossible de lire le fichier. Il est peut-être corrompu ou dans un format non pris en charge.",
+    "parseUnsupported": "Format de fichier non pris en charge. Utilisez CSV, XLS ou XLSX.",
+    "fileValidation": "Type de fichier invalide. Utilisez CSV, XLS ou XLSX.",
+    "fileContentValidation": "Le contenu du fichier ne correspond pas au format attendu."
+  },
+  "dropzone": {
+    "dragActive": "Déposez les fichiers ici…",
+    "disabled": "Importation désactivée"
+  },
+  "theme": {
+    "switchToLight": "Passer au thème clair",
+    "switchToDark": "Passer au thème sombre"
+  },
+  "a11y": {
+    "skipToContent": "Aller au contenu principal",
+    "selectLanguage": "Sélectionner la langue",
+    "themeToggle": "Changer de thème",
+    "usageProgress": "Progression de l'utilisation du forfait",
+    "columnToggle": "Sélectionner ou désélectionner la colonne",
+    "removeFile": "Supprimer",
+    "stepIndicator": "Progression du flux",
+    "mainNavigation": "Navigation principale",
+    "openMenu": "Ouvrir le menu de navigation",
+    "closeMenu": "Fermer le menu de navigation",
+    "navigationMenu": "Menu de navigation"
+  },
+  "billingPeriods": {
+    "month": "mois",
+    "totalSemester": "{price} $ tous les 6 mois",
+    "totalAnnual": "{price} $/an"
+  },
+  "proPricing": {
+    "currencySymbol": "$",
+    "monthly": {
+      "price": "29,90",
+      "total": "29,90 $/mois"
+    },
+    "semester": {
+      "price": "26,90",
+      "total": "161,40 $ tous les 6 mois"
+    },
+    "annual": {
+      "price": "24,90",
+      "total": "298,80 $/an"
+    }
+  },
+  "legal": {
+    "backToHome": "Retour à l'accueil",
+    "lastUpdated": "Dernière mise à jour : {date}",
+    "tableOfContents": "Table des matières",
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "intro": {
+        "title": "Introduction",
+        "p1": "Tablix Tecnologia (« Tablix », « nous ») exploite le service disponible sur tablix.me. La présente politique de confidentialité explique comment nous collectons, utilisons et protégeons vos informations lorsque vous utilisez notre service.",
+        "p2": "En utilisant Tablix, vous acceptez les pratiques décrites dans la présente politique. Si vous n'êtes pas d'accord, veuillez ne pas utiliser le service."
+      },
+      "dataCollection": {
+        "title": "Données que nous collectons",
+        "description": "Nous collectons uniquement les données strictement nécessaires au fonctionnement du service :",
+        "fingerprint": "Identifiant anonyme (empreinte) — utilisé pour contrôler les limites d'utilisation du forfait gratuit. Stocké sous forme de cookie httpOnly.",
+        "ipHash": "Hachage de l'adresse IP — utilisé avec l'empreinte pour l'identification. Nous ne stockons jamais l'adresse IP complète.",
+        "usageCounters": "Compteurs d'utilisation — nombre de fusions effectuées dans le mois, stockés dans Redis avec expiration automatique.",
+        "locale": "Préférence de langue — stockée localement dans votre navigateur (localStorage)."
+      },
+      "spreadsheetProcessing": {
+        "title": "Traitement des feuilles de calcul",
+        "p1": "Vos fichiers sont traités entièrement dans votre navigateur (côté client) sur le forfait gratuit. Cela signifie que vos données ne sont jamais envoyées à nos serveurs pendant le traitement.",
+        "p2": "Sur le forfait Pro, les fichiers plus volumineux peuvent être traités sur le serveur. Dans ce cas, les données sont traitées en mémoire et supprimées immédiatement après la génération du fichier de sortie. Nous ne stockons, ne copions ni ne conservons vos fichiers.",
+        "p3": "Nous n'accédons jamais au contenu de vos feuilles de calcul, ne le lisons ni ne l'analysons à d'autres fins que le traitement que vous avez demandé."
+      },
+      "cookies": {
+        "title": "Cookies et stockage local",
+        "description": "Nous utilisons les cookies et données de stockage local suivants :",
+        "tablixFp": "tablix_fp — cookie httpOnly qui stocke votre identifiant anonyme. Expire au bout d'un an.",
+        "theme": "theme — Préférence de thème (clair/sombre). Stockée via localStorage.",
+        "localePref": "locale — Préférence de langue. Stockée via localStorage.",
+        "noCookies": "Nous n'utilisons pas de cookies de suivi, de marketing ou de publicité."
+      },
+      "storage": {
+        "title": "Stockage et conservation",
+        "p1": "Les compteurs d'utilisation sont stockés dans Redis (Upstash) et expirent automatiquement à la fin de chaque période de facturation.",
+        "p2": "Le cookie d'empreinte expire au bout d'un an ou lorsque vous effacez les données de votre navigateur.",
+        "p3": "Nous ne maintenons pas de base de données contenant des informations personnelles. Il n'y a pas de « compte » sur le forfait gratuit — uniquement l'identifiant anonyme."
+      },
+      "security": {
+        "title": "Sécurité",
+        "description": "Nous appliquons les mesures suivantes pour protéger vos données :",
+        "csp": "Content Security Policy (CSP) — restreint les ressources pouvant être chargées.",
+        "rateLimit": "Limitation de débit — protège contre les abus et les attaques par force brute.",
+        "headers": "En-têtes de sécurité — HSTS, X-Frame-Options, X-Content-Type-Options, et autres.",
+        "validation": "Validation des fichiers — vérification du type MIME, de l'extension et des nombres magiques avant traitement.",
+        "httpOnly": "Cookies httpOnly — inaccessibles via JavaScript, protégeant contre les attaques XSS."
+      },
+      "rights": {
+        "title": "Vos droits (LGPD)",
+        "description": "Conformément à la loi générale brésilienne sur la protection des données (loi 13 709/2018), vous avez le droit de :",
+        "access": "Accéder à vos données — Vous pouvez consulter votre statut d'utilisation directement dans l'interface Tablix.",
+        "deletion": "Demander la suppression — En effaçant les cookies de votre navigateur, l'empreinte est supprimée. Les compteurs Redis expirent automatiquement.",
+        "info": "Demander des informations — Contactez-nous pour savoir quelles données sont associées à votre identifiant.",
+        "legalBasis": "Base légale : nous nous appuyons sur l'intérêt légitime (art. 7, IX de la LGPD) pour le traitement des données nécessaires au fonctionnement du service.",
+        "contact": "Pour exercer l'un de ces droits, contactez-nous à :"
+      },
+      "thirdParty": {
+        "title": "Services tiers",
+        "description": "Nous utilisons les services tiers suivants :",
+        "vercel": "Vercel — Hébergement et CDN. Soumis à la politique de confidentialité de Vercel.",
+        "upstash": "Upstash Redis — Stockage des compteurs d'utilisation. Données chiffrées en transit et au repos.",
+        "analytics": "Vercel Analytics — Indicateurs de performance anonymes. Ne collecte aucune donnée personnellement identifiable."
+      },
+      "changes": {
+        "title": "Modifications de la présente politique",
+        "p1": "Nous pouvons mettre à jour cette politique de confidentialité périodiquement. Les modifications importantes seront communiquées par un avis sur le service.",
+        "p2": "L'utilisation continue de Tablix après des modifications vaut acceptation de la politique mise à jour."
+      },
+      "contact": {
+        "title": "Contact",
+        "p1": "Pour toute question, demande ou réclamation relative à la confidentialité :",
+        "controller": "Responsable du traitement : Tablix Tecnologia",
+        "emailLabel": "E-mail :",
+        "address": "Adresse : São Paulo - SP, Brésil"
+      }
+    },
+    "terms": {
+      "title": "Conditions d'utilisation",
+      "acceptance": {
+        "title": "Acceptation des conditions",
+        "p1": "En accédant à Tablix (« Service ») et en l'utilisant, disponible sur tablix.me, vous acceptez les présentes conditions d'utilisation. Si vous n'acceptez pas une partie quelconque de ces conditions, n'utilisez pas le Service.",
+        "p2": "Tablix est exploité par Tablix Tecnologia, dont le siège est à São Paulo - SP, Brésil."
+      },
+      "serviceDescription": {
+        "title": "Description du service",
+        "p1": "Tablix est un outil en ligne de traitement de feuilles de calcul. Le service permet d'importer des fichiers CSV et XLSX, de sélectionner des colonnes spécifiques et de générer de nouveaux fichiers avec des données filtrées.",
+        "p2": "Le traitement sur le forfait gratuit s'effectue entièrement dans votre navigateur. Sur le forfait Pro, les fichiers plus volumineux peuvent être traités sur nos serveurs."
+      },
+      "plans": {
+        "title": "Forfaits et limites",
+        "freeTitle": "Forfait gratuit",
+        "freeDescription": "Gratuit, sans inscription requise. Soumis aux limites suivantes :",
+        "freeLimit1": "1 fusion par mois",
+        "freeLimit2": "Jusqu'à 500 lignes par feuille de calcul",
+        "freeLimit3": "Jusqu'à 3 colonnes par fichier de sortie",
+        "freeLimit4": "Jusqu'à 3 fichiers par importation",
+        "freeLimit5": "Taille totale d'importation maximale de 1 Mo",
+        "proTitle": "Forfait Pro",
+        "proDescription": "Nécessite un abonnement actif. Comprend des limites étendues :",
+        "proLimit1": "Jusqu'à 40 fusions par mois",
+        "proLimit2": "Jusqu'à 5 000 lignes par feuille de calcul",
+        "proLimit3": "Jusqu'à 10 colonnes par fichier de sortie",
+        "proLimit4": "Jusqu'à 15 fichiers par importation",
+        "proLimit5": "Maximum 2 Mo par fichier (30 Mo au total)",
+        "proLimit6": "Traitement prioritaire côté serveur",
+        "limitsNote": "Les limites peuvent être ajustées à tout moment. Les modifications seront communiquées à l'avance."
+      },
+      "acceptableUse": {
+        "title": "Utilisation acceptable",
+        "description": "En utilisant Tablix, vous acceptez de ne pas :",
+        "rule1": "Tenter de contourner les limites d'utilisation de votre forfait.",
+        "rule2": "Utiliser le service pour traiter des données illégales ou obtenues illégalement.",
+        "rule3": "Procéder à de l'ingénierie inverse, décompiler ou tenter d'extraire le code source du service.",
+        "rule4": "Importer des fichiers malveillants, des virus ou du code nuisible.",
+        "rule5": "Utiliser l'automatisation (bots, scrapers) pour accéder au service sans autorisation préalable.",
+        "rule6": "Surcharger intentionnellement l'infrastructure du service."
+      },
+      "userContent": {
+        "title": "Contenu de l'utilisateur",
+        "p1": "Vous êtes seul responsable des fichiers que vous importez sur Tablix. Le service ne revendique aucun droit de propriété sur vos données.",
+        "p2": "Sur le forfait gratuit, les fichiers sont traités entièrement dans votre navigateur et ne sont jamais envoyés à nos serveurs.",
+        "p3": "Sur le forfait Pro, les fichiers sont traités dans la mémoire du serveur et supprimés immédiatement après le traitement. Nous ne stockons, ne copions ni ne conservons vos fichiers."
+      },
+      "ip": {
+        "title": "Propriété intellectuelle",
+        "p1": "Tablix, y compris son interface, son code source, son design et sa marque, est la propriété exclusive de Tablix Tecnologia.",
+        "p2": "Vous recevez une licence limitée, non exclusive et révocable d'utilisation du Service conformément aux présentes conditions."
+      },
+      "liability": {
+        "title": "Limitation de responsabilité",
+        "p1": "Tablix est fourni « en l'état », sans garantie d'aucune sorte, expresse ou implicite.",
+        "p2": "Nous ne sommes pas responsables des pertes ou dommages résultant de l'utilisation du service, y compris, mais sans s'y limiter : perte de données, interruptions de service ou résultats de traitement inexacts.",
+        "p3": "La responsabilité totale de Tablix Tecnologia, dans tous les cas, est limitée au montant payé par l'utilisateur au cours des 12 derniers mois."
+      },
+      "availability": {
+        "title": "Disponibilité",
+        "p1": "Nous nous efforçons de maintenir Tablix disponible 24 heures sur 24, 7 jours sur 7, mais nous ne garantissons pas une disponibilité ininterrompue.",
+        "p2": "Nous pouvons effectuer une maintenance planifiée ou d'urgence pouvant entraîner une indisponibilité temporaire."
+      },
+      "suspension": {
+        "title": "Suspension et résiliation",
+        "p1": "Nous nous réservons le droit de suspendre ou de résilier l'accès de tout utilisateur qui enfreint les présentes conditions d'utilisation.",
+        "p2": "Nous pouvons interrompre le Service ou toute fonctionnalité à tout moment, avec un préavis raisonnable lorsque cela est possible."
+      },
+      "changes": {
+        "title": "Modifications des conditions",
+        "p1": "Nous pouvons mettre à jour ces conditions d'utilisation périodiquement. Les modifications importantes seront communiquées par un avis sur le service.",
+        "p2": "L'utilisation continue de Tablix après des modifications vaut acceptation des conditions mises à jour."
+      },
+      "governingLaw": {
+        "title": "Droit applicable",
+        "p1": "Les présentes conditions sont régies par les lois de la République fédérative du Brésil.",
+        "p2": "Les tribunaux de São Paulo - SP sont désignés pour résoudre tout litige découlant des présentes conditions."
+      },
+      "contact": {
+        "title": "Contact",
+        "p1": "Pour toute question concernant les présentes conditions d'utilisation :",
+        "emailLabel": "E-mail :",
+        "address": "Adresse : São Paulo - SP, Brésil"
+      }
+    }
+  },
+  "ctaBanner": {
+    "afterHowItWorks": {
+      "title": "Aussi simple que ça. À vous de jouer.",
+      "cta": "Commencer gratuitement"
+    },
+    "afterAudience": {
+      "title": "Si vous êtes arrivé jusqu'ici, Tablix est fait pour vous.",
+      "subtitle": "Sans inscription, sans carte bancaire. Essayez maintenant avec votre propre feuille de calcul.",
+      "cta": "Essayer avec ma feuille de calcul"
+    },
+    "final": {
+      "title": "Votre prochaine feuille de calcul n'a pas à être un casse-tête.",
+      "subtitle": "Gratuit pour les premiers utilisateurs. Commencez en quelques secondes.",
+      "cta": "Simplifier mes feuilles de calcul"
+    }
+  },
+  "paymentBadges": {
+    "label": "Moyens de paiement",
+    "aria": "Moyens de paiement acceptés"
+  },
+  "securityBadges": {
+    "title": "Une sécurité vérifiable",
+    "local": {
+      "title": "Traitement local",
+      "subtitle": "Vos données ne quittent jamais votre navigateur"
+    },
+    "noStorage": {
+      "title": "Aucun stockage",
+      "subtitle": "Les fichiers ne sont pas conservés sur nos serveurs"
+    },
+    "tls": {
+      "title": "Chiffrement TLS",
+      "subtitle": "Toutes les communications protégées par HTTPS"
+    },
+    "validation": {
+      "title": "Validation stricte",
+      "subtitle": "Chaque fichier vérifié avant traitement"
+    }
+  },
+  "pricingPage": {
+    "metaTitle": "Forfaits & Tarifs | Tablix",
+    "metaDescription": "Comparez les forfaits Tablix Gratuit, Pro et Entreprise. Commencez gratuitement, sans inscription.",
+    "ctaText": "Prêt à simplifier vos feuilles de calcul ?",
+    "ctaSubtext": "Commencez en quelques secondes. Sans inscription, sans carte bancaire.",
+    "cta": "Commencer gratuitement",
+    "comparison": {
+      "title": "Comparer les forfaits",
+      "features": {
+        "sheetsPerMonth": "Feuilles de calcul par mois",
+        "maxRows": "Lignes par feuille de calcul",
+        "maxColumns": "Colonnes",
+        "maxFileSize": "Taille max de fichier",
+        "processing": "Traitement",
+        "watermark": "Filigrane",
+        "fileHistory": "Historique des fichiers",
+        "support": "Support",
+        "infrastructure": "Infrastructure"
+      },
+      "values": {
+        "free": {
+          "sheetsPerMonth": "1",
+          "maxRows": "500",
+          "maxColumns": "3",
+          "maxFileSize": "1 Mo",
+          "processing": "Local (navigateur)",
+          "watermark": "Oui",
+          "fileHistory": "Non",
+          "support": "Communauté",
+          "infrastructure": "Partagée"
+        },
+        "pro": {
+          "sheetsPerMonth": "40",
+          "maxRows": "5 000",
+          "maxColumns": "10",
+          "maxFileSize": "2 Mo",
+          "processing": "Serveur prioritaire",
+          "watermark": "Non",
+          "fileHistory": "30 jours",
+          "support": "Support e-mail prioritaire",
+          "infrastructure": "Partagée"
+        },
+        "enterprise": {
+          "sheetsPerMonth": "Sur mesure",
+          "maxRows": "Sur mesure",
+          "maxColumns": "Sur mesure",
+          "maxFileSize": "Sur mesure",
+          "processing": "Dédié",
+          "watermark": "Non",
+          "fileHistory": "Sur mesure",
+          "support": "Dédié + SLA",
+          "infrastructure": "Dédiée"
+        }
+      }
+    },
+    "faq": {
+      "title": "Questions fréquentes",
+      "items": {
+        "q1": {
+          "question": "Puis-je essayer avant de m'abonner ?",
+          "answer": "Oui ! Le forfait gratuit est gratuit et ne nécessite aucune inscription. Vous pouvez traiter jusqu'à 1 feuille de calcul par mois, avec jusqu'à 500 lignes et 3 colonnes, sans engagement."
+        },
+        "q2": {
+          "question": "Comment fonctionne le traitement local ?",
+          "answer": "Sur le forfait gratuit, vos feuilles de calcul sont traitées directement dans votre navigateur. Aucune donnée ne quitte votre ordinateur — c'est 100 % local et privé."
+        },
+        "q3": {
+          "question": "Puis-je annuler à tout moment ?",
+          "answer": "Oui. Il n'y a ni engagement ni frais d'annulation. Vous conservez le prix de lancement tant que votre abonnement est actif."
+        },
+        "q4": {
+          "question": "Mes données sont-elles en sécurité ?",
+          "answer": "Vos fichiers sont traités de manière temporaire et supprimés immédiatement après le téléchargement. Nous ne stockons pas le contenu de vos feuilles de calcul."
+        },
+        "q5": {
+          "question": "Quelle est la différence entre Gratuit et Pro ?",
+          "answer": "Le forfait gratuit est idéal pour des tests rapides avec des limites réduites. Pro offre jusqu'à 40 feuilles de calcul/mois, 5 000 lignes, 10 colonnes, un traitement serveur, sans filigrane, et un historique des fichiers de 30 jours."
+        },
+        "q6": {
+          "question": "Comment fonctionne le forfait Entreprise ?",
+          "answer": "Entreprise s'adresse aux sociétés à fort volume ou aux besoins spécifiques. Nous proposons des limites personnalisées, un SLA garanti, un support dédié et une infrastructure exclusive. Contactez-nous pour une proposition."
+        },
+        "q7": {
+          "question": "Quels formats de fichier sont acceptés ?",
+          "answer": "Tablix accepte les fichiers CSV et XLSX (Excel). Vous pouvez importer jusqu'à 3 fichiers à la fois sur le forfait gratuit et jusqu'à 15 sur Pro."
+        }
+      }
+    }
+  },
+  "cookieConsent": {
+    "title": "Cookies",
+    "message": "Nous utilisons des cookies essentiels au fonctionnement du service, comme le contrôle d'utilisation et les préférences. Nous n'utilisons pas de cookies de suivi ni de publicité.",
+    "accept": "Compris",
+    "learnMore": "En savoir plus",
+    "ariaLabel": "Avis sur les cookies"
+  }
+}

@@ -5,6 +5,8 @@ import { SITE_URL } from '@/lib/constants'
 import ptBR from '@/lib/i18n/messages/pt-BR.json'
 import en from '@/lib/i18n/messages/en.json'
 import es from '@/lib/i18n/messages/es.json'
+import zh from '@/lib/i18n/messages/zh.json'
+import fr from '@/lib/i18n/messages/fr.json'
 
 export const runtime = 'edge'
 
@@ -14,7 +16,7 @@ export const alt = ptBR.meta.title
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-const messages = { 'pt-BR': ptBR, en, es } as const
+const messages = { 'pt-BR': ptBR, en, es, zh, fr } as const
 
 const siteHost = SITE_URL.replace(/^https?:\/\//, '')
 

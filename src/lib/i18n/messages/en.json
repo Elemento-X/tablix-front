@@ -243,7 +243,8 @@
     "aboutTotalRows": "Total rows",
     "aboutFilesUnified": "Files unified",
     "aboutUpgradeToPro": "Upgrade to Pro",
-    "aboutUpgradeMessage": "Remove watermark and increase your limits!"
+    "aboutUpgradeMessage": "Remove watermark and increase your limits!",
+    "fileName": "tablix-unified"
   },
   "steps": {
     "upload": "Upload",
