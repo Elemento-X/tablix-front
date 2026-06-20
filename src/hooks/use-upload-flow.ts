@@ -268,6 +268,8 @@ export function useUploadFlow() {
             aboutGeneratedBy: t('export.aboutGeneratedBy'),
             aboutWebsite: t('export.aboutWebsite'),
             aboutPlan: t('export.aboutPlan'),
+            aboutPlanValue: t('pricing.plans.free.name'),
+            fileName: t('export.fileName'),
             aboutGeneratedAt: t('export.aboutGeneratedAt'),
             aboutTotalRows: t('export.aboutTotalRows'),
             aboutFilesUnified: t('export.aboutFilesUnified'),
@@ -350,7 +352,7 @@ export function useUploadFlow() {
           setProcessingPhase('downloading')
           const blob = await response.blob()
           const timestamp = new Date().toISOString().split('T')[0]
-          downloadBlob(blob, `tablix-unificado-${timestamp}.xlsx`)
+          downloadBlob(blob, `${t('export.fileName')}-${timestamp}.xlsx`)
         } catch (processErr) {
           clearTimeout(processTimeout)
           if (processErr instanceof DOMException && processErr.name === 'AbortError') {

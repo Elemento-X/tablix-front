@@ -1,0 +1,651 @@
+{
+  "meta": {
+    "title": "Tablix — 将复杂的电子表格转换为即用文件",
+    "description": "上传电子表格，选择所需的列，几秒钟内生成新文件。用于自定义电子表格处理与生成的在线工具。",
+    "privacyTitle": "隐私政策 — Tablix",
+    "privacyDescription": "了解 Tablix 如何收集、使用和保护您的数据。隐私政策符合 LGPD 规定。",
+    "termsTitle": "使用条款 — Tablix",
+    "termsDescription": "阅读使用 Tablix 电子表格处理平台的条款与条件。"
+  },
+  "header": {
+    "brand": "Tablix",
+    "cta": "免费开始",
+    "nav": {
+      "howItWorks": "工作原理",
+      "audience": "适用人群",
+      "pricing": "定价"
+    }
+  },
+  "hero": {
+    "title": "夺回被电子表格浪费的时间",
+    "subtitle": "合并电子表格不该耗费您一整个下午。上传、选取所需、即可完成。",
+    "cta": "简化我的电子表格",
+    "ctaSecondary": "四步了解工作原理",
+    "earlyAccess": "早期用户免费使用"
+  },
+  "howItWorks": {
+    "title": "工作原理",
+    "steps": {
+      "upload": {
+        "title": "上传电子表格",
+        "description": "上传您的 CSV 或 XLSX 文件"
+      },
+      "visualize": {
+        "title": "查看识别出的列",
+        "description": "系统自动识别所有列"
+      },
+      "choose": {
+        "title": "选择要保留的内容",
+        "description": "仅选择需要的列"
+      },
+      "generate": {
+        "title": "生成新文件",
+        "description": "下载整洁、即用的电子表格"
+      }
+    }
+  },
+  "benefits": {
+    "title": "告别手动处理电子表格",
+    "items": {
+      "item1": {
+        "pain": "在几十个工作表之间复制粘贴",
+        "solution": "上传文件，一次性完成合并"
+      },
+      "item2": {
+        "pain": "列搞错了，数据乱成一团",
+        "solution": "直观地挑选，只留重要内容"
+      },
+      "item3": {
+        "pain": "每周花数小时重复同样的流程",
+        "solution": "使用 Tablix，几秒钟内得到结果"
+      }
+    }
+  },
+  "audience": {
+    "title": "适用人群",
+    "roles": {
+      "analysts": {
+        "title": "分析师",
+        "description": "整合来自多个来源的报表，无需在工作表之间复制粘贴。"
+      },
+      "admins": {
+        "title": "行政团队",
+        "description": "只需几次点击即可合并登记表、台账和清单。"
+      },
+      "recurring": {
+        "title": "周期性电子表格",
+        "description": "自动完成每周都要做的合并——总是一样，总是枯燥。"
+      }
+    }
+  },
+  "socialProof": {
+    "heading": "为何信赖 Tablix",
+    "ariaLabel": "Tablix 信任指标",
+    "metrics": {
+      "zeroStorage": { "label": "存储的字节数" },
+      "localProcessing": { "label": "本地处理" },
+      "formats": { "label": "格式：XLSX、CSV 和 XLS" }
+    }
+  },
+  "comparisonMini": {
+    "title": "免费版与专业版对比",
+    "seeAll": "查看完整对比"
+  },
+  "pricing": {
+    "title": "套餐",
+    "subtitle": "选择最适合您需求的套餐",
+    "billingPeriod": {
+      "monthly": "按月",
+      "semester": "半年",
+      "annual": "按年",
+      "annualBadge": "最划算"
+    },
+    "plans": {
+      "free": {
+        "name": "免费版",
+        "price": "$0",
+        "period": "永久免费",
+        "features": {
+          "sheetsPerMonth": "每月 1 张电子表格",
+          "maxRows": "最多 500 行",
+          "maxColumns": "最多 3 列"
+        },
+        "description": "适合体验工作流程，了解 Tablix 是否能解决您的问题。",
+        "cta": "免费开始"
+      },
+      "pro": {
+        "name": "专业版",
+        "badge": "推荐",
+        "oldPrice": "$9.90",
+        "period": "月",
+        "launchPrice": "订阅有效期内锁定首发价格",
+        "features": {
+          "sheetsPerMonth": "每月最多 40 张电子表格",
+          "maxRows": "每张电子表格最多 5,000 行",
+          "maxColumns": "最多 10 列",
+          "priorityProcessing": "优先处理",
+          "noWatermark": "无水印",
+          "fileHistory": "文件历史保留 30 天"
+        },
+        "cta": "订阅专业版"
+      },
+      "enterprise": {
+        "name": "企业版",
+        "price": "定制",
+        "period": "联系我们",
+        "features": {
+          "customLimits": "定制额度",
+          "sla": "保障 SLA",
+          "prioritySupport": "优先支持",
+          "dedicatedInfra": "专属基础设施"
+        },
+        "description": "面向高用量或有特定需求的企业。",
+        "cta": "联系我们的团队"
+      }
+    }
+  },
+  "footer": {
+    "tagline": "您的文件经安全处理后即被丢弃。",
+    "product": {
+      "title": "产品",
+      "howItWorks": "工作原理",
+      "audience": "适用人群",
+      "pricing": "定价",
+      "cta": "免费开始"
+    },
+    "legal": {
+      "title": "法律与联系"
+    },
+    "nav": {
+      "product": "产品导航",
+      "legal": "法律与联系"
+    },
+    "privacyPolicy": "隐私政策",
+    "terms": "使用条款",
+    "copyright": "© {year} Tablix Tecnologia。保留所有权利。"
+  },
+  "upload": {
+    "title": "上传电子表格",
+    "subtitle": "免费版：最多 500 行、3 列",
+    "back": "返回",
+    "dropzone": "点击选择或拖入文件",
+    "dropzoneWithFiles": "个文件已选择",
+    "or": "或",
+    "selectFile": "选择文件",
+    "maxSize": "CSV 或 XLSX • 最大 1 MB",
+    "processing": "处理中…",
+    "continue": "继续",
+    "error": "处理文件时出错",
+    "securityNote": "您的文件以临时且安全的方式处理。",
+    "selectAtLeastOne": "请至少选择一个文件"
+  },
+  "columns": {
+    "title": "选择列",
+    "subtitle": "选择要包含在处理后文件中的列",
+    "detected": "识别出的列",
+    "selected": "已选择",
+    "max": "上限",
+    "of": "/",
+    "startOver": "重新开始",
+    "deselectAll": "全部取消",
+    "selectAll": "全选",
+    "processAndDownload": "处理并下载",
+    "previewHint": "第一个文件前几行的预览"
+  },
+  "status": {
+    "plan": "套餐",
+    "unificationsRemaining": "次合并剩余",
+    "files": "个文件",
+    "maxFiles": "上限",
+    "maxTotalSize": "总大小上限",
+    "maxRows": "行",
+    "maxColumns": "列",
+    "maxRowsLabel": "上限",
+    "maxColumnsLabel": "上限",
+    "clickToAddMore": "点击上方添加更多文件",
+    "loading": "正在加载套餐信息…",
+    "quotaExhausted": "本月额度已用完",
+    "quotaExhaustedHint": "您本月的合并额度已用完。请等待下个周期或升级套餐。"
+  },
+  "messages": {
+    "tooManyFiles": "文件过多。{plan} 套餐最多 {max} 个文件。",
+    "fileAlreadyAdded": "文件“{name}”已添加",
+    "fileTooLarge": "“{name}”过大。{plan} 套餐单个文件大小上限为 {size}。",
+    "totalSizeExceeded": "总大小超限。{plan} 套餐的总大小上限为 {size}。",
+    "fileAdded": "文件添加成功",
+    "filesAdded": "已成功添加 {count} 个文件",
+    "selectAtLeastOneColumn": "请至少选择一列",
+    "tooManyColumns": "选择的列过多。{plan} 套餐最多 {max} 列。",
+    "processingFiles": "正在处理文件…",
+    "unifiedSuccess": "已合并 {count} 个文件，共 {rows} 行！",
+    "processingOnServer": "文件较大，正在服务器上处理…",
+    "processFailed": "处理文件失败",
+    "processSuccess": "文件处理成功！",
+    "unificationLimitExceeded": "已超出合并额度。本月已使用 {current}/{max} 次合并。",
+    "parsingFile": "正在解析文件 {current}/{total}：{name}",
+    "rowsExceedLimit": "总行数（{total}）超出限制。{plan} 套餐最多 {max} 行。",
+    "noCommonColumns": "所有文件中未找到共同列。文件之间至少需有一个共同列。",
+    "foundCommonColumns": "找到 {count} 个共同列。{plan} 套餐最多可选择 {max} 个。",
+    "parsedSuccessSingle": "解析成功！找到 {columns} 列、{rows} 行。",
+    "parsedSuccessMultiple": "已解析 {files} 个文件！找到 {columns} 个共同列、共 {rows} 行。"
+  },
+  "export": {
+    "sheetName": "合并数据",
+    "watermarkColumn": "由 Tablix 生成",
+    "watermarkValue": "tablix.me",
+    "aboutSheetName": "关于",
+    "aboutHeaderInfo": "信息",
+    "aboutHeaderValue": "值",
+    "aboutGeneratedBy": "生成工具",
+    "aboutWebsite": "网站",
+    "aboutPlan": "套餐",
+    "aboutGeneratedAt": "生成时间",
+    "aboutTotalRows": "总行数",
+    "aboutFilesUnified": "已合并文件数",
+    "aboutUpgradeToPro": "升级到专业版",
+    "aboutUpgradeMessage": "去除水印并提升您的额度！",
+    "fileName": "tablix-合并表格"
+  },
+  "steps": {
+    "upload": "上传",
+    "columns": "列",
+    "result": "结果"
+  },
+  "result": {
+    "title": "完成！",
+    "subtitle": "您的电子表格已成功生成",
+    "filesUnified": "已合并 {count} 个文件",
+    "rowsProcessed": "已处理 {count} 行",
+    "columnsSelected": "已选择 {count} 列",
+    "newUnification": "新建合并",
+    "upgradePro": "升级到专业版",
+    "upgradeMessage": "去除水印，处理多达 5,000 行和 10 列。",
+    "remainingQuota": "剩余 {remaining} / {max} 次合并"
+  },
+  "onboarding": {
+    "tipUpload": "上传您的 CSV 或 XLSX 文件，我们将自动识别列。",
+    "tipColumns": "选择您希望在最终文件中保留的列。",
+    "gotIt": "知道了"
+  },
+  "quotaGate": {
+    "title": "已达上限",
+    "description": "您本月的合并次数已全部用完。"
+  },
+  "processing": {
+    "consumingQuota": "正在预留您的合并额度…",
+    "mergingFiles": "正在合并文件…",
+    "generatingFile": "正在生成电子表格…",
+    "downloading": "正在开始下载…"
+  },
+  "notFound": {
+    "title": "页面未找到",
+    "description": "您要找的页面不存在或已被移动。",
+    "goHome": "返回首页"
+  },
+  "errorBoundary": {
+    "title": "出错了",
+    "description": "发生了意外错误。请重试或返回首页。",
+    "tryAgain": "重试",
+    "goHome": "返回首页",
+    "uploadTitle": "处理出错",
+    "uploadDescription": "文件上传或处理过程中发生错误。请重试。"
+  },
+  "errors": {
+    "offline": "您已离线。请检查网络连接后重试。",
+    "offlineShort": "无网络连接",
+    "timeout": "操作耗时过长。请重试。",
+    "serverError": "服务器错误。请稍后重试。",
+    "rateLimited": "尝试次数过多。请稍候片刻再试。",
+    "networkGeneric": "连接错误。请检查您的网络。",
+    "retryingConnection": "正在重新连接…",
+    "parseRowLimit": "文件超出 {total} 行的限制（{plan} 套餐上限为 {max} 行）。",
+    "parseNoColumns": "在文件首行未找到任何列。",
+    "parseNoSheets": "工作簿中未找到工作表。",
+    "parseEmpty": "电子表格为空。",
+    "parseFailed": "读取文件出错。请检查文件格式是否有效。",
+    "parseGeneric": "解析文件出错：{detail}",
+    "parseCorrupt": "无法读取该文件。它可能已损坏或格式不受支持。",
+    "parseUnsupported": "不支持的文件格式。请使用 CSV、XLS 或 XLSX。",
+    "fileValidation": "无效的文件类型。请使用 CSV、XLS 或 XLSX。",
+    "fileContentValidation": "文件内容与预期格式不符。"
+  },
+  "dropzone": {
+    "dragActive": "将文件拖放到此处…",
+    "disabled": "上传已禁用"
+  },
+  "theme": {
+    "switchToLight": "切换到浅色主题",
+    "switchToDark": "切换到深色主题"
+  },
+  "a11y": {
+    "skipToContent": "跳至主要内容",
+    "selectLanguage": "选择语言",
+    "themeToggle": "切换主题",
+    "usageProgress": "套餐使用进度",
+    "columnToggle": "选择或取消选择列",
+    "removeFile": "移除",
+    "stepIndicator": "流程进度",
+    "mainNavigation": "主导航",
+    "openMenu": "打开导航菜单",
+    "closeMenu": "关闭导航菜单",
+    "navigationMenu": "导航菜单"
+  },
+  "billingPeriods": {
+    "month": "月",
+    "totalSemester": "每 6 个月 ${price}",
+    "totalAnnual": "${price}/年"
+  },
+  "proPricing": {
+    "currencySymbol": "$",
+    "monthly": {
+      "price": "29.90",
+      "total": "$29.90/月"
+    },
+    "semester": {
+      "price": "26.90",
+      "total": "每 6 个月 $161.40"
+    },
+    "annual": {
+      "price": "24.90",
+      "total": "$298.80/年"
+    }
+  },
+  "legal": {
+    "backToHome": "返回首页",
+    "lastUpdated": "最后更新：{date}",
+    "tableOfContents": "目录",
+    "privacy": {
+      "title": "隐私政策",
+      "intro": {
+        "title": "引言",
+        "p1": "Tablix Tecnologia（以下简称“Tablix”或“我们”）运营 tablix.me 上提供的服务。本隐私政策说明我们在您使用本服务时如何收集、使用和保护您的信息。",
+        "p2": "使用 Tablix 即表示您同意本政策所述的做法。如您不同意，请勿使用本服务。"
+      },
+      "dataCollection": {
+        "title": "我们收集的数据",
+        "description": "我们仅收集服务运行所必需的数据：",
+        "fingerprint": "匿名标识符（指纹）——用于控制免费版的使用额度。以 httpOnly Cookie 形式存储。",
+        "ipHash": "IP 地址哈希——与指纹一起用于身份识别。我们绝不存储完整的 IP 地址。",
+        "usageCounters": "使用计数器——当月已执行的合并次数，存储于 Redis 并自动过期。",
+        "locale": "语言偏好——本地存储于您的浏览器（localStorage）。"
+      },
+      "spreadsheetProcessing": {
+        "title": "电子表格处理",
+        "p1": "在免费版中，您的文件完全在您的浏览器内（客户端）处理。这意味着处理过程中您的数据绝不会发送到我们的服务器。",
+        "p2": "在专业版中，较大的文件可能在服务器上处理。此时数据在内存中处理，并在生成输出文件后立即丢弃。我们不存储、复制或保留您的文件。",
+        "p3": "除您所请求的处理外，我们绝不会出于任何其他目的访问、读取或分析您电子表格的内容。"
+      },
+      "cookies": {
+        "title": "Cookie 与本地存储",
+        "description": "我们使用以下 Cookie 和本地存储数据：",
+        "tablixFp": "tablix_fp——存储您匿名标识符的 httpOnly Cookie，1 年后过期。",
+        "theme": "theme——主题偏好（浅色/深色），通过 localStorage 存储。",
+        "localePref": "locale——语言偏好，通过 localStorage 存储。",
+        "noCookies": "我们不使用追踪、营销或广告类 Cookie。"
+      },
+      "storage": {
+        "title": "存储与保留",
+        "p1": "使用计数器存储于 Redis（Upstash），并在每个计费周期结束时自动过期。",
+        "p2": "指纹 Cookie 在 1 年后或您清除浏览器数据时过期。",
+        "p3": "我们不维护包含个人信息的数据库。免费版没有“账户”——仅有匿名标识符。"
+      },
+      "security": {
+        "title": "安全",
+        "description": "我们采取以下措施保护您的数据：",
+        "csp": "内容安全策略（CSP）——限制可加载的资源。",
+        "rateLimit": "速率限制——防止滥用和暴力破解攻击。",
+        "headers": "安全响应头——HSTS、X-Frame-Options、X-Content-Type-Options 等。",
+        "validation": "文件校验——处理前验证 MIME 类型、扩展名和文件头标识（magic number）。",
+        "httpOnly": "httpOnly Cookie——无法通过 JavaScript 访问，可防御 XSS 攻击。"
+      },
+      "rights": {
+        "title": "您的权利（LGPD）",
+        "description": "根据巴西《通用数据保护法》（第 13,709/2018 号法律），您有权：",
+        "access": "访问您的数据——您可直接在 Tablix 界面中查看使用状态。",
+        "deletion": "请求删除——清除浏览器 Cookie 即可移除指纹。Redis 计数器会自动过期。",
+        "info": "请求信息——联系我们以了解与您的标识符关联的数据。",
+        "legalBasis": "法律依据：我们以正当利益（LGPD 第 7 条第 IX 项）作为处理服务运行所必需数据的依据。",
+        "contact": "如需行使上述任何权利，请通过以下方式联系我们："
+      },
+      "thirdParty": {
+        "title": "第三方服务",
+        "description": "我们使用以下第三方服务：",
+        "vercel": "Vercel——托管与 CDN，受 Vercel 隐私政策约束。",
+        "upstash": "Upstash Redis——使用计数器存储。数据在传输和静态存储时均加密。",
+        "analytics": "Vercel Analytics——匿名性能指标，不收集可识别个人身份的数据。"
+      },
+      "changes": {
+        "title": "本政策的变更",
+        "p1": "我们可能定期更新本隐私政策。重大变更将通过服务内的通知告知。",
+        "p2": "变更后继续使用 Tablix 即视为接受更新后的政策。"
+      },
+      "contact": {
+        "title": "联系方式",
+        "p1": "如有与隐私相关的疑问、请求或投诉：",
+        "controller": "数据控制者：Tablix Tecnologia",
+        "emailLabel": "电子邮箱：",
+        "address": "地址：巴西圣保罗州圣保罗市"
+      }
+    },
+    "terms": {
+      "title": "使用条款",
+      "acceptance": {
+        "title": "条款的接受",
+        "p1": "访问并使用 tablix.me 上提供的 Tablix（“本服务”）即表示您同意本使用条款。如您不同意其中任何部分，请勿使用本服务。",
+        "p2": "Tablix 由位于巴西圣保罗州圣保罗市的 Tablix Tecnologia 运营。"
+      },
+      "serviceDescription": {
+        "title": "服务说明",
+        "p1": "Tablix 是一款用于处理电子表格的在线工具。本服务允许您上传 CSV 和 XLSX 文件、选择特定的列，并生成包含筛选后数据的新文件。",
+        "p2": "免费版的处理完全在您的浏览器内完成。在专业版中，较大的文件可能在我们的服务器上处理。"
+      },
+      "plans": {
+        "title": "套餐与额度",
+        "freeTitle": "免费版",
+        "freeDescription": "免费，无需注册。须遵守以下额度：",
+        "freeLimit1": "每月 1 次合并",
+        "freeLimit2": "每张电子表格最多 500 行",
+        "freeLimit3": "每个输出文件最多 3 列",
+        "freeLimit4": "每次上传最多 3 个文件",
+        "freeLimit5": "上传总大小上限为 1 MB",
+        "proTitle": "专业版",
+        "proDescription": "需要有效订阅。包含更高的额度：",
+        "proLimit1": "每月最多 40 次合并",
+        "proLimit2": "每张电子表格最多 5,000 行",
+        "proLimit3": "每个输出文件最多 10 列",
+        "proLimit4": "每次上传最多 15 个文件",
+        "proLimit5": "单个文件最大 2 MB（总计 30 MB）",
+        "proLimit6": "服务器端优先处理",
+        "limitsNote": "额度可能随时调整。变更将提前告知。"
+      },
+      "acceptableUse": {
+        "title": "可接受的使用",
+        "description": "使用 Tablix 即表示您同意不会：",
+        "rule1": "试图规避您套餐的使用额度。",
+        "rule2": "使用本服务处理非法或以非法手段获取的数据。",
+        "rule3": "对本服务进行逆向工程、反编译或试图提取其源代码。",
+        "rule4": "上传恶意文件、病毒或有害代码。",
+        "rule5": "未经事先授权，使用自动化手段（机器人、爬虫）访问本服务。",
+        "rule6": "蓄意使本服务的基础设施过载。"
+      },
+      "userContent": {
+        "title": "用户内容",
+        "p1": "您对上传至 Tablix 的文件负全部责任。本服务不主张对您数据的所有权。",
+        "p2": "在免费版中，文件完全在您的浏览器内处理，绝不会发送到我们的服务器。",
+        "p3": "在专业版中，文件在服务器内存中处理，并在处理后立即丢弃。我们不存储、复制或保留您的文件。"
+      },
+      "ip": {
+        "title": "知识产权",
+        "p1": "Tablix，包括其界面、源代码、设计和品牌，均为 Tablix Tecnologia 的专有财产。",
+        "p2": "您获得有限的、非独占的、可撤销的许可，按照本条款使用本服务。"
+      },
+      "liability": {
+        "title": "责任限制",
+        "p1": "Tablix 按“现状”提供，不附带任何明示或默示的保证。",
+        "p2": "对于因使用本服务而导致的损失或损害，我们概不负责，包括但不限于：数据丢失、服务中断或处理结果不准确。",
+        "p3": "在任何情况下，Tablix Tecnologia 的全部责任均以用户在过去 12 个月内所支付的金额为上限。"
+      },
+      "availability": {
+        "title": "可用性",
+        "p1": "我们努力使 Tablix 全天候、每周 7 天保持可用，但不保证服务不间断。",
+        "p2": "我们可能进行计划内或紧急维护，这可能导致服务暂时不可用。"
+      },
+      "suspension": {
+        "title": "暂停与终止",
+        "p1": "对于违反本使用条款的任何用户，我们保留暂停或终止其访问权限的权利。",
+        "p2": "我们可能随时停止本服务或任何功能，并在可能时提前合理通知。"
+      },
+      "changes": {
+        "title": "条款的变更",
+        "p1": "我们可能定期更新本使用条款。重大变更将通过服务内的通知告知。",
+        "p2": "变更后继续使用 Tablix 即视为接受更新后的条款。"
+      },
+      "governingLaw": {
+        "title": "适用法律",
+        "p1": "本条款受巴西联邦共和国法律管辖。",
+        "p2": "因本条款引起的任何争议，均约定由巴西圣保罗州圣保罗市法院专属管辖。"
+      },
+      "contact": {
+        "title": "联系方式",
+        "p1": "如对本使用条款有任何疑问：",
+        "emailLabel": "电子邮箱：",
+        "address": "地址：巴西圣保罗州圣保罗市"
+      }
+    }
+  },
+  "ctaBanner": {
+    "afterHowItWorks": {
+      "title": "就这么简单。现在轮到您了。",
+      "cta": "免费开始"
+    },
+    "afterAudience": {
+      "title": "如果您读到了这里，那 Tablix 就是为您而生。",
+      "subtitle": "无需注册，无需信用卡。立即用您自己的电子表格试试。",
+      "cta": "用我的电子表格试试"
+    },
+    "final": {
+      "title": "您的下一张电子表格不必再是个难题。",
+      "subtitle": "早期用户免费使用。几秒钟即可开始。",
+      "cta": "简化我的电子表格"
+    }
+  },
+  "paymentBadges": {
+    "label": "支付方式",
+    "aria": "支持的支付方式"
+  },
+  "securityBadges": {
+    "title": "可验证的安全保障",
+    "local": {
+      "title": "本地处理",
+      "subtitle": "您的数据绝不离开浏览器"
+    },
+    "noStorage": {
+      "title": "不存储",
+      "subtitle": "文件不会保留在我们的服务器上"
+    },
+    "tls": {
+      "title": "TLS 加密",
+      "subtitle": "所有通信均受 HTTPS 保护"
+    },
+    "validation": {
+      "title": "严格校验",
+      "subtitle": "每个文件在处理前都经过验证"
+    }
+  },
+  "pricingPage": {
+    "metaTitle": "套餐与定价 | Tablix",
+    "metaDescription": "比较 Tablix 免费版、专业版和企业版套餐。免费开始，无需注册。",
+    "ctaText": "准备好简化您的电子表格了吗？",
+    "ctaSubtext": "几秒钟即可开始。无需注册，无需信用卡。",
+    "cta": "免费开始",
+    "comparison": {
+      "title": "套餐对比",
+      "features": {
+        "sheetsPerMonth": "每月电子表格数",
+        "maxRows": "每张电子表格行数",
+        "maxColumns": "列数",
+        "maxFileSize": "单个文件大小上限",
+        "processing": "处理方式",
+        "watermark": "水印",
+        "fileHistory": "文件历史",
+        "support": "支持",
+        "infrastructure": "基础设施"
+      },
+      "values": {
+        "free": {
+          "sheetsPerMonth": "1",
+          "maxRows": "500",
+          "maxColumns": "3",
+          "maxFileSize": "1 MB",
+          "processing": "本地（浏览器）",
+          "watermark": "有",
+          "fileHistory": "无",
+          "support": "社区",
+          "infrastructure": "共享"
+        },
+        "pro": {
+          "sheetsPerMonth": "40",
+          "maxRows": "5,000",
+          "maxColumns": "10",
+          "maxFileSize": "2 MB",
+          "processing": "优先服务器处理",
+          "watermark": "无",
+          "fileHistory": "30 天",
+          "support": "优先邮件支持",
+          "infrastructure": "共享"
+        },
+        "enterprise": {
+          "sheetsPerMonth": "定制",
+          "maxRows": "定制",
+          "maxColumns": "定制",
+          "maxFileSize": "定制",
+          "processing": "专属",
+          "watermark": "无",
+          "fileHistory": "定制",
+          "support": "专属支持 + SLA",
+          "infrastructure": "专属"
+        }
+      }
+    },
+    "faq": {
+      "title": "常见问题",
+      "items": {
+        "q1": {
+          "question": "订阅前可以先试用吗？",
+          "answer": "可以！免费版完全免费且无需注册。您每月可处理 1 张最多 500 行、3 列的电子表格，没有任何附带条件。"
+        },
+        "q2": {
+          "question": "本地处理是如何工作的？",
+          "answer": "在免费版中，您的电子表格直接在浏览器内处理。没有任何数据离开您的电脑——100% 本地且私密。"
+        },
+        "q3": {
+          "question": "可以随时取消吗？",
+          "answer": "可以。没有锁定期，也没有取消费用。只要订阅有效，您就一直享受首发价。"
+        },
+        "q4": {
+          "question": "我的数据安全吗？",
+          "answer": "您的文件以临时方式处理，下载后立即丢弃。我们不存储您电子表格的内容。"
+        },
+        "q5": {
+          "question": "免费版和专业版有什么区别？",
+          "answer": "免费版适合用较小的额度进行快速测试。专业版提供每月最多 40 张电子表格、5,000 行、10 列、服务器处理、无水印以及 30 天文件历史。"
+        },
+        "q6": {
+          "question": "企业版是如何运作的？",
+          "answer": "企业版面向高用量或有特定需求的企业。我们提供定制额度、保障 SLA、专属支持和独享基础设施。请联系我们获取方案。"
+        },
+        "q7": {
+          "question": "支持哪些文件格式？",
+          "answer": "Tablix 支持 CSV 和 XLSX（Excel）文件。免费版每次最多可上传 3 个文件，专业版最多 15 个。"
+        }
+      }
+    }
+  },
+  "cookieConsent": {
+    "title": "Cookie",
+    "message": "我们使用服务运行所必需的基础 Cookie，例如使用额度控制和偏好设置。我们不使用追踪或广告类 Cookie。",
+    "accept": "知道了",
+    "learnMore": "了解更多",
+    "ariaLabel": "Cookie 提示"
+  }
+}
