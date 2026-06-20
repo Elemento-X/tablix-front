@@ -1,25 +1,33 @@
 /**
- * Tests for xls-parser.ts — Web Worker wrapper for SheetJS legacy XLS parsing.
+ * Tests for xls-parser.ts — Web Worker wrapper for SheetJS parsing.
  *
- * The Worker itself runs in a separate thread and cannot be instantiated in jsdom.
- * We test the wrapper's contract: it creates a Worker, sends the buffer, and
- * correctly handles success, error from worker protocol, and onerror events.
+ * The Worker runs in a separate thread and cannot be instantiated in jsdom.
+ * We test the wrapper's contract: creates a Worker, sends the buffer, and
+ * correctly handles success, worker-protocol errors (with code), and onerror.
+ *
+ * Protocol change (post-refactor):
+ *   Error path: { error: string, code: ParseErrorCode }
+ *   Success path: { columns, rows, rowCount }
+ * Rejections must be SpreadsheetParseError instances with the correct .code.
  */
 
 import { parseXls, type XlsParseResult } from '@/lib/xls-parser'
+import { SpreadsheetParseError } from '@/lib/spreadsheet-errors'
 
-// Worker mock: captures postMessage calls and exposes event hooks
+// ── Worker mock ───────────────────────────────────────────────────────────────
+
 const mockTerminate = jest.fn()
 const mockPostMessage = jest.fn()
 
-let capturedOnMessage: ((event: MessageEvent<XlsParseResult | { error: string }>) => void) | null =
-  null
+type WorkerMessageData = XlsParseResult | { error: string; code?: string }
+
+let capturedOnMessage: ((event: MessageEvent<WorkerMessageData>) => void) | null = null
 let capturedOnError: ((error: ErrorEvent) => void) | null = null
 
 const MockWorker = jest.fn().mockImplementation(() => ({
   terminate: mockTerminate,
   postMessage: mockPostMessage,
-  set onmessage(cb: (event: MessageEvent<XlsParseResult | { error: string }>) => void) {
+  set onmessage(cb: (event: MessageEvent<WorkerMessageData>) => void) {
     capturedOnMessage = cb
   },
   set onerror(cb: (error: ErrorEvent) => void) {
@@ -27,8 +35,19 @@ const MockWorker = jest.fn().mockImplementation(() => ({
   },
 }))
 
-// Replace global Worker with mock
 ;(global as unknown as Record<string, unknown>).Worker = MockWorker
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function sendWorkerMessage(data: WorkerMessageData) {
+  capturedOnMessage!(new MessageEvent('message', { data }))
+}
+
+function sendWorkerError(message: string) {
+  capturedOnError!({ message } as ErrorEvent)
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('xls-parser.ts', () => {
   beforeEach(() => {
@@ -37,17 +56,24 @@ describe('xls-parser.ts', () => {
     capturedOnError = null
   })
 
-  describe('parseXls', () => {
-    it('should create a Worker and post the buffer', () => {
+  describe('parseXls — setup', () => {
+    it('creates a Worker and posts the buffer with zero-copy transfer', () => {
       const buffer = new ArrayBuffer(8)
-      // Don't await — just start to capture the call
       parseXls(buffer)
-
       expect(MockWorker).toHaveBeenCalledTimes(1)
       expect(mockPostMessage).toHaveBeenCalledWith({ buffer }, [buffer])
     })
 
-    it('should resolve with parsed data on successful worker message', async () => {
+    it('passes the buffer as the transferable argument (not a copy)', () => {
+      const buffer = new ArrayBuffer(16)
+      parseXls(buffer)
+      const [, transferables] = mockPostMessage.mock.calls[0]
+      expect(transferables).toContain(buffer)
+    })
+  })
+
+  describe('parseXls — success path', () => {
+    it('resolves with parsed data on successful worker message', async () => {
       const buffer = new ArrayBuffer(8)
       const promise = parseXls(buffer)
 
@@ -56,130 +82,21 @@ describe('xls-parser.ts', () => {
         rows: [{ Name: 'John', Email: 'john@test.com' }],
         rowCount: 1,
       }
-
-      // Simulate worker success message
-      capturedOnMessage!(new MessageEvent('message', { data: successResult }))
+      sendWorkerMessage(successResult)
 
       const result = await promise
-
       expect(result).toEqual(successResult)
-      expect(mockTerminate).toHaveBeenCalledTimes(1)
     })
 
-    it('should terminate the worker after successful message', async () => {
+    it('terminates the worker after a successful message', async () => {
       const buffer = new ArrayBuffer(8)
       const promise = parseXls(buffer)
-
-      capturedOnMessage!(
-        new MessageEvent('message', {
-          data: { columns: [], rows: [], rowCount: 0 },
-        }),
-      )
-
+      sendWorkerMessage({ columns: [], rows: [], rowCount: 0 })
       await promise
       expect(mockTerminate).toHaveBeenCalledTimes(1)
     })
 
-    it('should reject with error when worker sends { error: string }', async () => {
-      const buffer = new ArrayBuffer(8)
-      const promise = parseXls(buffer)
-
-      capturedOnMessage!(
-        new MessageEvent('message', {
-          data: { error: 'No sheets found in workbook' },
-        }),
-      )
-
-      await expect(promise).rejects.toThrow('No sheets found in workbook')
-      expect(mockTerminate).toHaveBeenCalledTimes(1)
-    })
-
-    it('should reject with empty spreadsheet error from worker', async () => {
-      const buffer = new ArrayBuffer(8)
-      const promise = parseXls(buffer)
-
-      capturedOnMessage!(
-        new MessageEvent('message', {
-          data: { error: 'Empty spreadsheet' },
-        }),
-      )
-
-      await expect(promise).rejects.toThrow('Empty spreadsheet')
-    })
-
-    it('should reject with generic message on onerror (no info disclosure)', async () => {
-      const buffer = new ArrayBuffer(8)
-      const promise = parseXls(buffer)
-
-      // onerror always uses generic message to avoid leaking internal details
-      capturedOnError!({ message: 'Worker crashed' } as ErrorEvent)
-
-      await expect(promise).rejects.toThrow('Failed to parse XLS file')
-      expect(mockTerminate).toHaveBeenCalledTimes(1)
-    })
-
-    it('should reject with same generic message when onerror has no message', async () => {
-      const buffer = new ArrayBuffer(8)
-      const promise = parseXls(buffer)
-
-      capturedOnError!({ message: '' } as ErrorEvent)
-
-      await expect(promise).rejects.toThrow('Failed to parse XLS file')
-    })
-
-    it('should terminate the worker on onerror', async () => {
-      const buffer = new ArrayBuffer(8)
-      const promise = parseXls(buffer)
-
-      capturedOnError!({ message: 'Fatal error' } as ErrorEvent)
-
-      await expect(promise).rejects.toThrow()
-      expect(mockTerminate).toHaveBeenCalledTimes(1)
-    })
-
-    it('should transfer the buffer (zero-copy) in postMessage', () => {
-      const buffer = new ArrayBuffer(16)
-      parseXls(buffer)
-
-      // Second argument to postMessage must be the transferable array
-      expect(mockPostMessage).toHaveBeenCalledWith({ buffer }, [buffer])
-    })
-
-    it('should reject with timeout when worker takes too long', async () => {
-      jest.useFakeTimers()
-      const buffer = new ArrayBuffer(8)
-      const promise = parseXls(buffer)
-
-      // Advance past the 30s timeout
-      jest.advanceTimersByTime(30_000)
-
-      await expect(promise).rejects.toThrow('XLS parsing timed out')
-      expect(mockTerminate).toHaveBeenCalledTimes(1)
-      jest.useRealTimers()
-    })
-
-    it('should ignore late messages after timeout', async () => {
-      jest.useFakeTimers()
-      const buffer = new ArrayBuffer(8)
-      const promise = parseXls(buffer)
-
-      // Timeout fires first
-      jest.advanceTimersByTime(30_000)
-      await expect(promise).rejects.toThrow('XLS parsing timed out')
-
-      // Late message arrives — should be ignored (no double-resolve)
-      capturedOnMessage!(
-        new MessageEvent('message', {
-          data: { columns: [], rows: [], rowCount: 0 },
-        }),
-      )
-
-      // terminate called once for timeout, not again for late message
-      expect(mockTerminate).toHaveBeenCalledTimes(1)
-      jest.useRealTimers()
-    })
-
-    it('should handle a large result with many columns and rows', async () => {
+    it('handles a large result (50 columns, 1000 rows)', async () => {
       const buffer = new ArrayBuffer(8)
       const promise = parseXls(buffer)
 
@@ -187,65 +104,194 @@ describe('xls-parser.ts', () => {
       const rows = Array.from({ length: 1000 }, (_, i) =>
         Object.fromEntries(columns.map((c) => [c, `row${i}`])),
       )
-
-      capturedOnMessage!(
-        new MessageEvent('message', {
-          data: { columns, rows, rowCount: 1000 },
-        }),
-      )
+      sendWorkerMessage({ columns, rows, rowCount: 1000 })
 
       const result = await promise
       expect(result.rowCount).toBe(1000)
       expect(result.columns).toHaveLength(50)
     })
+  })
 
-    it('should not fire timeout rejection if promise already resolved (settled guard — line 32 branch)', async () => {
+  describe('parseXls — worker error protocol ({ error, code })', () => {
+    it('rejects with SpreadsheetParseError when worker sends NO_SHEETS', async () => {
+      const buffer = new ArrayBuffer(8)
+      const promise = parseXls(buffer)
+
+      sendWorkerMessage({ error: 'No sheets found in workbook', code: 'NO_SHEETS' })
+
+      const err = await promise.catch((e) => e)
+      expect(err).toBeInstanceOf(SpreadsheetParseError)
+      expect(err.code).toBe('NO_SHEETS')
+      expect(err.message).toBe('No sheets found in workbook')
+      expect(mockTerminate).toHaveBeenCalledTimes(1)
+    })
+
+    it('rejects with code CORRUPT_FILE when worker sends corrupt file error', async () => {
+      const buffer = new ArrayBuffer(8)
+      const promise = parseXls(buffer)
+
+      sendWorkerMessage({ error: 'Could not read the spreadsheet file', code: 'CORRUPT_FILE' })
+
+      const err = await promise.catch((e) => e)
+      expect(err).toBeInstanceOf(SpreadsheetParseError)
+      expect(err.code).toBe('CORRUPT_FILE')
+    })
+
+    it('rejects with code EMPTY_SHEET when worker sends empty sheet error', async () => {
+      const buffer = new ArrayBuffer(8)
+      const promise = parseXls(buffer)
+
+      sendWorkerMessage({ error: 'Empty spreadsheet', code: 'EMPTY_SHEET' })
+
+      const err = await promise.catch((e) => e)
+      expect(err).toBeInstanceOf(SpreadsheetParseError)
+      expect(err.code).toBe('EMPTY_SHEET')
+    })
+
+    it('rejects with code NO_COLUMNS when worker sends no columns error', async () => {
+      const buffer = new ArrayBuffer(8)
+      const promise = parseXls(buffer)
+
+      sendWorkerMessage({ error: 'No columns found in first row', code: 'NO_COLUMNS' })
+
+      const err = await promise.catch((e) => e)
+      expect(err).toBeInstanceOf(SpreadsheetParseError)
+      expect(err.code).toBe('NO_COLUMNS')
+    })
+
+    it('rejects with code INVALID_INPUT when worker sends invalid input error', async () => {
+      const buffer = new ArrayBuffer(8)
+      const promise = parseXls(buffer)
+
+      sendWorkerMessage({ error: 'Invalid input: expected ArrayBuffer', code: 'INVALID_INPUT' })
+
+      const err = await promise.catch((e) => e)
+      expect(err).toBeInstanceOf(SpreadsheetParseError)
+      expect(err.code).toBe('INVALID_INPUT')
+    })
+
+    it('falls back to WORKER_ERROR code when worker sends error without code field', async () => {
+      const buffer = new ArrayBuffer(8)
+      const promise = parseXls(buffer)
+
+      // No `code` property — uses ?? 'WORKER_ERROR'
+      sendWorkerMessage({ error: 'Something went wrong' })
+
+      const err = await promise.catch((e) => e)
+      expect(err).toBeInstanceOf(SpreadsheetParseError)
+      expect(err.code).toBe('WORKER_ERROR')
+      expect(err.message).toBe('Something went wrong')
+    })
+  })
+
+  describe('parseXls — onerror path', () => {
+    it('rejects with SpreadsheetParseError(WORKER_ERROR) on onerror', async () => {
+      const buffer = new ArrayBuffer(8)
+      const promise = parseXls(buffer)
+
+      sendWorkerError('Worker crashed')
+
+      const err = await promise.catch((e) => e)
+      expect(err).toBeInstanceOf(SpreadsheetParseError)
+      expect(err.code).toBe('WORKER_ERROR')
+    })
+
+    it('uses a safe generic message on onerror (no info disclosure)', async () => {
+      const buffer = new ArrayBuffer(8)
+      const promise = parseXls(buffer)
+
+      sendWorkerError('Internal native crash — do not surface')
+
+      const err = await promise.catch((e) => e)
+      expect(err.message).toBe('Failed to parse spreadsheet')
+    })
+
+    it('uses the same generic message even when onerror has empty message', async () => {
+      const buffer = new ArrayBuffer(8)
+      const promise = parseXls(buffer)
+
+      sendWorkerError('')
+
+      const err = await promise.catch((e) => e)
+      expect(err.message).toBe('Failed to parse spreadsheet')
+    })
+
+    it('terminates the worker on onerror', async () => {
+      const buffer = new ArrayBuffer(8)
+      const promise = parseXls(buffer)
+
+      sendWorkerError('Fatal error')
+
+      await promise.catch(() => {})
+      expect(mockTerminate).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('parseXls — timeout', () => {
+    it('rejects with SpreadsheetParseError(TIMEOUT) when worker exceeds 30s', async () => {
       jest.useFakeTimers()
       const buffer = new ArrayBuffer(8)
       const promise = parseXls(buffer)
 
-      // Resolve BEFORE timeout fires — sets settled = true
-      capturedOnMessage!(
-        new MessageEvent('message', {
-          data: { columns: ['A'], rows: [{ A: '1' }], rowCount: 1 },
-        }),
-      )
+      jest.advanceTimersByTime(30_000)
 
-      // Flush microtasks so the Promise executor callback runs and settled=true
-      await Promise.resolve()
-      await Promise.resolve()
-
-      // Run all pending timers synchronously — settled is already true, so the
-      // timeout callback hits the `if (!settled)` false-branch and does nothing.
-      // runAllTimers() guarantees the callback body executes and Istanbul records
-      // the branch miss (false-branch of `if (!settled)`).
-      jest.runAllTimers()
-
-      const result = await promise
-      expect(result.columns).toEqual(['A'])
-
-      // terminate called exactly once (from the resolve path, not timeout)
+      const err = await promise.catch((e) => e)
+      expect(err).toBeInstanceOf(SpreadsheetParseError)
+      expect(err.code).toBe('TIMEOUT')
+      expect(err.message).toBe('Spreadsheet parsing timed out')
       expect(mockTerminate).toHaveBeenCalledTimes(1)
       jest.useRealTimers()
     })
 
-    it('should ignore onerror after promise already resolved (settled guard — line 56 branch)', async () => {
+    it('ignores late worker messages after timeout fires (settled guard)', async () => {
+      jest.useFakeTimers()
       const buffer = new ArrayBuffer(8)
       const promise = parseXls(buffer)
 
-      // Resolve first
-      capturedOnMessage!(
-        new MessageEvent('message', {
-          data: { columns: ['B'], rows: [], rowCount: 0 },
-        }),
-      )
+      jest.advanceTimersByTime(30_000)
+      await promise.catch(() => {})
 
+      // Late message arrives — must be silently ignored
+      sendWorkerMessage({ columns: [], rows: [], rowCount: 0 })
+
+      expect(mockTerminate).toHaveBeenCalledTimes(1)
+      jest.useRealTimers()
+    })
+  })
+
+  describe('parseXls — settled guard (double-resolution prevention)', () => {
+    it('does not fire timeout rejection when promise already resolved', async () => {
+      jest.useFakeTimers()
+      const buffer = new ArrayBuffer(8)
+      const promise = parseXls(buffer)
+
+      // Resolve first — sets settled = true
+      sendWorkerMessage({ columns: ['A'], rows: [{ A: '1' }], rowCount: 1 })
+
+      // Flush microtasks so the executor runs and settled=true before the timer fires
+      await Promise.resolve()
+      await Promise.resolve()
+
+      // runAllTimers runs the setTimeout callback; settled=true → no-op inside it
+      jest.runAllTimers()
+
+      const result = await promise
+      expect(result.columns).toEqual(['A'])
+      // terminate called exactly once (from the resolve path, not from timeout)
+      expect(mockTerminate).toHaveBeenCalledTimes(1)
+      jest.useRealTimers()
+    })
+
+    it('ignores onerror after promise already resolved (settled guard)', async () => {
+      const buffer = new ArrayBuffer(8)
+      const promise = parseXls(buffer)
+
+      sendWorkerMessage({ columns: ['B'], rows: [], rowCount: 0 })
       await promise
 
-      // Late onerror — should be ignored, no double-reject
-      capturedOnError!({ message: 'Late crash' } as ErrorEvent)
+      // Late onerror — must be ignored
+      sendWorkerError('Late crash')
 
-      // terminate called once from the resolve path only
       expect(mockTerminate).toHaveBeenCalledTimes(1)
     })
   })

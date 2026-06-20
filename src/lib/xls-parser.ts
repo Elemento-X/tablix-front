@@ -1,10 +1,15 @@
 /**
- * Wrapper for parsing legacy .xls (BIFF) files via Web Worker.
+ * Wrapper for parsing spreadsheet files (.xls, .xlsx, .xlsm) via Web Worker.
  *
  * SheetJS runs inside a Worker to isolate CVE-2023-30533 prototype pollution.
  * The Worker receives an ArrayBuffer and returns plain JSON — no prototype
  * pollution can escape to the main thread.
  */
+
+import { SpreadsheetParseError, type ParseErrorCode } from '@/lib/spreadsheet-errors'
+
+// Re-export for backward compatibility with existing import sites.
+export { SpreadsheetParseError, type ParseErrorCode }
 
 export interface XlsParseResult {
   columns: string[]
@@ -34,18 +39,20 @@ export function parseXls(buffer: ArrayBuffer): Promise<XlsParseResult> {
       if (!settled) {
         settled = true
         worker.terminate()
-        reject(new Error('XLS parsing timed out'))
+        reject(new SpreadsheetParseError('TIMEOUT', 'Spreadsheet parsing timed out'))
       }
     }, WORKER_TIMEOUT_MS)
 
-    worker.onmessage = (event: MessageEvent<XlsParseResult | { error: string }>) => {
+    worker.onmessage = (
+      event: MessageEvent<XlsParseResult | { error: string; code?: ParseErrorCode }>,
+    ) => {
       if (settled) return
       settled = true
       clearTimeout(timeoutId)
       worker.terminate()
 
       if ('error' in event.data) {
-        reject(new Error(event.data.error))
+        reject(new SpreadsheetParseError(event.data.code ?? 'WORKER_ERROR', event.data.error))
         return
       }
 
@@ -57,7 +64,7 @@ export function parseXls(buffer: ArrayBuffer): Promise<XlsParseResult> {
       settled = true
       clearTimeout(timeoutId)
       worker.terminate()
-      reject(new Error('Failed to parse XLS file'))
+      reject(new SpreadsheetParseError('WORKER_ERROR', 'Failed to parse spreadsheet'))
     }
 
     // Transfer the buffer to avoid copying (zero-copy)
