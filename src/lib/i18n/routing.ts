@@ -41,9 +41,14 @@ export function localizedPath(locale: Locale, path: string = '/'): string {
   return p === '/' ? `/${locale}` : `/${locale}${p}`
 }
 
-/** Absolute localized URL (SITE_URL + localizedPath). */
+/**
+ * Absolute localized URL (SITE_URL + localizedPath).
+ * The root path collapses to the bare domain (no trailing slash) to match how
+ * Next normalizes canonical URLs and to avoid duplicate-content ambiguity.
+ */
 export function localizedUrl(locale: Locale, path: string = '/'): string {
-  return `${SITE_URL}${localizedPath(locale, path)}`
+  const p = localizedPath(locale, path)
+  return p === '/' ? SITE_URL : `${SITE_URL}${p}`
 }
 
 /**

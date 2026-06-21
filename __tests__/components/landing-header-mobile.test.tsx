@@ -42,9 +42,7 @@ jest.mock('framer-motion', () => ({
       <a {...rest}>{children}</a>
     ),
   },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
 jest.mock('@/lib/i18n', () => ({
@@ -63,6 +61,7 @@ jest.mock('@/lib/i18n', () => ({
       return map[key] ?? key
     },
   }),
+  useLocalizedHref: () => (path: string) => path,
 }))
 
 jest.mock('@/hooks/use-reduced-motion', () => ({
@@ -76,8 +75,18 @@ jest.mock('@/components/landing-header-nav', () => ({
 
 // Mock next/link
 jest.mock('next/link', () => {
-  const Link = ({ href, children, onClick }: { href: string; children: React.ReactNode; onClick?: () => void }) => (
-    <a href={href} onClick={onClick}>{children}</a>
+  const Link = ({
+    href,
+    children,
+    onClick,
+  }: {
+    href: string
+    children: React.ReactNode
+    onClick?: () => void
+  }) => (
+    <a href={href} onClick={onClick}>
+      {children}
+    </a>
   )
   Link.displayName = 'Link'
   return Link

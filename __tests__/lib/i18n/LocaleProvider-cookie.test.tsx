@@ -94,11 +94,11 @@ describe('LocaleProvider — cookie write (Card 8.4)', () => {
     })
   })
 
-  it('writes cookie on initialization with stored locale from localStorage', async () => {
-    localStorageMock.getItem.mockReturnValue('en')
-
+  it('writes cookie on initialization with initialLocale="en"', async () => {
+    // URL-prefix routing: server resolves locale from URL and passes initialLocale.
+    // The cookie is written with that value (not from localStorage, which is no longer read).
     render(
-      <LocaleProvider>
+      <LocaleProvider initialLocale="en">
         <div />
       </LocaleProvider>,
     )
@@ -192,10 +192,9 @@ describe('LocaleProvider — cookie write (Card 8.4)', () => {
     expect(written).toContain('SameSite=Strict')
   })
 
-  it('does not write invalid locale to cookie', async () => {
-    // Pass an invalid locale via localStorage — provider should ignore and write pt-BR
-    localStorageMock.getItem.mockReturnValue('zh-CN')
-
+  it('writes defaultLocale to cookie when no initialLocale is provided', async () => {
+    // Without initialLocale, the provider defaults to pt-BR and writes it to the cookie.
+    // localStorage is no longer consulted during initialization (URL is the source of truth).
     render(
       <LocaleProvider>
         <div />
@@ -204,7 +203,6 @@ describe('LocaleProvider — cookie write (Card 8.4)', () => {
 
     await waitFor(() => {
       const written = cookieValues.join(' ')
-      // Should write the defaultLocale fallback, not the invalid one
       expect(written).toContain('tablix-locale=pt-BR')
       expect(written).not.toContain('tablix-locale=zh-CN')
     })

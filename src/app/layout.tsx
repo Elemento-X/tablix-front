@@ -7,6 +7,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { LocaleProvider } from '@/lib/i18n'
 import { getServerLocale, getMessages, toOpenGraphLocale } from '@/lib/i18n/server'
+import { buildAlternates } from '@/lib/i18n/routing'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from 'sonner'
 import { CookieConsent } from '@/components/cookie-consent'
@@ -25,22 +26,17 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getServerLocale()
   const messages = getMessages(locale)
 
-  // hreflang requires different URLs per locale (e.g., /en/, /es/).
-  // Since Tablix uses client-side locale switching without URL-based routing,
-  // hreflang tags would all point to the same URL — which Google ignores.
-  // This will be added when locale-based routing is implemented.
-
+  // hreflang + canonical per locale, from the URL prefix resolved by proxy.ts.
+  // This is the home ('/'); other pages override with their own path.
   return {
     title: messages.meta.title,
     description: messages.meta.description,
     metadataBase: new URL(SITE_URL),
-    alternates: {
-      canonical: '/',
-    },
+    alternates: buildAlternates(locale, '/'),
     openGraph: {
       title: messages.meta.title,
       description: messages.meta.description,
-      url: SITE_URL,
+      url: buildAlternates(locale, '/')?.canonical as string,
       siteName: 'Tablix',
       locale: toOpenGraphLocale(locale),
       type: 'website',
@@ -119,7 +115,7 @@ export default async function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem nonce={nonce}>
           <PostHogProvider>
             <MotionProvider>
-              <LocaleProvider>
+              <LocaleProvider initialLocale={locale}>
                 <SkipLink />
                 <OfflineIndicator />
                 {children}

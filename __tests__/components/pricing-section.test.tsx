@@ -74,6 +74,7 @@ jest.mock('@/lib/i18n', () => ({
       return map[key] ?? key
     },
   }),
+  useLocalizedHref: () => (path: string) => path,
 }))
 
 // Mock next/link

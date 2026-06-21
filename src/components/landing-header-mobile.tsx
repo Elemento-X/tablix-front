@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
-import { useLocale } from '@/lib/i18n'
+import { useLocale, useLocalizedHref } from '@/lib/i18n'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import { Button } from '@/components/button'
 import { scrollToSection } from '@/components/landing-header-nav'
@@ -16,6 +16,7 @@ interface LandingHeaderMobileProps {
 export function LandingHeaderMobile({ activeSection }: LandingHeaderMobileProps) {
   const [open, setOpen] = useState(false)
   const { t } = useLocale()
+  const lh = useLocalizedHref()
   const prefersReducedMotion = useReducedMotion()
   const hamburgerRef = useRef<HTMLButtonElement>(null)
   const firstLinkRef = useRef<HTMLAnchorElement>(null)
@@ -24,7 +25,7 @@ export function LandingHeaderMobile({ activeSection }: LandingHeaderMobileProps)
   const navItems = [
     { key: 'how-it-works', label: t('header.nav.howItWorks') },
     { key: 'audience', label: t('header.nav.audience') },
-    { key: 'pricing', label: t('header.nav.pricing'), href: '/pricing' },
+    { key: 'pricing', label: t('header.nav.pricing'), href: lh('/pricing') },
   ]
 
   const close = useCallback(() => {
@@ -192,7 +193,7 @@ export function LandingHeaderMobile({ activeSection }: LandingHeaderMobileProps)
 
                 <div className="border-border my-4 border-t" />
 
-                <Link href="/upload" onClick={close}>
+                <Link href={lh('/upload')} onClick={close}>
                   <Button variant="brand" size="lg" className="h-12 w-full">
                     {t('header.cta')}
                   </Button>

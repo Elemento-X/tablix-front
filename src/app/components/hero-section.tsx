@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Badge } from '@/components/badge'
 import { Button } from '@/components/button'
 import { GridBackground } from '@/components/grid-background'
-import { useLocale } from '@/lib/i18n'
+import { useLocale, useLocalizedHref } from '@/lib/i18n'
 import { trackEvent } from '@/lib/analytics/events'
 import { EASING, SPRING, TIMING } from '@/lib/motion'
 import { motion } from 'framer-motion'
@@ -98,6 +98,7 @@ function ScrambleText({ text, className }: { text: string; className?: string })
 
 export function HeroSection() {
   const { t, locale } = useLocale()
+  const lh = useLocalizedHref()
 
   const handleCtaClick = () => {
     trackEvent('landing_cta_click', { locale })
@@ -146,7 +147,7 @@ export function HeroSection() {
         {/* CTAs — spring entrance */}
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <MotionLink
-            href="/upload"
+            href={lh('/upload')}
             data-testid="cta-upload"
             onClick={handleCtaClick}
             initial={{ opacity: 0, y: 24, scale: 0.95 }}

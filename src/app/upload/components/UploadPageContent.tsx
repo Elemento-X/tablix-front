@@ -8,7 +8,7 @@ import { StepIndicator } from '@/components/step-indicator'
 import { StepTransition } from '@/components/step-transition'
 import { TablixLogo } from '@/components/tablix-logo'
 import { useUploadFlow } from '@/hooks/use-upload-flow'
-import { useLocale } from '@/lib/i18n'
+import { useLocale, useLocalizedHref } from '@/lib/i18n'
 import { ArrowLeft, TriangleAlert } from 'lucide-react'
 import Link from 'next/link'
 import { ColumnsStep } from './columns-step'
@@ -18,6 +18,7 @@ import { UsageStatus } from './usage-status'
 
 export function UploadPageContent() {
   const { t } = useLocale()
+  const lh = useLocalizedHref()
   const {
     files,
     isUploading,
@@ -76,14 +77,14 @@ export function UploadPageContent() {
         <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex items-center justify-between">
             <Link
-              href="/"
+              href={lh('/')}
               className="text-muted-foreground hover:text-foreground flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="text-sm font-medium">{t('upload.back')}</span>
             </Link>
 
-            <Link href="/" className="flex items-center">
+            <Link href={lh('/')} className="flex items-center">
               <TablixLogo symbolSize={24} />
             </Link>
 

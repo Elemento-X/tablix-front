@@ -19,24 +19,19 @@ jest.mock('@/lib/i18n', () => ({
       return key
     },
   }),
+  useLocalizedHref: () => (path: string) => path,
 }))
 
 // Mock LanguageSelector
 jest.mock('@/components/language-selector', () => ({
-  LanguageSelector: () => (
-    <div data-testid="language-selector">LanguageSelector</div>
-  ),
+  LanguageSelector: () => <div data-testid="language-selector">LanguageSelector</div>,
 }))
 
 // Mock next/link
 jest.mock('next/link', () => {
-  const MockLink = ({
-    children,
-    href,
-  }: {
-    children: React.ReactNode
-    href: string
-  }) => <a href={href}>{children}</a>
+  const MockLink = ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  )
   MockLink.displayName = 'MockLink'
   return MockLink
 })

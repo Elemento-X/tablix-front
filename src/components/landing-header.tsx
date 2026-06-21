@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
-import { useLocale } from '@/lib/i18n'
+import { useLocale, useLocalizedHref } from '@/lib/i18n'
 import { useActiveSection } from '@/hooks/use-active-section'
 import { LanguageSelector } from '@/components/language-selector'
 import { LandingHeaderNav } from '@/components/landing-header-nav'
@@ -17,6 +17,7 @@ const SECTION_IDS = ['how-it-works', 'audience', 'pricing']
 
 export function LandingHeader() {
   const { t } = useLocale()
+  const lh = useLocalizedHref()
   const sectionIds = useMemo(() => SECTION_IDS, [])
   const activeSection = useActiveSection(sectionIds)
   const prefersReducedMotion = useReducedMotion()
@@ -28,7 +29,7 @@ export function LandingHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-8">
           <motion.div style={prefersReducedMotion ? undefined : { scale: headerScale }}>
-            <Link href="/" className="flex items-center">
+            <Link href={lh('/')} className="flex items-center">
               <TablixLogo />
             </Link>
           </motion.div>
@@ -37,7 +38,7 @@ export function LandingHeader() {
 
         <div className="flex items-center gap-3">
           <LanguageSelector />
-          <Link href="/upload" className="hidden lg:inline-flex">
+          <Link href={lh('/upload')} className="hidden lg:inline-flex">
             <Button variant="brand" size="default">
               {t('header.cta')}
               <ArrowRight className="ml-1 h-4 w-4" aria-hidden="true" />

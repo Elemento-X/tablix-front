@@ -1,8 +1,45 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { env } from '@/config/env'
+import { locales, defaultLocale } from '@/lib/i18n/config'
+
+/**
+ * Detect a leading locale segment in the pathname (e.g. "/en/pricing").
+ * Returns the locale and the de-prefixed path to rewrite to internally.
+ * pt-BR (default) lives at the root with NO prefix.
+ */
+function detectLocale(pathname: string): {
+  locale: string
+  rewriteTo: string | null
+  isDefaultPrefixed: boolean
+} {
+  const firstSegment = pathname.split('/')[1] ?? ''
+  const isKnownLocale = (locales as readonly string[]).includes(firstSegment)
+
+  if (!isKnownLocale) {
+    return { locale: defaultLocale, rewriteTo: null, isDefaultPrefixed: false }
+  }
+  // Strip the locale prefix to get the underlying app path.
+  const stripped = pathname.slice(firstSegment.length + 1) || '/'
+  // pt-BR is the default: it must NOT be prefixed (canonical lives at root).
+  if (firstSegment === defaultLocale) {
+    return { locale: defaultLocale, rewriteTo: stripped, isDefaultPrefixed: true }
+  }
+  return { locale: firstSegment, rewriteTo: stripped, isDefaultPrefixed: false }
+}
 
 export function proxy(request: NextRequest) {
+  // i18n: resolve the locale from a path prefix (/en, /fr...). pt-BR = root.
+  const { locale, rewriteTo, isDefaultPrefixed } = detectLocale(request.nextUrl.pathname)
+
+  // Canonical hygiene: /pt-BR/* (default locale, explicit) → 308 to the unprefixed
+  // path, so the default language is never indexed under a duplicate prefix.
+  if (isDefaultPrefixed) {
+    const url = request.nextUrl.clone()
+    url.pathname = rewriteTo as string
+    return NextResponse.redirect(url, 308)
+  }
+
   const isStateChanging =
     request.nextUrl.pathname.startsWith('/api/') &&
     request.method !== 'GET' &&
@@ -75,13 +112,27 @@ export function proxy(request: NextRequest) {
 
   const cspHeader = cspDirectives.join('; ')
 
-  // Pass nonce via request headers (invisible to browser, accessible in server components)
+  // Pass nonce + resolved locale via request headers (invisible to browser,
+  // accessible in server components via headers()).
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-nonce', nonce)
+  requestHeaders.set('x-locale', locale)
 
-  const response = NextResponse.next({
-    request: { headers: requestHeaders },
-  })
+  // For prefixed locales (/en, /fr...) rewrite internally to the unprefixed app
+  // path; the public URL keeps its prefix. pt-BR (root) just passes through.
+  // Both paths must carry the SAME security headers (applied below).
+  let response: NextResponse
+  if (rewriteTo) {
+    const rewriteUrl = request.nextUrl.clone()
+    rewriteUrl.pathname = rewriteTo
+    response = NextResponse.rewrite(rewriteUrl, {
+      request: { headers: requestHeaders },
+    })
+  } else {
+    response = NextResponse.next({
+      request: { headers: requestHeaders },
+    })
+  }
 
   // Security Headers
   response.headers.set('X-DNS-Prefetch-Control', 'on')

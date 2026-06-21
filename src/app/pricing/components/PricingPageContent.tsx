@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
-import { useLocale } from '@/lib/i18n'
+import { useLocale, useLocalizedHref } from '@/lib/i18n'
 import { LandingHeader } from '@/components/landing-header'
 import { LandingFooter } from '@/components/landing-footer'
 import { PricingSection } from '@/components/pricing-section'
@@ -16,6 +16,7 @@ const PricingFAQ = dynamic(() => import('./PricingFAQ').then((mod) => mod.Pricin
 
 export function PricingPageContent() {
   const { t } = useLocale()
+  const lh = useLocalizedHref()
 
   return (
     <div className="bg-background min-h-screen">
@@ -33,7 +34,7 @@ export function PricingPageContent() {
             {t('pricingPage.ctaText')}
           </h2>
           <p className="text-muted-foreground mt-3 text-base">{t('pricingPage.ctaSubtext')}</p>
-          <Link href="/upload" className="mt-6 inline-block">
+          <Link href={lh('/upload')} className="mt-6 inline-block">
             <Button variant="brand" size="lg" className="h-12 px-8 text-base">
               {t('pricingPage.cta')}
               <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />

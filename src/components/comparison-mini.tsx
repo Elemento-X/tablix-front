@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useLocale } from '@/lib/i18n'
+import { useLocale, useLocalizedHref } from '@/lib/i18n'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import { EASING, TIMING } from '@/lib/motion'
 
@@ -11,6 +11,7 @@ const FEATURE_KEYS = ['maxFileSize', 'maxRows', 'processing', 'support'] as cons
 
 export function ComparisonMini() {
   const { t } = useLocale()
+  const lh = useLocalizedHref()
   const prefersReducedMotion = useReducedMotion()
 
   return (
@@ -73,7 +74,7 @@ export function ComparisonMini() {
 
         <div className="mt-4 text-center sm:mt-6">
           <Link
-            href="/pricing"
+            href={lh('/pricing')}
             className="text-primary hover:text-primary/80 inline-flex items-center gap-1 text-sm font-medium transition-colors"
           >
             {t('comparisonMini.seeAll')}

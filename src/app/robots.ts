@@ -7,7 +7,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/upload'],
+        // Block the app (upload) in every locale (/upload, /en/upload, ...) and the API.
+        disallow: ['/api/', '/upload', '/*/upload'],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

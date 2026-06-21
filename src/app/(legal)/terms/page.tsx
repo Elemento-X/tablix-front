@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getServerLocale, getMessages, toOpenGraphLocale } from '@/lib/i18n/server'
-import { SITE_URL } from '@/lib/constants'
+import { buildAlternates, localizedUrl } from '@/lib/i18n/routing'
 import { TermsContent } from './components/TermsContent'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -10,13 +10,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: messages.meta.termsTitle,
     description: messages.meta.termsDescription,
-    alternates: {
-      canonical: `${SITE_URL}/terms`,
-    },
+    alternates: buildAlternates(locale, '/terms'),
     openGraph: {
       title: messages.meta.termsTitle,
       description: messages.meta.termsDescription,
-      url: `${SITE_URL}/terms`,
+      url: localizedUrl(locale, '/terms'),
       siteName: 'Tablix',
       locale: toOpenGraphLocale(locale),
       type: 'website',

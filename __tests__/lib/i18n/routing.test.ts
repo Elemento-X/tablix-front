@@ -43,8 +43,9 @@ describe('i18n routing utils', () => {
   })
 
   describe('localizedUrl', () => {
-    it('prepends SITE_URL', () => {
-      expect(localizedUrl('pt-BR', '/')).toBe(`${SITE_URL}/`)
+    it('prepends SITE_URL; root collapses to bare domain (no trailing slash)', () => {
+      expect(localizedUrl('pt-BR', '/')).toBe(SITE_URL)
+      expect(localizedUrl('en', '/')).toBe(`${SITE_URL}/en`)
       expect(localizedUrl('en', '/pricing')).toBe(`${SITE_URL}/en/pricing`)
     })
   })
@@ -72,14 +73,16 @@ describe('i18n routing utils', () => {
       expect(alt?.canonical).toBe(`${SITE_URL}/en/pricing`)
       const ptAlt = buildAlternates('pt-BR', '/pricing')
       expect(ptAlt?.canonical).toBe(`${SITE_URL}/pricing`)
+      const ptHome = buildAlternates('pt-BR', '/')
+      expect(ptHome?.canonical).toBe(SITE_URL)
     })
     it('languages map covers all locales + x-default', () => {
       const alt = buildAlternates('pt-BR', '/')
       const langs = alt?.languages as Record<string, string>
       for (const loc of locales) {
-        expect(langs[loc]).toBe(`${SITE_URL}${loc === defaultLocale ? '/' : '/' + loc}`)
+        expect(langs[loc]).toBe(loc === defaultLocale ? SITE_URL : `${SITE_URL}/${loc}`)
       }
-      expect(langs['x-default']).toBe(`${SITE_URL}/`)
+      expect(langs['x-default']).toBe(SITE_URL)
     })
     it('x-default always maps to the default locale (pt-BR) version', () => {
       const alt = buildAlternates('de', '/terms')
