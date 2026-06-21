@@ -3,10 +3,11 @@ import en from '../../src/lib/i18n/messages/en.json'
 import es from '../../src/lib/i18n/messages/es.json'
 import zh from '../../src/lib/i18n/messages/zh.json'
 import fr from '../../src/lib/i18n/messages/fr.json'
+import de from '../../src/lib/i18n/messages/de.json'
 
-type Locale = 'pt-BR' | 'en' | 'es' | 'zh' | 'fr'
+type Locale = 'pt-BR' | 'en' | 'es' | 'zh' | 'fr' | 'de'
 
-const messages: Record<Locale, Record<string, unknown>> = { 'pt-BR': ptBR, en, es, zh, fr }
+const messages: Record<Locale, Record<string, unknown>> = { 'pt-BR': ptBR, en, es, zh, fr, de }
 
 /**
  * Resolve uma chave de i18n para o texto localizado.

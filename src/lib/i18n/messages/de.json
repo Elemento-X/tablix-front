@@ -1,0 +1,651 @@
+{
+  "meta": {
+    "title": "Tablix — Verwandeln Sie komplexe Tabellen in gebrauchsfertige Dateien",
+    "description": "Laden Sie Ihre Tabelle hoch, wählen Sie die benötigten Spalten aus und erstellen Sie in Sekunden eine neue Datei. Online-Tool zur individuellen Verarbeitung und Erstellung von Tabellen.",
+    "privacyTitle": "Datenschutzerklärung — Tablix",
+    "privacyDescription": "Erfahren Sie, wie Tablix Ihre Daten erhebt, verwendet und schützt. LGPD-konforme Datenschutzerklärung.",
+    "termsTitle": "Nutzungsbedingungen — Tablix",
+    "termsDescription": "Lesen Sie die allgemeinen Geschäftsbedingungen für die Nutzung der Tablix-Plattform zur Tabellenverarbeitung."
+  },
+  "header": {
+    "brand": "Tablix",
+    "cta": "Kostenlos starten",
+    "nav": {
+      "howItWorks": "So funktioniert's",
+      "audience": "Für wen",
+      "pricing": "Preise"
+    }
+  },
+  "hero": {
+    "title": "Holen Sie sich die Stunden zurück, die Tabellen Ihnen rauben",
+    "subtitle": "Tabellen zusammenzuführen sollte nicht Ihren ganzen Nachmittag kosten. Hochladen, das Wesentliche auswählen, fertig.",
+    "cta": "Meine Tabellen vereinfachen",
+    "ctaSecondary": "So funktioniert's in 4 Schritten",
+    "earlyAccess": "Kostenlos für die ersten Nutzer"
+  },
+  "howItWorks": {
+    "title": "So funktioniert's",
+    "steps": {
+      "upload": {
+        "title": "Tabelle hochladen",
+        "description": "Laden Sie Ihre CSV- oder XLSX-Datei hoch"
+      },
+      "visualize": {
+        "title": "Erkannte Spalten ansehen",
+        "description": "Das System erkennt automatisch alle Spalten"
+      },
+      "choose": {
+        "title": "Auswählen, was bleiben soll",
+        "description": "Wählen Sie nur die benötigten Spalten aus"
+      },
+      "generate": {
+        "title": "Neue Datei erstellen",
+        "description": "Laden Sie Ihre saubere, gebrauchsfertige Tabelle herunter"
+      }
+    }
+  },
+  "benefits": {
+    "title": "Schluss mit der manuellen Tabellenarbeit",
+    "items": {
+      "item1": {
+        "pain": "Kopieren und Einfügen über Dutzende von Registerkarten",
+        "solution": "Laden Sie Ihre Dateien hoch und führen Sie sie auf einmal zusammen"
+      },
+      "item2": {
+        "pain": "Falsche Spalten, Daten überall verstreut",
+        "solution": "Wählen Sie visuell nur das Wesentliche aus"
+      },
+      "item3": {
+        "pain": "Stunden mit der Wiederholung desselben Vorgangs jede Woche",
+        "solution": "Ergebnisse in Sekunden mit Tablix"
+      }
+    }
+  },
+  "audience": {
+    "title": "Für wen",
+    "roles": {
+      "analysts": {
+        "title": "Analysten",
+        "description": "Konsolidieren Sie Berichte aus mehreren Quellen, ohne zwischen Registerkarten zu kopieren und einzufügen."
+      },
+      "admins": {
+        "title": "Verwaltungsteams",
+        "description": "Führen Sie Stammdaten, Übersichten und Listen mit wenigen Klicks zusammen."
+      },
+      "recurring": {
+        "title": "Wiederkehrende Tabellen",
+        "description": "Automatisieren Sie die Zusammenführung, die Sie jede Woche durchführen — immer dieselbe, immer mühsam."
+      }
+    }
+  },
+  "socialProof": {
+    "heading": "Warum Sie Tablix vertrauen können",
+    "ariaLabel": "Tablix-Vertrauenskennzahlen",
+    "metrics": {
+      "zeroStorage": { "label": "gespeicherte Bytes" },
+      "localProcessing": { "label": "lokale Verarbeitung" },
+      "formats": { "label": "Formate: XLSX, CSV und XLS" }
+    }
+  },
+  "comparisonMini": {
+    "title": "Kostenlos vs. Pro",
+    "seeAll": "Vollständigen Vergleich ansehen"
+  },
+  "pricing": {
+    "title": "Tarife",
+    "subtitle": "Wählen Sie den idealen Tarif für Ihre Anforderungen",
+    "billingPeriod": {
+      "monthly": "Monatlich",
+      "semester": "Halbjährlich",
+      "annual": "Jährlich",
+      "annualBadge": "Bester Preis"
+    },
+    "plans": {
+      "free": {
+        "name": "Kostenlos",
+        "price": "0 $",
+        "period": "Für immer",
+        "features": {
+          "sheetsPerMonth": "1 Tabelle pro Monat",
+          "maxRows": "bis zu 500 Zeilen",
+          "maxColumns": "bis zu 3 Spalten"
+        },
+        "description": "Ideal, um den Arbeitsablauf zu testen und zu sehen, ob Tablix Ihr Problem löst.",
+        "cta": "Kostenlos starten"
+      },
+      "pro": {
+        "name": "Pro",
+        "badge": "Empfohlen",
+        "oldPrice": "9,90 $",
+        "period": "Monat",
+        "launchPrice": "Einführungspreis garantiert, solange das Abo aktiv ist",
+        "features": {
+          "sheetsPerMonth": "bis zu 40 Tabellen pro Monat",
+          "maxRows": "bis zu 5.000 Zeilen pro Tabelle",
+          "maxColumns": "bis zu 10 Spalten",
+          "priorityProcessing": "vorrangige Verarbeitung",
+          "noWatermark": "ohne Wasserzeichen",
+          "fileHistory": "Dateiverlauf für 30 Tage"
+        },
+        "cta": "Pro abonnieren"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Individuell",
+        "period": "Kontaktieren Sie uns",
+        "features": {
+          "customLimits": "Individuelle Limits",
+          "sla": "Garantiertes SLA",
+          "prioritySupport": "Vorrangiger Support",
+          "dedicatedInfra": "Dedizierte Infrastruktur"
+        },
+        "description": "Für Unternehmen mit hohem Volumen oder besonderen Anforderungen.",
+        "cta": "Unser Team kontaktieren"
+      }
+    }
+  },
+  "footer": {
+    "tagline": "Ihre Dateien werden sicher verarbeitet und nach der Nutzung gelöscht.",
+    "product": {
+      "title": "Produkt",
+      "howItWorks": "So funktioniert's",
+      "audience": "Für wen",
+      "pricing": "Preise",
+      "cta": "Kostenlos starten"
+    },
+    "legal": {
+      "title": "Rechtliches & Kontakt"
+    },
+    "nav": {
+      "product": "Produktnavigation",
+      "legal": "Rechtliches und Kontakt"
+    },
+    "privacyPolicy": "Datenschutzerklärung",
+    "terms": "Nutzungsbedingungen",
+    "copyright": "© {year} Tablix Tecnologia. Alle Rechte vorbehalten."
+  },
+  "upload": {
+    "title": "Tabelle hochladen",
+    "subtitle": "Kostenloser Tarif: bis zu 500 Zeilen und 3 Spalten",
+    "back": "Zurück",
+    "dropzone": "Zum Auswählen klicken oder Dateien hierherziehen",
+    "dropzoneWithFiles": "Datei(en) ausgewählt",
+    "or": "oder",
+    "selectFile": "Datei auswählen",
+    "maxSize": "CSV oder XLSX • Maximal 1 MB",
+    "processing": "Wird verarbeitet…",
+    "continue": "Weiter",
+    "error": "Fehler bei der Verarbeitung der Datei",
+    "securityNote": "Ihre Dateien werden temporär und sicher verarbeitet.",
+    "selectAtLeastOne": "Wählen Sie mindestens eine Datei aus"
+  },
+  "columns": {
+    "title": "Spalten auswählen",
+    "subtitle": "Wählen Sie, welche Spalten in Ihre verarbeitete Datei aufgenommen werden",
+    "detected": "Erkannte Spalten",
+    "selected": "ausgewählt",
+    "max": "max.",
+    "of": "von",
+    "startOver": "Neu beginnen",
+    "deselectAll": "Alle abwählen",
+    "selectAll": "Alle auswählen",
+    "processAndDownload": "Verarbeiten & herunterladen",
+    "previewHint": "Vorschau der ersten Zeilen Ihrer ersten Datei"
+  },
+  "status": {
+    "plan": "Tarif",
+    "unificationsRemaining": "Zusammenführungen übrig",
+    "files": "Dateien",
+    "maxFiles": "Max.",
+    "maxTotalSize": "Max. Gesamtgröße",
+    "maxRows": "Zeilen",
+    "maxColumns": "Spalten",
+    "maxRowsLabel": "Max.",
+    "maxColumnsLabel": "Max.",
+    "clickToAddMore": "Klicken Sie oben, um weitere Dateien hinzuzufügen",
+    "loading": "Tarifinformationen werden geladen…",
+    "quotaExhausted": "Monatliches Kontingent aufgebraucht",
+    "quotaExhaustedHint": "Ihr Kontingent an Zusammenführungen für diesen Monat ist aufgebraucht. Warten Sie auf den nächsten Zyklus oder führen Sie ein Upgrade durch."
+  },
+  "messages": {
+    "tooManyFiles": "Zu viele Dateien. Maximal {max} Dateien für den Tarif {plan}.",
+    "fileAlreadyAdded": "Datei „{name}“ wurde bereits hinzugefügt",
+    "fileTooLarge": "„{name}“ ist zu groß. Die maximale Dateigröße für den Tarif {plan} beträgt {size}.",
+    "totalSizeExceeded": "Gesamtgröße überschritten. Die maximale Gesamtgröße für den Tarif {plan} beträgt {size}.",
+    "fileAdded": "Datei erfolgreich hinzugefügt",
+    "filesAdded": "{count} Dateien erfolgreich hinzugefügt",
+    "selectAtLeastOneColumn": "Bitte wählen Sie mindestens eine Spalte aus",
+    "tooManyColumns": "Zu viele Spalten ausgewählt. Maximal {max} Spalten für den Tarif {plan}.",
+    "processingFiles": "Dateien werden verarbeitet…",
+    "unifiedSuccess": "{count} Datei(en) mit {rows} Zeilen zusammengeführt!",
+    "processingOnServer": "Dateien sind groß, Verarbeitung auf dem Server…",
+    "processFailed": "Datei konnte nicht verarbeitet werden",
+    "processSuccess": "Datei erfolgreich verarbeitet!",
+    "unificationLimitExceeded": "Limit für Zusammenführungen überschritten. Sie haben diesen Monat {current}/{max} Zusammenführungen genutzt.",
+    "parsingFile": "Datei {current}/{total} wird analysiert: {name}",
+    "rowsExceedLimit": "Die Gesamtzahl der Zeilen ({total}) überschreitet das Limit. Maximal {max} Zeilen für den Tarif {plan}.",
+    "noCommonColumns": "Keine gemeinsamen Spalten in allen Dateien gefunden. Die Dateien müssen mindestens eine gemeinsame Spalte haben.",
+    "foundCommonColumns": "{count} gemeinsame Spalten gefunden. Sie können bis zu {max} für Ihren Tarif {plan} auswählen.",
+    "parsedSuccessSingle": "Erfolgreich analysiert! {columns} Spalten und {rows} Zeilen gefunden.",
+    "parsedSuccessMultiple": "{files} Dateien analysiert! {columns} gemeinsame Spalten und {rows} Zeilen insgesamt gefunden."
+  },
+  "export": {
+    "sheetName": "Zusammengeführte Daten",
+    "watermarkColumn": "Erstellt mit Tablix",
+    "watermarkValue": "tablix.me",
+    "aboutSheetName": "Info",
+    "aboutHeaderInfo": "Info",
+    "aboutHeaderValue": "Wert",
+    "aboutGeneratedBy": "Erstellt mit",
+    "aboutWebsite": "Website",
+    "aboutPlan": "Tarif",
+    "aboutGeneratedAt": "Erstellt am",
+    "aboutTotalRows": "Zeilen insgesamt",
+    "aboutFilesUnified": "Zusammengeführte Dateien",
+    "aboutUpgradeToPro": "Upgrade auf Pro",
+    "aboutUpgradeMessage": "Entfernen Sie das Wasserzeichen und erhöhen Sie Ihre Limits!",
+    "fileName": "tablix-zusammengefuehrt"
+  },
+  "steps": {
+    "upload": "Hochladen",
+    "columns": "Spalten",
+    "result": "Ergebnis"
+  },
+  "result": {
+    "title": "Fertig!",
+    "subtitle": "Ihre Tabelle wurde erfolgreich erstellt",
+    "filesUnified": "{count} Datei(en) zusammengeführt",
+    "rowsProcessed": "{count} Zeilen verarbeitet",
+    "columnsSelected": "{count} Spalte(n) ausgewählt",
+    "newUnification": "Neue Zusammenführung",
+    "upgradePro": "Upgrade auf Pro",
+    "upgradeMessage": "Entfernen Sie das Wasserzeichen, verarbeiten Sie bis zu 5.000 Zeilen und 10 Spalten.",
+    "remainingQuota": "{remaining} von {max} Zusammenführung(en) übrig"
+  },
+  "onboarding": {
+    "tipUpload": "Laden Sie Ihre CSV- oder XLSX-Dateien hoch. Wir erkennen die Spalten automatisch.",
+    "tipColumns": "Wählen Sie die Spalten aus, die Sie in der endgültigen Datei behalten möchten.",
+    "gotIt": "Verstanden"
+  },
+  "quotaGate": {
+    "title": "Limit erreicht",
+    "description": "Sie haben diesen Monat alle Ihre Zusammenführungen aufgebraucht."
+  },
+  "processing": {
+    "consumingQuota": "Ihre Zusammenführung wird reserviert…",
+    "mergingFiles": "Dateien werden zusammengeführt…",
+    "generatingFile": "Tabelle wird erstellt…",
+    "downloading": "Download wird gestartet…"
+  },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "description": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    "goHome": "Zur Startseite"
+  },
+  "errorBoundary": {
+    "title": "Etwas ist schiefgelaufen",
+    "description": "Ein unerwarteter Fehler ist aufgetreten. Versuchen Sie es erneut oder kehren Sie zur Startseite zurück.",
+    "tryAgain": "Erneut versuchen",
+    "goHome": "Zur Startseite",
+    "uploadTitle": "Verarbeitungsfehler",
+    "uploadDescription": "Beim Hochladen oder Verarbeiten der Datei ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
+  },
+  "errors": {
+    "offline": "Sie sind offline. Überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+    "offlineShort": "Keine Internetverbindung",
+    "timeout": "Der Vorgang hat zu lange gedauert. Bitte versuchen Sie es erneut.",
+    "serverError": "Serverfehler. Bitte versuchen Sie es in einem Moment erneut.",
+    "rateLimited": "Zu viele Versuche. Bitte warten Sie einen Moment, bevor Sie es erneut versuchen.",
+    "networkGeneric": "Verbindungsfehler. Überprüfen Sie Ihre Internetverbindung.",
+    "retryingConnection": "Verbindung wird wiederhergestellt…",
+    "parseRowLimit": "Die Datei überschreitet das Limit von {total} Zeilen (maximal {max} im Tarif {plan}).",
+    "parseNoColumns": "In der ersten Zeile der Datei wurden keine Spalten gefunden.",
+    "parseNoSheets": "In der Arbeitsmappe wurden keine Tabellenblätter gefunden.",
+    "parseEmpty": "Die Tabelle ist leer.",
+    "parseFailed": "Fehler beim Lesen der Datei. Bitte überprüfen Sie, ob das Format gültig ist.",
+    "parseGeneric": "Fehler beim Analysieren der Datei: {detail}",
+    "parseCorrupt": "Die Datei konnte nicht gelesen werden. Sie ist möglicherweise beschädigt oder hat ein nicht unterstütztes Format.",
+    "parseUnsupported": "Nicht unterstütztes Dateiformat. Verwenden Sie CSV, XLS oder XLSX.",
+    "fileValidation": "Ungültiger Dateityp. Verwenden Sie CSV, XLS oder XLSX.",
+    "fileContentValidation": "Der Dateiinhalt entspricht nicht dem erwarteten Format."
+  },
+  "dropzone": {
+    "dragActive": "Dateien hier ablegen…",
+    "disabled": "Hochladen deaktiviert"
+  },
+  "theme": {
+    "switchToLight": "Zum hellen Design wechseln",
+    "switchToDark": "Zum dunklen Design wechseln"
+  },
+  "a11y": {
+    "skipToContent": "Zum Hauptinhalt springen",
+    "selectLanguage": "Sprache auswählen",
+    "themeToggle": "Design umschalten",
+    "usageProgress": "Tarifnutzungsfortschritt",
+    "columnToggle": "Spalte aus- oder abwählen",
+    "removeFile": "Entfernen",
+    "stepIndicator": "Ablauffortschritt",
+    "mainNavigation": "Hauptnavigation",
+    "openMenu": "Navigationsmenü öffnen",
+    "closeMenu": "Navigationsmenü schließen",
+    "navigationMenu": "Navigationsmenü"
+  },
+  "billingPeriods": {
+    "month": "Monat",
+    "totalSemester": "{price} $ alle 6 Monate",
+    "totalAnnual": "{price} $/Jahr"
+  },
+  "proPricing": {
+    "currencySymbol": "$",
+    "monthly": {
+      "price": "29,90",
+      "total": "29,90 $/Monat"
+    },
+    "semester": {
+      "price": "26,90",
+      "total": "161,40 $ alle 6 Monate"
+    },
+    "annual": {
+      "price": "24,90",
+      "total": "298,80 $/Jahr"
+    }
+  },
+  "legal": {
+    "backToHome": "Zurück zur Startseite",
+    "lastUpdated": "Zuletzt aktualisiert: {date}",
+    "tableOfContents": "Inhaltsverzeichnis",
+    "privacy": {
+      "title": "Datenschutzerklärung",
+      "intro": {
+        "title": "Einleitung",
+        "p1": "Tablix Tecnologia („Tablix“, „wir“) betreibt den unter tablix.me verfügbaren Dienst. Diese Datenschutzerklärung erläutert, wie wir Ihre Informationen erheben, verwenden und schützen, wenn Sie unseren Dienst nutzen.",
+        "p2": "Durch die Nutzung von Tablix stimmen Sie den in dieser Erklärung beschriebenen Praktiken zu. Wenn Sie nicht einverstanden sind, nutzen Sie den Dienst bitte nicht."
+      },
+      "dataCollection": {
+        "title": "Daten, die wir erheben",
+        "description": "Wir erheben nur die Daten, die für den Betrieb des Dienstes unbedingt erforderlich sind:",
+        "fingerprint": "Anonyme Kennung (Fingerprint) — zur Kontrolle der Nutzungslimits des kostenlosen Tarifs. Wird als httpOnly-Cookie gespeichert.",
+        "ipHash": "Hash der IP-Adresse — wird zusammen mit dem Fingerprint zur Identifizierung verwendet. Wir speichern niemals die vollständige IP-Adresse.",
+        "usageCounters": "Nutzungszähler — Anzahl der im Monat durchgeführten Zusammenführungen, in Redis mit automatischem Ablauf gespeichert.",
+        "locale": "Spracheinstellung — lokal in Ihrem Browser gespeichert (localStorage)."
+      },
+      "spreadsheetProcessing": {
+        "title": "Tabellenverarbeitung",
+        "p1": "Ihre Dateien werden im kostenlosen Tarif vollständig in Ihrem Browser (clientseitig) verarbeitet. Das bedeutet, dass Ihre Daten während der Verarbeitung niemals an unsere Server gesendet werden.",
+        "p2": "Im Pro-Tarif können größere Dateien auf dem Server verarbeitet werden. In diesem Fall werden die Daten im Arbeitsspeicher verarbeitet und unmittelbar nach der Erstellung der Ausgabedatei gelöscht. Wir speichern, kopieren oder bewahren Ihre Dateien nicht auf.",
+        "p3": "Wir greifen niemals auf den Inhalt Ihrer Tabellen zu, lesen oder analysieren ihn zu anderen Zwecken als der von Ihnen angeforderten Verarbeitung."
+      },
+      "cookies": {
+        "title": "Cookies und lokaler Speicher",
+        "description": "Wir verwenden die folgenden Cookies und lokalen Speicherdaten:",
+        "tablixFp": "tablix_fp — httpOnly-Cookie, das Ihre anonyme Kennung speichert. Läuft nach 1 Jahr ab.",
+        "theme": "theme — Designeinstellung (hell/dunkel). Über localStorage gespeichert.",
+        "localePref": "locale — Spracheinstellung. Über localStorage gespeichert.",
+        "noCookies": "Wir verwenden keine Tracking-, Marketing- oder Werbe-Cookies."
+      },
+      "storage": {
+        "title": "Speicherung und Aufbewahrung",
+        "p1": "Nutzungszähler werden in Redis (Upstash) gespeichert und laufen am Ende jedes Abrechnungszeitraums automatisch ab.",
+        "p2": "Das Fingerprint-Cookie läuft nach 1 Jahr ab oder wenn Sie Ihre Browserdaten löschen.",
+        "p3": "Wir unterhalten keine Datenbank mit personenbezogenen Daten. Im kostenlosen Tarif gibt es kein „Konto“ — nur die anonyme Kennung."
+      },
+      "security": {
+        "title": "Sicherheit",
+        "description": "Wir setzen die folgenden Maßnahmen zum Schutz Ihrer Daten ein:",
+        "csp": "Content Security Policy (CSP) — schränkt ein, welche Ressourcen geladen werden können.",
+        "rateLimit": "Ratenbegrenzung — schützt vor Missbrauch und Brute-Force-Angriffen.",
+        "headers": "Sicherheits-Header — HSTS, X-Frame-Options, X-Content-Type-Options und weitere.",
+        "validation": "Dateivalidierung — Überprüfung von MIME-Typ, Erweiterung und Magic Numbers vor der Verarbeitung.",
+        "httpOnly": "httpOnly-Cookies — nicht über JavaScript zugänglich, schützen vor XSS-Angriffen."
+      },
+      "rights": {
+        "title": "Ihre Rechte (LGPD)",
+        "description": "Gemäß dem brasilianischen Allgemeinen Datenschutzgesetz (Gesetz 13.709/2018) haben Sie das Recht:",
+        "access": "Auf Ihre Daten zuzugreifen — Sie können Ihren Nutzungsstatus direkt in der Tablix-Oberfläche einsehen.",
+        "deletion": "Löschung zu verlangen — Durch Löschen Ihrer Browser-Cookies wird der Fingerprint entfernt. Die Redis-Zähler laufen automatisch ab.",
+        "info": "Informationen anzufordern — Kontaktieren Sie uns, um zu erfahren, welche Daten mit Ihrer Kennung verknüpft sind.",
+        "legalBasis": "Rechtsgrundlage: Wir stützen uns auf das berechtigte Interesse (Art. 7, IX der LGPD) zur Verarbeitung der für den Betrieb des Dienstes erforderlichen Daten.",
+        "contact": "Um eines dieser Rechte auszuüben, kontaktieren Sie uns unter:"
+      },
+      "thirdParty": {
+        "title": "Dienste von Drittanbietern",
+        "description": "Wir nutzen die folgenden Dienste von Drittanbietern:",
+        "vercel": "Vercel — Hosting und CDN. Unterliegt der Datenschutzerklärung von Vercel.",
+        "upstash": "Upstash Redis — Speicherung der Nutzungszähler. Daten bei der Übertragung und im Ruhezustand verschlüsselt.",
+        "analytics": "Vercel Analytics — Anonyme Leistungskennzahlen. Erhebt keine personenbezogenen Daten."
+      },
+      "changes": {
+        "title": "Änderungen dieser Erklärung",
+        "p1": "Wir können diese Datenschutzerklärung regelmäßig aktualisieren. Wesentliche Änderungen werden durch einen Hinweis im Dienst mitgeteilt.",
+        "p2": "Die fortgesetzte Nutzung von Tablix nach Änderungen gilt als Annahme der aktualisierten Erklärung."
+      },
+      "contact": {
+        "title": "Kontakt",
+        "p1": "Bei Fragen, Anfragen oder Beschwerden zum Datenschutz:",
+        "controller": "Verantwortlicher: Tablix Tecnologia",
+        "emailLabel": "E-Mail:",
+        "address": "Adresse: São Paulo - SP, Brasilien"
+      }
+    },
+    "terms": {
+      "title": "Nutzungsbedingungen",
+      "acceptance": {
+        "title": "Annahme der Bedingungen",
+        "p1": "Durch den Zugriff auf und die Nutzung von Tablix („Dienst“), verfügbar unter tablix.me, stimmen Sie diesen Nutzungsbedingungen zu. Wenn Sie mit einem Teil dieser Bedingungen nicht einverstanden sind, nutzen Sie den Dienst nicht.",
+        "p2": "Tablix wird von Tablix Tecnologia mit Sitz in São Paulo - SP, Brasilien, betrieben."
+      },
+      "serviceDescription": {
+        "title": "Dienstbeschreibung",
+        "p1": "Tablix ist ein Online-Tool zur Tabellenverarbeitung. Der Dienst ermöglicht es Ihnen, CSV- und XLSX-Dateien hochzuladen, bestimmte Spalten auszuwählen und neue Dateien mit gefilterten Daten zu erstellen.",
+        "p2": "Die Verarbeitung im kostenlosen Tarif erfolgt vollständig in Ihrem Browser. Im Pro-Tarif können größere Dateien auf unseren Servern verarbeitet werden."
+      },
+      "plans": {
+        "title": "Tarife und Limits",
+        "freeTitle": "Kostenloser Tarif",
+        "freeDescription": "Kostenlos, keine Registrierung erforderlich. Unterliegt den folgenden Limits:",
+        "freeLimit1": "1 Zusammenführung pro Monat",
+        "freeLimit2": "Bis zu 500 Zeilen pro Tabelle",
+        "freeLimit3": "Bis zu 3 Spalten pro Ausgabedatei",
+        "freeLimit4": "Bis zu 3 Dateien pro Upload",
+        "freeLimit5": "Maximale Gesamtgröße des Uploads von 1 MB",
+        "proTitle": "Pro-Tarif",
+        "proDescription": "Erfordert ein aktives Abo. Umfasst erweiterte Limits:",
+        "proLimit1": "Bis zu 40 Zusammenführungen pro Monat",
+        "proLimit2": "Bis zu 5.000 Zeilen pro Tabelle",
+        "proLimit3": "Bis zu 10 Spalten pro Ausgabedatei",
+        "proLimit4": "Bis zu 15 Dateien pro Upload",
+        "proLimit5": "Maximal 2 MB pro Datei (30 MB insgesamt)",
+        "proLimit6": "Vorrangige serverseitige Verarbeitung",
+        "limitsNote": "Limits können jederzeit angepasst werden. Änderungen werden im Voraus mitgeteilt."
+      },
+      "acceptableUse": {
+        "title": "Zulässige Nutzung",
+        "description": "Durch die Nutzung von Tablix verpflichten Sie sich, Folgendes nicht zu tun:",
+        "rule1": "Zu versuchen, die Nutzungslimits Ihres Tarifs zu umgehen.",
+        "rule2": "Den Dienst zur Verarbeitung illegaler oder rechtswidrig erlangter Daten zu nutzen.",
+        "rule3": "Reverse Engineering, Dekompilierung oder den Versuch, den Quellcode des Dienstes zu extrahieren, durchzuführen.",
+        "rule4": "Schädliche Dateien, Viren oder schädlichen Code hochzuladen.",
+        "rule5": "Automatisierung (Bots, Scraper) zu verwenden, um ohne vorherige Genehmigung auf den Dienst zuzugreifen.",
+        "rule6": "Die Infrastruktur des Dienstes absichtlich zu überlasten."
+      },
+      "userContent": {
+        "title": "Nutzerinhalte",
+        "p1": "Sie sind allein für die Dateien verantwortlich, die Sie auf Tablix hochladen. Der Dienst erhebt keinen Eigentumsanspruch auf Ihre Daten.",
+        "p2": "Im kostenlosen Tarif werden Dateien vollständig in Ihrem Browser verarbeitet und niemals an unsere Server gesendet.",
+        "p3": "Im Pro-Tarif werden Dateien im Serverspeicher verarbeitet und unmittelbar nach der Verarbeitung gelöscht. Wir speichern, kopieren oder bewahren Ihre Dateien nicht auf."
+      },
+      "ip": {
+        "title": "Geistiges Eigentum",
+        "p1": "Tablix, einschließlich seiner Oberfläche, seines Quellcodes, seines Designs und seiner Marke, ist ausschließliches Eigentum von Tablix Tecnologia.",
+        "p2": "Sie erhalten eine begrenzte, nicht ausschließliche und widerrufliche Lizenz zur Nutzung des Dienstes gemäß diesen Bedingungen."
+      },
+      "liability": {
+        "title": "Haftungsbeschränkung",
+        "p1": "Tablix wird „wie besehen“ bereitgestellt, ohne Gewährleistung jeglicher Art, weder ausdrücklich noch stillschweigend.",
+        "p2": "Wir haften nicht für Verluste oder Schäden, die aus der Nutzung des Dienstes entstehen, einschließlich, aber nicht beschränkt auf: Datenverlust, Dienstunterbrechungen oder ungenaue Verarbeitungsergebnisse.",
+        "p3": "Die Gesamthaftung von Tablix Tecnologia ist in jedem Fall auf den vom Nutzer in den letzten 12 Monaten gezahlten Betrag begrenzt."
+      },
+      "availability": {
+        "title": "Verfügbarkeit",
+        "p1": "Wir bemühen uns, Tablix rund um die Uhr an 7 Tagen die Woche verfügbar zu halten, garantieren jedoch keine unterbrechungsfreie Verfügbarkeit.",
+        "p2": "Wir können geplante oder Notfallwartungen durchführen, die zu vorübergehender Nichtverfügbarkeit führen können."
+      },
+      "suspension": {
+        "title": "Sperrung und Kündigung",
+        "p1": "Wir behalten uns das Recht vor, den Zugang jedes Nutzers, der gegen diese Nutzungsbedingungen verstößt, zu sperren oder zu beenden.",
+        "p2": "Wir können den Dienst oder jede Funktion jederzeit einstellen, nach Möglichkeit mit angemessener Vorankündigung."
+      },
+      "changes": {
+        "title": "Änderungen der Bedingungen",
+        "p1": "Wir können diese Nutzungsbedingungen regelmäßig aktualisieren. Wesentliche Änderungen werden durch einen Hinweis im Dienst mitgeteilt.",
+        "p2": "Die fortgesetzte Nutzung von Tablix nach Änderungen gilt als Annahme der aktualisierten Bedingungen."
+      },
+      "governingLaw": {
+        "title": "Anwendbares Recht",
+        "p1": "Diese Bedingungen unterliegen den Gesetzen der Föderativen Republik Brasilien.",
+        "p2": "Für die Beilegung von Streitigkeiten aus diesen Bedingungen sind die Gerichte von São Paulo - SP zuständig."
+      },
+      "contact": {
+        "title": "Kontakt",
+        "p1": "Bei Fragen zu diesen Nutzungsbedingungen:",
+        "emailLabel": "E-Mail:",
+        "address": "Adresse: São Paulo - SP, Brasilien"
+      }
+    }
+  },
+  "ctaBanner": {
+    "afterHowItWorks": {
+      "title": "So einfach ist das. Jetzt sind Sie dran.",
+      "cta": "Kostenlos starten"
+    },
+    "afterAudience": {
+      "title": "Wenn Sie bis hierher gelesen haben, ist Tablix genau das Richtige für Sie.",
+      "subtitle": "Keine Registrierung, keine Kreditkarte. Probieren Sie es jetzt mit Ihrer eigenen Tabelle aus.",
+      "cta": "Mit meiner Tabelle ausprobieren"
+    },
+    "final": {
+      "title": "Ihre nächste Tabelle muss kein Problem sein.",
+      "subtitle": "Kostenlos für die ersten Nutzer. In Sekunden starten.",
+      "cta": "Meine Tabellen vereinfachen"
+    }
+  },
+  "paymentBadges": {
+    "label": "Zahlungsmethoden",
+    "aria": "Akzeptierte Zahlungsmethoden"
+  },
+  "securityBadges": {
+    "title": "Sicherheit, die Sie überprüfen können",
+    "local": {
+      "title": "Lokale Verarbeitung",
+      "subtitle": "Ihre Daten verlassen niemals Ihren Browser"
+    },
+    "noStorage": {
+      "title": "Keine Speicherung",
+      "subtitle": "Dateien werden nicht auf unseren Servern aufbewahrt"
+    },
+    "tls": {
+      "title": "TLS-Verschlüsselung",
+      "subtitle": "Die gesamte Kommunikation ist durch HTTPS geschützt"
+    },
+    "validation": {
+      "title": "Strenge Validierung",
+      "subtitle": "Jede Datei wird vor der Verarbeitung überprüft"
+    }
+  },
+  "pricingPage": {
+    "metaTitle": "Tarife & Preise | Tablix",
+    "metaDescription": "Vergleichen Sie die Tablix-Tarife Kostenlos, Pro und Enterprise. Kostenlos starten, keine Registrierung nötig.",
+    "ctaText": "Bereit, Ihre Tabellen zu vereinfachen?",
+    "ctaSubtext": "In Sekunden starten. Keine Registrierung, keine Kreditkarte erforderlich.",
+    "cta": "Kostenlos starten",
+    "comparison": {
+      "title": "Tarife vergleichen",
+      "features": {
+        "sheetsPerMonth": "Tabellen pro Monat",
+        "maxRows": "Zeilen pro Tabelle",
+        "maxColumns": "Spalten",
+        "maxFileSize": "Max. Dateigröße",
+        "processing": "Verarbeitung",
+        "watermark": "Wasserzeichen",
+        "fileHistory": "Dateiverlauf",
+        "support": "Support",
+        "infrastructure": "Infrastruktur"
+      },
+      "values": {
+        "free": {
+          "sheetsPerMonth": "1",
+          "maxRows": "500",
+          "maxColumns": "3",
+          "maxFileSize": "1 MB",
+          "processing": "Lokal (Browser)",
+          "watermark": "Ja",
+          "fileHistory": "Nein",
+          "support": "Community",
+          "infrastructure": "Geteilt"
+        },
+        "pro": {
+          "sheetsPerMonth": "40",
+          "maxRows": "5.000",
+          "maxColumns": "10",
+          "maxFileSize": "2 MB",
+          "processing": "Vorrangiger Server",
+          "watermark": "Nein",
+          "fileHistory": "30 Tage",
+          "support": "Vorrangiger E-Mail-Support",
+          "infrastructure": "Geteilt"
+        },
+        "enterprise": {
+          "sheetsPerMonth": "Individuell",
+          "maxRows": "Individuell",
+          "maxColumns": "Individuell",
+          "maxFileSize": "Individuell",
+          "processing": "Dediziert",
+          "watermark": "Nein",
+          "fileHistory": "Individuell",
+          "support": "Dediziert + SLA",
+          "infrastructure": "Dediziert"
+        }
+      }
+    },
+    "faq": {
+      "title": "Häufig gestellte Fragen",
+      "items": {
+        "q1": {
+          "question": "Kann ich es vor dem Abonnieren ausprobieren?",
+          "answer": "Ja! Der kostenlose Tarif erfordert keine Registrierung. Sie können bis zu 1 Tabelle pro Monat mit bis zu 500 Zeilen und 3 Spalten verarbeiten, ganz unverbindlich."
+        },
+        "q2": {
+          "question": "Wie funktioniert die lokale Verarbeitung?",
+          "answer": "Im kostenlosen Tarif werden Ihre Tabellen direkt in Ihrem Browser verarbeitet. Keine Daten verlassen Ihren Computer — es ist 100 % lokal und privat."
+        },
+        "q3": {
+          "question": "Kann ich jederzeit kündigen?",
+          "answer": "Ja. Es gibt keine Bindung und keine Kündigungsgebühr. Sie behalten den Einführungspreis, solange Ihr Abo aktiv ist."
+        },
+        "q4": {
+          "question": "Sind meine Daten sicher?",
+          "answer": "Ihre Dateien werden temporär verarbeitet und unmittelbar nach dem Download gelöscht. Wir speichern den Inhalt Ihrer Tabellen nicht."
+        },
+        "q5": {
+          "question": "Was ist der Unterschied zwischen Kostenlos und Pro?",
+          "answer": "Der kostenlose Tarif ist ideal für schnelle Tests mit geringeren Limits. Pro bietet bis zu 40 Tabellen/Monat, 5.000 Zeilen, 10 Spalten, Serververarbeitung, kein Wasserzeichen und 30 Tage Dateiverlauf."
+        },
+        "q6": {
+          "question": "Wie funktioniert der Enterprise-Tarif?",
+          "answer": "Enterprise richtet sich an Unternehmen mit hohem Volumen oder besonderen Anforderungen. Wir bieten individuelle Limits, garantiertes SLA, dedizierten Support und exklusive Infrastruktur. Kontaktieren Sie uns für ein Angebot."
+        },
+        "q7": {
+          "question": "Welche Dateiformate werden akzeptiert?",
+          "answer": "Tablix akzeptiert CSV- und XLSX-Dateien (Excel). Sie können im kostenlosen Tarif bis zu 3 Dateien gleichzeitig hochladen und bis zu 15 im Pro-Tarif."
+        }
+      }
+    }
+  },
+  "cookieConsent": {
+    "title": "Cookies",
+    "message": "Wir verwenden essenzielle Cookies für die Funktionalität des Dienstes, etwa zur Nutzungskontrolle und für Einstellungen. Wir verwenden keine Tracking- oder Werbe-Cookies.",
+    "accept": "Verstanden",
+    "learnMore": "Mehr erfahren",
+    "ariaLabel": "Cookie-Hinweis"
+  }
+}
