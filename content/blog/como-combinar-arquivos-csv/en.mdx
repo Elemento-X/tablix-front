@@ -1,0 +1,48 @@
+---
+title: How to combine CSV files into one (no coding)
+description: See how to combine several CSV files into a single file, handling delimiters and encoding — plus a fast way to do it online, for free.
+datePublished: 2026-06-21
+dateModified: 2026-06-21
+relatedLanding: /juntar-arquivos-csv
+order: 2
+---
+
+CSV is the universal export format: systems, databases, marketing tools and reports almost always offer "export as CSV". The problem is those files usually come split up — one per month, one per source, one per team — and merging them by hand is tedious and risky. This guide shows how to combine CSV files the right way.
+
+## What can go wrong with CSV
+
+Before combining, it helps to understand why CSV is deceptive. Two files that look identical can have invisible differences:
+
+- **Different delimiter:** some use a comma (`,`), others a semicolon (`;`) — common in non-English exports.
+- **Different encoding:** accented characters break when one file is UTF-8 and another is ANSI/Latin-1.
+- **Divergent headers:** "Customer" in one, "Customer Name" in another.
+
+Combining without fixing this produces duplicate columns and garbled characters in the result.
+
+## Manual step by step
+
+If you prefer to do it in Excel or a text editor:
+
+1. Open the first CSV and confirm the delimiter and encoding.
+2. Standardize the other files to the same delimiter and the same encoding.
+3. Paste the data from each file below the first one, **without repeating the header**.
+4. Save the result as a new CSV in UTF-8.
+
+It works, but it demands attention on every file — and an encoding slip only shows up later, once the accents have already come out wrong.
+
+## The fast way: combine CSV online
+
+To skip the tedious part, you can upload all the CSVs at once, let the tool detect the columns and download a single clean file. On [Tablix](/juntar-arquivos-csv), the free plan processes everything in your browser — your files are never sent to any server.
+
+<Cta href="/juntar-arquivos-csv" label="Combine my CSV files" />
+
+## Frequently asked questions
+
+**Do the files need the same delimiter?**
+In the manual process, yes. In tools that detect the format automatically, each file is read correctly even with different delimiters.
+
+**Will I lose accents when combining?**
+Only if you mix encodings. Saving the result in UTF-8 preserves accents and special characters.
+
+**What if I have Excel spreadsheets besides CSV?**
+You can handle both formats together. See the guide on [how to merge spreadsheets in Excel](/blog/como-juntar-planilhas-no-excel) and the comparison between [CSV or XLSX](/blog/csv-ou-xlsx-qual-usar).

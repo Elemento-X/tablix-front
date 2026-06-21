@@ -654,6 +654,27 @@
     "learnMore": "了解更多",
     "ariaLabel": "Cookie 提示"
   },
+  "blog": {
+    "meta": {
+      "title": "Tablix 博客：表格、Excel 和 CSV 指南",
+      "description": "合并、组合和整理 Excel 与 CSV 表格的实用指南。按步骤学习，直接在浏览器中免费完成。"
+    },
+    "title": "表格指南",
+    "subtitle": "合并、组合和整理 Excel 与 CSV 数据的实用教程。",
+    "empty": "暂无已发布的文章。",
+    "readMore": "阅读指南",
+    "publishedOn": "发布于",
+    "updatedOn": "更新于",
+    "relatedGuidesTitle": "相关指南",
+    "breadcrumb": {
+      "home": "首页",
+      "blog": "博客"
+    },
+    "cta": {
+      "title": "准备好整理你的表格了吗？",
+      "button": "免费试用 Tablix"
+    }
+  },
   "useCases": {
     "mergeExcel": {
       "metaTitle": "合并 Excel 文件，免费在线工具 | Tablix",

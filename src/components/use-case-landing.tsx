@@ -14,7 +14,18 @@ import { Button } from '@/components/button'
  * landings only need a new namespace + a thin route that renders this with the
  * matching `useCaseKey`. Schema (HowTo/FAQ) is emitted server-side by the route.
  */
-export function UseCaseLanding({ useCaseKey }: { useCaseKey: string }) {
+interface RelatedGuide {
+  href: string
+  title: string
+}
+
+export function UseCaseLanding({
+  useCaseKey,
+  relatedGuides = [],
+}: {
+  useCaseKey: string
+  relatedGuides?: RelatedGuide[]
+}) {
   const { t } = useLocale()
   const lh = useLocalizedHref()
   const k = (suffix: string) => t(`useCases.${useCaseKey}.${suffix}`)
@@ -107,6 +118,28 @@ export function UseCaseLanding({ useCaseKey }: { useCaseKey: string }) {
             ))}
           </dl>
         </section>
+
+        {/* Related guides (hub-and-spoke: money page → informational guides) */}
+        {relatedGuides.length > 0 && (
+          <section className="border-border mx-auto max-w-3xl border-t px-4 py-10 sm:px-6 sm:py-12">
+            <h2 className="text-foreground mb-4 text-lg font-bold">
+              {t('blog.relatedGuidesTitle')}
+            </h2>
+            <ul className="space-y-2">
+              {relatedGuides.map((g) => (
+                <li key={g.href}>
+                  <Link
+                    href={lh(g.href)}
+                    className="text-primary hover:text-primary/80 inline-flex items-center gap-1 text-sm font-medium transition-colors"
+                  >
+                    {g.title}
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* Final CTA */}
         <section className="border-border mx-auto max-w-3xl border-t px-4 py-12 text-center sm:px-6 sm:py-16">

@@ -1,0 +1,48 @@
+---
+title: Comment combiner des fichiers CSV en un seul
+description: Découvrez comment combiner plusieurs fichiers CSV en un seul, en gérant délimiteurs et encodage — et une façon rapide de le faire en ligne, gratuitement.
+datePublished: 2026-06-21
+dateModified: 2026-06-21
+relatedLanding: /juntar-arquivos-csv
+order: 2
+---
+
+Le CSV est le format d'export universel : systèmes, bases de données, outils marketing et rapports proposent presque toujours « exporter en CSV ». Le souci, c'est que ces fichiers arrivent souvent découpés — un par mois, un par source, un par équipe — et les combiner à la main est fastidieux et risqué. Ce guide montre comment combiner des fichiers CSV correctement.
+
+## Ce qui peut mal tourner avec le CSV
+
+Avant de combiner, il faut comprendre pourquoi le CSV est trompeur. Deux fichiers qui semblent identiques peuvent avoir des différences invisibles :
+
+- **Un délimiteur différent :** certains utilisent la virgule (`,`), d'autres le point-virgule (`;`) — fréquent dans les exports francophones.
+- **Un encodage différent :** les caractères accentués cassent quand un fichier est en UTF-8 et un autre en ANSI/Latin-1.
+- **Des en-têtes divergents :** « Client » dans l'un, « Nom du client » dans l'autre.
+
+Combiner sans régler cela produit des colonnes en double et des caractères illisibles dans le résultat.
+
+## Étape par étape manuelle
+
+Si vous préférez le faire dans Excel ou un éditeur de texte :
+
+1. Ouvrez le premier CSV et confirmez le délimiteur et l'encodage.
+2. Standardisez les autres fichiers au même délimiteur et au même encodage.
+3. Collez les données de chaque fichier sous le premier, **sans répéter l'en-tête**.
+4. Enregistrez le résultat comme un nouveau CSV en UTF-8.
+
+Cela fonctionne, mais demande de l'attention sur chaque fichier — et une erreur d'encodage n'apparaît que plus tard, une fois les accents déjà mal venus.
+
+## La méthode rapide : combiner des CSV en ligne
+
+Pour sauter la partie pénible, vous pouvez importer tous les CSV d'un coup, laisser l'outil détecter les colonnes et télécharger un seul fichier propre. Sur [Tablix](/juntar-arquivos-csv), le forfait gratuit traite tout dans votre navigateur — vos fichiers ne sont jamais envoyés à un serveur.
+
+<Cta href="/juntar-arquivos-csv" label="Combiner mes fichiers CSV" />
+
+## Questions fréquentes
+
+**Les fichiers doivent-ils avoir le même délimiteur ?**
+Dans le processus manuel, oui. Dans les outils qui détectent le format automatiquement, chaque fichier est lu correctement même avec des délimiteurs différents.
+
+**Vais-je perdre les accents en combinant ?**
+Seulement si vous mélangez les encodages. Enregistrer le résultat en UTF-8 préserve les accents et les caractères spéciaux.
+
+**Et si j'ai des feuilles Excel en plus des CSV ?**
+Vous pouvez traiter les deux formats ensemble. Voyez le guide [comment fusionner des feuilles de calcul dans Excel](/blog/como-juntar-planilhas-no-excel) et la comparaison entre [CSV ou XLSX](/blog/csv-ou-xlsx-qual-usar).

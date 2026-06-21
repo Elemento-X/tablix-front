@@ -1,0 +1,48 @@
+---
+title: CSV-Dateien zu einer zusammenführen (ohne Programmieren)
+description: Erfahren Sie, wie Sie mehrere CSV-Dateien zu einer einzigen kombinieren — inklusive Trennzeichen und Kodierung — und ein schneller Weg, das online zu tun.
+datePublished: 2026-06-21
+dateModified: 2026-06-21
+relatedLanding: /juntar-arquivos-csv
+order: 2
+---
+
+CSV ist das universelle Exportformat: Systeme, Datenbanken, Marketing-Tools und Berichte bieten fast immer „als CSV exportieren“ an. Das Problem ist, dass diese Dateien meist zerstückelt kommen — eine pro Monat, eine pro Quelle, eine pro Team — und sie von Hand zu kombinieren ist mühsam und riskant. Diese Anleitung zeigt, wie Sie CSV-Dateien richtig kombinieren.
+
+## Was bei CSV schiefgehen kann
+
+Vor dem Kombinieren hilft es zu verstehen, warum CSV täuscht. Zwei scheinbar identische Dateien können unsichtbare Unterschiede haben:
+
+- **Unterschiedliches Trennzeichen:** manche nutzen ein Komma (`,`), andere ein Semikolon (`;`) — in deutschen Exporten häufig.
+- **Unterschiedliche Kodierung:** Umlaute brechen, wenn eine Datei UTF-8 und eine andere ANSI/Latin-1 ist.
+- **Abweichende Überschriften:** „Kunde“ in der einen, „Kundenname“ in der anderen.
+
+Kombinieren ohne diese Punkte zu lösen erzeugt doppelte Spalten und unleserliche Zeichen im Ergebnis.
+
+## Schritt für Schritt manuell
+
+Wenn Sie es in Excel oder einem Texteditor erledigen möchten:
+
+1. Öffnen Sie die erste CSV und bestätigen Sie Trennzeichen und Kodierung.
+2. Vereinheitlichen Sie die übrigen Dateien auf dasselbe Trennzeichen und dieselbe Kodierung.
+3. Fügen Sie die Daten jeder Datei unter der ersten ein, **ohne die Überschrift zu wiederholen**.
+4. Speichern Sie das Ergebnis als neue CSV in UTF-8.
+
+Es funktioniert, erfordert aber Aufmerksamkeit bei jeder Datei — und ein Kodierungsfehler zeigt sich erst später, wenn die Umlaute bereits falsch sind.
+
+## Der schnelle Weg: CSV online kombinieren
+
+Um den mühsamen Teil zu überspringen, können Sie alle CSVs auf einmal hochladen, das Tool die Spalten erkennen lassen und eine einzige saubere Datei herunterladen. Bei [Tablix](/juntar-arquivos-csv) verarbeitet der kostenlose Tarif alles in Ihrem Browser — Ihre Dateien werden nie an einen Server gesendet.
+
+<Cta href="/juntar-arquivos-csv" label="Meine CSV-Dateien kombinieren" />
+
+## Häufige Fragen
+
+**Müssen die Dateien dasselbe Trennzeichen haben?**
+Beim manuellen Vorgehen ja. In Tools, die das Format automatisch erkennen, wird jede Datei auch mit unterschiedlichen Trennzeichen korrekt gelesen.
+
+**Verliere ich beim Kombinieren die Umlaute?**
+Nur wenn Sie Kodierungen mischen. Das Speichern des Ergebnisses in UTF-8 bewahrt Umlaute und Sonderzeichen.
+
+**Was, wenn ich neben CSV auch Excel-Tabellen habe?**
+Sie können beide Formate gemeinsam verarbeiten. Sehen Sie die Anleitung [wie man Excel-Tabellen zusammenführt](/blog/como-juntar-planilhas-no-excel) und den Vergleich zwischen [CSV oder XLSX](/blog/csv-ou-xlsx-qual-usar).
