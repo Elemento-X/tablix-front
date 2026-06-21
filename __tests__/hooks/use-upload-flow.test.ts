@@ -1154,7 +1154,9 @@ describe('useUploadFlow', () => {
         await result.current.handleFilesAccepted(files)
       })
 
-      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('"FREE"'))
+      expect(mockToast.error).toHaveBeenCalledWith(
+        expect.stringContaining('pricing.plans.free.name'),
+      )
     })
 
     it('handles basic validation with no error message', async () => {
@@ -1289,11 +1291,11 @@ describe('useUploadFlow', () => {
       expect(mockToast.error).toHaveBeenCalledWith(
         expect.stringContaining('messages.totalSizeExceeded'),
       )
-      // The plan fallback should resolve to 'FREE' (the ?? 'FREE' branch)
+      // The plan fallback ('free') resolves to its localized name via getPlanName
       const call = (mockToast.error as jest.Mock).mock.calls.find((c: string[]) =>
         c[0].includes('messages.totalSizeExceeded'),
       )
-      expect(call[0]).toContain('FREE')
+      expect(call[0]).toContain('pricing.plans.free.name')
     })
 
     // Branch coverage: multiple files upload (line 343: parsedSuccessMultiple)
@@ -1599,7 +1601,7 @@ describe('useUploadFlow', () => {
         new SpreadsheetParseError(
           'ROW_LIMIT',
           'File exceeds row limit: 501 rows (max 500 for Free plan)',
-          { total: '501', max: '500', plan: 'FREE' },
+          { total: '501', max: '500', plan: 'free' },
         ),
       )
       const { result } = renderHook(() => useUploadFlow())

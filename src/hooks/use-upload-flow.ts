@@ -11,6 +11,7 @@ import { toastFetchError } from '@/lib/toast-error'
 import { validateFile, validateFileContent, sanitizeFileName } from '@/lib/security'
 import { env } from '@/config/env'
 import { mergeSpreadsheets, canProcessClientSide, downloadBlob } from '@/lib/spreadsheet-merge'
+import { getPlanName } from '@/lib/plan-name'
 
 export type UploadStep = 'upload' | 'columns' | 'result'
 
@@ -83,7 +84,7 @@ export function useUploadFlow() {
       toast.error(
         t('messages.tooManyFiles', {
           max: maxInputFiles,
-          plan: usage?.plan.toUpperCase() ?? 'FREE',
+          plan: getPlanName(t, usage?.plan ?? 'free'),
         }),
       )
       return
@@ -102,7 +103,7 @@ export function useUploadFlow() {
         toast.error(
           t('messages.fileTooLarge', {
             name: safeName,
-            plan: usage.plan.toUpperCase(),
+            plan: getPlanName(t, usage.plan),
             size: formatFileSize(usage.limits.maxFileSize),
           }),
         )
@@ -114,7 +115,7 @@ export function useUploadFlow() {
         trackEvent('plan_limit_reached', { limitType: 'totalSize', usageBucket: 'at_limit' })
         toast.error(
           t('messages.totalSizeExceeded', {
-            plan: usage?.plan.toUpperCase() ?? 'FREE',
+            plan: getPlanName(t, usage?.plan ?? 'free'),
             size: formatFileSize(maxTotalSize),
           }),
         )
@@ -167,7 +168,7 @@ export function useUploadFlow() {
         toast.error(
           t('messages.tooManyColumns', {
             max: maxColumns,
-            plan: usage?.plan.toUpperCase() ?? 'FREE',
+            plan: getPlanName(t, usage?.plan ?? 'free'),
           }),
         )
         return prev
@@ -208,7 +209,7 @@ export function useUploadFlow() {
       toast.error(
         t('messages.tooManyColumns', {
           max: usage.limits.maxColumns,
-          plan: usage.plan.toUpperCase(),
+          plan: getPlanName(t, usage.plan),
         }),
       )
       return
@@ -454,7 +455,7 @@ export function useUploadFlow() {
           t('messages.rowsExceedLimit', {
             total: totalRowCount,
             max: usage.limits.maxRows,
-            plan: usage.plan.toUpperCase(),
+            plan: getPlanName(t, usage.plan),
           }),
         )
         setIsUploading(false)
@@ -482,7 +483,7 @@ export function useUploadFlow() {
           t('messages.foundCommonColumns', {
             count: commonColumns.length,
             max: usage.limits.maxColumns,
-            plan: usage.plan.toUpperCase(),
+            plan: getPlanName(t, usage.plan),
           }),
         )
       }
