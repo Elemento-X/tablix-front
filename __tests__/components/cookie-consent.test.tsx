@@ -59,6 +59,7 @@ const mockT = (key: string) => key
 
 jest.mock('@/lib/i18n', () => ({
   useLocale: () => ({ t: mockT }),
+  useLocalizedHref: () => (path: string) => path,
 }))
 
 let mockReducedMotion = false

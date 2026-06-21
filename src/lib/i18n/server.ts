@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { type Locale, defaultLocale, locales } from './config'
 import ptBR from './messages/pt-BR.json'
 import en from './messages/en.json'
@@ -17,13 +17,22 @@ const messages = {
 } as const
 
 /**
- * Read the user's locale preference from the cookie (server-side).
- * Falls back to defaultLocale if cookie is missing or invalid.
+ * Resolve the locale for the current request (server-side).
+ *
+ * Source of truth is the `x-locale` header, set by proxy.ts from the URL prefix
+ * (/en, /fr...) — this is what the crawler sees and what keeps SSR consistent
+ * with the URL. Falls back to the `tablix-locale` cookie (routes the proxy may
+ * not cover) and finally to defaultLocale.
  */
 export async function getServerLocale(): Promise<Locale> {
+  const headerStore = await headers()
+  const fromHeader = headerStore.get('x-locale')
+  if (fromHeader && locales.includes(fromHeader as Locale)) {
+    return fromHeader as Locale
+  }
+
   const cookieStore = await cookies()
   const stored = cookieStore.get('tablix-locale')?.value
-
   if (stored && locales.includes(stored as Locale)) {
     return stored as Locale
   }

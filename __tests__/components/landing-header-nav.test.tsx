@@ -41,6 +41,7 @@ jest.mock('@/lib/i18n', () => ({
       return map[key] ?? key
     },
   }),
+  useLocalizedHref: () => (path: string) => path,
 }))
 
 jest.mock('@/hooks/use-reduced-motion', () => ({

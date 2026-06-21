@@ -54,9 +54,7 @@ function TestComponent() {
     <div>
       <span data-testid="current-locale">{locale}</span>
       <span data-testid="title">{t('common.title')}</span>
-      <span data-testid="greeting">
-        {t('common.greeting', { name: 'Test' })}
-      </span>
+      <span data-testid="greeting">{t('common.greeting', { name: 'Test' })}</span>
       <span data-testid="count">{t('common.count', { count: 5 })}</span>
       <span data-testid="deep-value">{t('nested.deep.value')}</span>
       <span data-testid="missing-key">{t('nonexistent.key')}</span>
@@ -90,9 +88,7 @@ describe('LocaleProvider', () => {
   })
 
   describe('initial state', () => {
-    it('should default to pt-BR locale', () => {
-      localStorageMock.getItem.mockReturnValue(null)
-
+    it('should default to pt-BR when no initialLocale is provided', () => {
       render(
         <LocaleProvider>
           <TestComponent />
@@ -102,30 +98,35 @@ describe('LocaleProvider', () => {
       expect(screen.getByTestId('current-locale')).toHaveTextContent('pt-BR')
     })
 
-    it('should use stored locale from localStorage', async () => {
-      localStorageMock.getItem.mockReturnValue('en')
-
+    it('should use initialLocale prop when provided', () => {
+      // URL-prefix routing: the server resolves the locale from the URL and
+      // passes it via initialLocale. No localStorage read at mount.
       render(
-        <LocaleProvider>
+        <LocaleProvider initialLocale="en">
           <TestComponent />
         </LocaleProvider>,
       )
 
-      await waitFor(() => {
-        expect(screen.getByTestId('current-locale')).toHaveTextContent('en')
-      })
+      expect(screen.getByTestId('current-locale')).toHaveTextContent('en')
     })
 
-    it('should ignore invalid stored locale', async () => {
-      localStorageMock.getItem.mockReturnValue('invalid-locale')
-
+    it('should use pt-BR initialLocale explicitly', () => {
       render(
-        <LocaleProvider>
+        <LocaleProvider initialLocale="pt-BR">
           <TestComponent />
         </LocaleProvider>,
       )
 
-      // Should stay at default
+      expect(screen.getByTestId('current-locale')).toHaveTextContent('pt-BR')
+    })
+
+    it('should fall back to pt-BR when initialLocale is undefined', () => {
+      render(
+        <LocaleProvider initialLocale={undefined}>
+          <TestComponent />
+        </LocaleProvider>,
+      )
+
       expect(screen.getByTestId('current-locale')).toHaveTextContent('pt-BR')
     })
   })
@@ -160,10 +161,7 @@ describe('LocaleProvider', () => {
 
       await user.click(screen.getByTestId('switch-to-en'))
 
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        'tablix-locale',
-        'en',
-      )
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('tablix-locale', 'en')
     })
 
     it('should switch between all locales', async () => {
@@ -200,9 +198,7 @@ describe('LocaleProvider', () => {
         </LocaleProvider>,
       )
 
-      expect(screen.getByTestId('title')).toHaveTextContent(
-        'Título em Português',
-      )
+      expect(screen.getByTestId('title')).toHaveTextContent('Título em Português')
     })
 
     it('should interpolate string values', () => {
@@ -238,9 +234,7 @@ describe('LocaleProvider', () => {
         </LocaleProvider>,
       )
 
-      expect(screen.getByTestId('deep-value')).toHaveTextContent(
-        'Valor profundo',
-      )
+      expect(screen.getByTestId('deep-value')).toHaveTextContent('Valor profundo')
     })
 
     it('should return key when translation not found', () => {
@@ -252,9 +246,7 @@ describe('LocaleProvider', () => {
         </LocaleProvider>,
       )
 
-      expect(screen.getByTestId('missing-key')).toHaveTextContent(
-        'nonexistent.key',
-      )
+      expect(screen.getByTestId('missing-key')).toHaveTextContent('nonexistent.key')
     })
 
     it('should update translations when locale changes', async () => {
@@ -267,9 +259,7 @@ describe('LocaleProvider', () => {
         </LocaleProvider>,
       )
 
-      expect(screen.getByTestId('title')).toHaveTextContent(
-        'Título em Português',
-      )
+      expect(screen.getByTestId('title')).toHaveTextContent('Título em Português')
 
       await user.click(screen.getByTestId('switch-to-en'))
 
@@ -361,9 +351,7 @@ describe('getNestedValue helper', () => {
       </LocaleProvider>,
     )
 
-    expect(screen.getByTestId('result')).toHaveTextContent(
-      'Título em Português',
-    )
+    expect(screen.getByTestId('result')).toHaveTextContent('Título em Português')
   })
 
   it('should handle deeply nested keys', () => {
@@ -397,8 +385,6 @@ describe('getNestedValue helper', () => {
       </LocaleProvider>,
     )
 
-    expect(screen.getByTestId('result')).toHaveTextContent(
-      'this.does.not.exist',
-    )
+    expect(screen.getByTestId('result')).toHaveTextContent('this.does.not.exist')
   })
 })

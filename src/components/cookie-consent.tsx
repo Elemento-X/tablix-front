@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useId } from 'react'
 import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Cookie } from 'lucide-react'
-import { useLocale } from '@/lib/i18n'
+import { useLocale, useLocalizedHref } from '@/lib/i18n'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import { Button } from '@/components/button'
 import { optInCapturing } from '@/lib/analytics/posthog'
@@ -14,6 +14,7 @@ const APPEAR_DELAY_MS = 1500
 
 export function CookieConsent() {
   const { t } = useLocale()
+  const lh = useLocalizedHref()
   const reducedMotion = useReducedMotion()
   const [visible, setVisible] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -78,7 +79,7 @@ export function CookieConsent() {
 
             <div className="flex items-center justify-end gap-3">
               <Link
-                href="/privacy-policy"
+                href={lh('/privacy-policy')}
                 className="text-xs text-teal-700 underline underline-offset-2 dark:text-teal-500"
               >
                 {t('cookieConsent.learnMore')}

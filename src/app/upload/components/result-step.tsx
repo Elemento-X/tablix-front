@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Button, buttonVariants } from '@/components/button'
 import { Card, CardContent } from '@/components/card'
-import { useLocale } from '@/lib/i18n'
+import { useLocale, useLocalizedHref } from '@/lib/i18n'
 import type { ResultData } from '@/hooks/use-upload-flow'
 import type { UsageInfo } from '@/hooks/use-usage'
 import {
@@ -23,6 +23,7 @@ interface ResultStepProps {
 
 export function ResultStep({ resultData, usage, onStartOver }: ResultStepProps) {
   const { t } = useLocale()
+  const lh = useLocalizedHref()
   const isFree = usage?.plan === 'free'
 
   return (
@@ -93,7 +94,10 @@ export function ResultStep({ resultData, usage, onStartOver }: ResultStepProps) 
                   <p className="text-foreground text-sm font-semibold">{t('result.upgradePro')}</p>
                   <p className="text-muted-foreground mt-1 text-xs">{t('result.upgradeMessage')}</p>
                 </div>
-                <Link href="/#pricing" className={buttonVariants({ variant: 'brand', size: 'sm' })}>
+                <Link
+                  href={`${lh('/')}#pricing`}
+                  className={buttonVariants({ variant: 'brand', size: 'sm' })}
+                >
                   {t('result.upgradePro')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>

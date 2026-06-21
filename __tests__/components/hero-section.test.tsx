@@ -58,6 +58,7 @@ jest.mock('@/lib/i18n', () => ({
       return map[key] ?? key
     },
   }),
+  useLocalizedHref: () => (path: string) => path,
 }))
 
 jest.mock('@/components/badge', () => ({
@@ -106,12 +107,7 @@ jest.mock('framer-motion', () => ({
     span: ({ children, ...rest }: React.HTMLAttributes<HTMLSpanElement>) => (
       <span {...rest}>{children}</span>
     ),
-    a: ({
-      children,
-      onClick,
-      href,
-      ...rest
-    }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    a: ({ children, onClick, href, ...rest }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
       <a href={href} onClick={onClick} {...rest}>
         {children}
       </a>
@@ -132,7 +128,10 @@ jest.mock('next/link', () => ({
     children,
     href,
     ...rest
-  }: { children: React.ReactNode; href: string } & React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+  }: {
+    children: React.ReactNode
+    href: string
+  } & React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
     <a href={href} {...rest}>
       {children}
     </a>

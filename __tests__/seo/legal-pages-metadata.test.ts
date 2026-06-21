@@ -4,7 +4,11 @@
  *   - src/app/(legal)/terms/page.tsx
  *
  * Validates: title, description, canonical URL, openGraph fields,
- * locale-awareness (pt-BR / en / es), and fallback behavior.
+ * hreflang languages map (URL-prefix routing), locale-awareness, and fallback behavior.
+ *
+ * The `headers()` mock returns null for x-locale so getServerLocale() falls
+ * through to the cookie — preserving the cookie-driven test contract while
+ * satisfying the new header-first lookup in server.ts.
  */
 
 import ptBR from '@/lib/i18n/messages/pt-BR.json'
@@ -12,19 +16,19 @@ import en from '@/lib/i18n/messages/en.json'
 import es from '@/lib/i18n/messages/es.json'
 import { SITE_URL } from '@/lib/constants'
 
-// Must mock next/headers BEFORE importing any module that calls it
+// Must mock next/headers BEFORE importing any module that calls it.
+// headers() returns null for x-locale so the function falls through to cookies.
 const mockGet = jest.fn()
 jest.mock('next/headers', () => ({
   cookies: () => Promise.resolve({ get: mockGet }),
+  headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
 }))
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 async function getPrivacyMetadata(locale?: string) {
   mockGet.mockReturnValue(locale ? { value: locale } : undefined)
-  const { generateMetadata } = await import(
-    '@/app/(legal)/privacy-policy/page'
-  )
+  const { generateMetadata } = await import('@/app/(legal)/privacy-policy/page')
   return generateMetadata()
 }
 
@@ -43,6 +47,7 @@ describe('generateMetadata() — PrivacyPolicyPage', () => {
 
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
   })
 
@@ -61,6 +66,7 @@ describe('generateMetadata() — PrivacyPolicyPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     const result = await getPrivacyMetadata('en')
     expect(result.title).toBe(en.meta.privacyTitle)
@@ -70,6 +76,7 @@ describe('generateMetadata() — PrivacyPolicyPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     const result = await getPrivacyMetadata('es')
     expect(result.title).toBe(es.meta.privacyTitle)
@@ -84,14 +91,40 @@ describe('generateMetadata() — PrivacyPolicyPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     const result = await getPrivacyMetadata('en')
     expect(result.description).toBe(en.meta.privacyDescription)
   })
 
-  it('canonical URL is SITE_URL/privacy-policy', async () => {
+  it('canonical URL is SITE_URL/privacy-policy for pt-BR', async () => {
     const result = await getPrivacyMetadata('pt-BR')
     expect(result.alternates?.canonical).toBe(`${SITE_URL}/privacy-policy`)
+  })
+
+  it('canonical URL is SITE_URL/en/privacy-policy for en', async () => {
+    jest.resetModules()
+    jest.mock('next/headers', () => ({
+      cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
+    }))
+    const result = await getPrivacyMetadata('en')
+    expect(result.alternates?.canonical).toBe(`${SITE_URL}/en/privacy-policy`)
+  })
+
+  it('alternates.languages contains all 6 locales + x-default', async () => {
+    const result = await getPrivacyMetadata('pt-BR')
+    const langs = result.alternates?.languages as Record<string, string> | undefined
+    expect(langs).toBeDefined()
+    expect(langs?.['pt-BR']).toBe(`${SITE_URL}/privacy-policy`)
+    expect(langs?.['en']).toBe(`${SITE_URL}/en/privacy-policy`)
+    expect(langs?.['es']).toBe(`${SITE_URL}/es/privacy-policy`)
+    expect(langs?.['zh']).toBe(`${SITE_URL}/zh/privacy-policy`)
+    expect(langs?.['fr']).toBe(`${SITE_URL}/fr/privacy-policy`)
+    expect(langs?.['de']).toBe(`${SITE_URL}/de/privacy-policy`)
+    // x-default always points to the default locale (pt-BR) version
+    expect(langs?.['x-default']).toBe(`${SITE_URL}/privacy-policy`)
+    expect(Object.keys(langs ?? {}).length).toBe(7)
   })
 
   it('openGraph type is "website"', async () => {
@@ -104,9 +137,19 @@ describe('generateMetadata() — PrivacyPolicyPage', () => {
     expect(result.openGraph?.siteName).toBe('Tablix')
   })
 
-  it('openGraph url is SITE_URL/privacy-policy', async () => {
+  it('openGraph url is SITE_URL/privacy-policy for pt-BR', async () => {
     const result = await getPrivacyMetadata('pt-BR')
     expect(result.openGraph?.url).toBe(`${SITE_URL}/privacy-policy`)
+  })
+
+  it('openGraph url is SITE_URL/en/privacy-policy for en', async () => {
+    jest.resetModules()
+    jest.mock('next/headers', () => ({
+      cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
+    }))
+    const result = await getPrivacyMetadata('en')
+    expect(result.openGraph?.url).toBe(`${SITE_URL}/en/privacy-policy`)
   })
 
   it('openGraph title matches privacyTitle for pt-BR', async () => {
@@ -128,6 +171,7 @@ describe('generateMetadata() — PrivacyPolicyPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     const result = await getPrivacyMetadata('en')
     expect(result.openGraph?.locale).toBe('en')
@@ -137,6 +181,7 @@ describe('generateMetadata() — PrivacyPolicyPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     const result = await getPrivacyMetadata('es')
     expect(result.openGraph?.locale).toBe('es')
@@ -146,6 +191,7 @@ describe('generateMetadata() — PrivacyPolicyPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     const result = await getPrivacyMetadata(undefined)
     expect(result.title).toBe(ptBR.meta.privacyTitle)
@@ -156,11 +202,10 @@ describe('generateMetadata() — PrivacyPolicyPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     mockGet.mockReturnValue({ value: 'zh-CN' })
-    const { generateMetadata } = await import(
-      '@/app/(legal)/privacy-policy/page'
-    )
+    const { generateMetadata } = await import('@/app/(legal)/privacy-policy/page')
     const result = await generateMetadata()
     expect(result.openGraph?.locale).toBe('pt_BR')
   })
@@ -182,6 +227,7 @@ describe('generateMetadata() — PrivacyPolicyPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     const enResult = await getPrivacyMetadata('en')
     expect(ptResult.title).not.toBe(enResult.title)
@@ -197,6 +243,7 @@ describe('generateMetadata() — TermsPage', () => {
 
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
   })
 
@@ -215,6 +262,7 @@ describe('generateMetadata() — TermsPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     const result = await getTermsMetadata('en')
     expect(result.title).toBe(en.meta.termsTitle)
@@ -224,6 +272,7 @@ describe('generateMetadata() — TermsPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     const result = await getTermsMetadata('es')
     expect(result.title).toBe(es.meta.termsTitle)
@@ -238,14 +287,39 @@ describe('generateMetadata() — TermsPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     const result = await getTermsMetadata('en')
     expect(result.description).toBe(en.meta.termsDescription)
   })
 
-  it('canonical URL is SITE_URL/terms', async () => {
+  it('canonical URL is SITE_URL/terms for pt-BR', async () => {
     const result = await getTermsMetadata('pt-BR')
     expect(result.alternates?.canonical).toBe(`${SITE_URL}/terms`)
+  })
+
+  it('canonical URL is SITE_URL/en/terms for en', async () => {
+    jest.resetModules()
+    jest.mock('next/headers', () => ({
+      cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
+    }))
+    const result = await getTermsMetadata('en')
+    expect(result.alternates?.canonical).toBe(`${SITE_URL}/en/terms`)
+  })
+
+  it('alternates.languages contains all 6 locales + x-default', async () => {
+    const result = await getTermsMetadata('pt-BR')
+    const langs = result.alternates?.languages as Record<string, string> | undefined
+    expect(langs).toBeDefined()
+    expect(langs?.['pt-BR']).toBe(`${SITE_URL}/terms`)
+    expect(langs?.['en']).toBe(`${SITE_URL}/en/terms`)
+    expect(langs?.['es']).toBe(`${SITE_URL}/es/terms`)
+    expect(langs?.['zh']).toBe(`${SITE_URL}/zh/terms`)
+    expect(langs?.['fr']).toBe(`${SITE_URL}/fr/terms`)
+    expect(langs?.['de']).toBe(`${SITE_URL}/de/terms`)
+    expect(langs?.['x-default']).toBe(`${SITE_URL}/terms`)
+    expect(Object.keys(langs ?? {}).length).toBe(7)
   })
 
   it('openGraph type is "website"', async () => {
@@ -258,9 +332,19 @@ describe('generateMetadata() — TermsPage', () => {
     expect(result.openGraph?.siteName).toBe('Tablix')
   })
 
-  it('openGraph url is SITE_URL/terms', async () => {
+  it('openGraph url is SITE_URL/terms for pt-BR', async () => {
     const result = await getTermsMetadata('pt-BR')
     expect(result.openGraph?.url).toBe(`${SITE_URL}/terms`)
+  })
+
+  it('openGraph url is SITE_URL/en/terms for en', async () => {
+    jest.resetModules()
+    jest.mock('next/headers', () => ({
+      cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
+    }))
+    const result = await getTermsMetadata('en')
+    expect(result.openGraph?.url).toBe(`${SITE_URL}/en/terms`)
   })
 
   it('openGraph title matches termsTitle for pt-BR', async () => {
@@ -282,6 +366,7 @@ describe('generateMetadata() — TermsPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     const result = await getTermsMetadata('en')
     expect(result.openGraph?.locale).toBe('en')
@@ -291,6 +376,7 @@ describe('generateMetadata() — TermsPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     const result = await getTermsMetadata('es')
     expect(result.openGraph?.locale).toBe('es')
@@ -300,6 +386,7 @@ describe('generateMetadata() — TermsPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     const result = await getTermsMetadata(undefined)
     expect(result.title).toBe(ptBR.meta.termsTitle)
@@ -310,6 +397,7 @@ describe('generateMetadata() — TermsPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     mockGet.mockReturnValue({ value: 'fr-FR' })
     const { generateMetadata } = await import('@/app/(legal)/terms/page')
@@ -334,6 +422,7 @@ describe('generateMetadata() — TermsPage', () => {
     jest.resetModules()
     jest.mock('next/headers', () => ({
       cookies: () => Promise.resolve({ get: mockGet }),
+      headers: () => Promise.resolve({ get: jest.fn().mockReturnValue(null) }),
     }))
     const enResult = await getTermsMetadata('en')
     expect(ptResult.title).not.toBe(enResult.title)
@@ -341,9 +430,7 @@ describe('generateMetadata() — TermsPage', () => {
 
   it('privacy-policy and terms canonical URLs are distinct', async () => {
     const termsResult = await getTermsMetadata('pt-BR')
-    expect(termsResult.alternates?.canonical).not.toBe(
-      `${SITE_URL}/privacy-policy`,
-    )
+    expect(termsResult.alternates?.canonical).not.toBe(`${SITE_URL}/privacy-policy`)
     expect(termsResult.alternates?.canonical).toBe(`${SITE_URL}/terms`)
   })
 })

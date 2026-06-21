@@ -26,6 +26,7 @@ jest.mock('@/lib/i18n', () => ({
   useLocale: () => ({
     t: (key: string) => key,
   }),
+  useLocalizedHref: () => (path: string) => path,
 }))
 
 jest.mock('@/hooks/use-usage', () => ({
