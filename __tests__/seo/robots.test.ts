@@ -40,10 +40,10 @@ describe('robots()', () => {
     expect(disallow).toContain('/upload')
   })
 
-  it('disallows /_next/ path', () => {
+  it('does NOT disallow /_next/ (Googlebot must read CSS/JS to render)', () => {
     const rule = Array.isArray(result.rules) ? result.rules[0] : result.rules
     const disallow = Array.isArray(rule.disallow) ? rule.disallow : [rule.disallow]
-    expect(disallow).toContain('/_next/')
+    expect(disallow).not.toContain('/_next/')
   })
 
   it('includes sitemap URL', () => {

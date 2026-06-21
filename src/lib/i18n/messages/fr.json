@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Tablix — Transformez des feuilles de calcul complexes en fichiers prêts à l'emploi",
-    "description": "Importez votre feuille de calcul, sélectionnez les colonnes nécessaires et générez un nouveau fichier en quelques secondes. Outil en ligne de traitement et de génération de feuilles de calcul sur mesure.",
+    "title": "Fusionner des fichiers Excel et CSV en ligne | Tablix",
+    "description": "Fusionnez vos fichiers Excel et CSV en ligne, gratuitement et sans inscription. Choisissez les colonnes utiles et téléchargez un nouveau fichier en quelques secondes.",
     "privacyTitle": "Politique de confidentialité — Tablix",
     "privacyDescription": "Découvrez comment Tablix collecte, utilise et protège vos données. Politique de confidentialité conforme à la LGPD.",
     "termsTitle": "Conditions d'utilisation — Tablix",
@@ -553,7 +553,7 @@
     }
   },
   "pricingPage": {
-    "metaTitle": "Forfaits & Tarifs | Tablix",
+    "metaTitle": "Tarifs et forfaits — Gratuit et Pro | Tablix",
     "metaDescription": "Comparez les forfaits Tablix Gratuit, Pro et Entreprise. Commencez gratuitement, sans inscription.",
     "ctaText": "Prêt à simplifier vos feuilles de calcul ?",
     "ctaSubtext": "Commencez en quelques secondes. Sans inscription, sans carte bancaire.",

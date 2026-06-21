@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Tablix - Transform complex spreadsheets into ready-to-use files",
-    "description": "Upload your spreadsheet, select the columns you need and generate a new file in seconds. Web tool for custom spreadsheet processing and generation.",
+    "title": "Merge Excel & CSV spreadsheets online free | Tablix",
+    "description": "Merge and combine Excel and CSV spreadsheets online — free, no sign-up. Pick the columns you need and download a clean new file in seconds.",
     "privacyTitle": "Privacy Policy — Tablix",
     "privacyDescription": "Learn how Tablix collects, uses, and protects your data. Privacy policy compliant with LGPD.",
     "termsTitle": "Terms of Use — Tablix",
@@ -553,7 +553,7 @@
     }
   },
   "pricingPage": {
-    "metaTitle": "Plans & Pricing | Tablix",
+    "metaTitle": "Pricing & plans — Free and Pro | Tablix",
     "metaDescription": "Compare Tablix Free, Pro, and Enterprise plans. Start free, no signup needed.",
     "ctaText": "Ready to simplify your spreadsheets?",
     "ctaSubtext": "Start in seconds. No signup, no credit card required.",

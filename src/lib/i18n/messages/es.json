@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Tablix - Transforma hojas de cálculo complejas en archivos listos para usar",
-    "description": "Carga tu hoja de cálculo, selecciona las columnas que necesitas y genera un nuevo archivo en segundos. Herramienta web para procesamiento y generación de hojas de cálculo personalizadas.",
+    "title": "Unir y combinar hojas de cálculo online | Tablix",
+    "description": "Une y combina hojas de cálculo Excel y CSV online, gratis y sin registro. Elige las columnas que necesitas y descarga un archivo nuevo al instante.",
     "privacyTitle": "Política de Privacidad — Tablix",
     "privacyDescription": "Descubre cómo Tablix recopila, utiliza y protege tus datos. Política de privacidad conforme a la LGPD.",
     "termsTitle": "Términos de Uso — Tablix",
@@ -553,7 +553,7 @@
     }
   },
   "pricingPage": {
-    "metaTitle": "Planes y Precios | Tablix",
+    "metaTitle": "Precios y planes — Free y Pro | Tablix",
     "metaDescription": "Compare los planes Free, Pro y Enterprise de Tablix. Comience gratis, sin registro.",
     "ctaText": "¿Listo para simplificar tus hojas de cálculo?",
     "ctaSubtext": "Comienza en segundos. Sin registro, sin tarjeta de crédito.",

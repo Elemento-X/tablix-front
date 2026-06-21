@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Tablix - Transforme planilhas complexas em arquivos prontos para uso",
-    "description": "Envie sua planilha, selecione as colunas que você precisa e gere um novo arquivo em segundos. Ferramenta web para processamento e geração de planilhas personalizadas.",
+    "title": "Juntar e unir planilhas Excel e CSV online | Tablix",
+    "description": "Junte, una e mescle planilhas Excel e CSV online, grátis e sem cadastro. Escolha as colunas que importam e baixe um arquivo novo em segundos.",
     "privacyTitle": "Política de Privacidade — Tablix",
     "privacyDescription": "Saiba como o Tablix coleta, utiliza e protege seus dados. Política de privacidade conforme a LGPD.",
     "termsTitle": "Termos de Uso — Tablix",
@@ -553,7 +553,7 @@
     }
   },
   "pricingPage": {
-    "metaTitle": "Planos | Tablix",
+    "metaTitle": "Preços e planos — Free e Pro | Tablix",
     "metaDescription": "Compare os planos Free, Pro e Enterprise do Tablix. Comece grátis, sem cadastro.",
     "ctaText": "Pronto para simplificar suas planilhas?",
     "ctaSubtext": "Comece em segundos, sem cadastro e sem cartão de crédito.",
