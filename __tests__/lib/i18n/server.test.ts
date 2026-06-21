@@ -56,6 +56,13 @@ describe('getServerLocale()', () => {
     expect(result).toBe('fr')
   })
 
+  it('returns de when cookie is "de"', async () => {
+    mockGet.mockReturnValue({ value: 'de' })
+    const { getServerLocale } = await import('@/lib/i18n/server')
+    const result = await getServerLocale()
+    expect(result).toBe('de')
+  })
+
   it('returns defaultLocale when cookie is missing (undefined)', async () => {
     mockGet.mockReturnValue(undefined)
     const { getServerLocale } = await import('@/lib/i18n/server')
@@ -147,6 +154,14 @@ describe('getMessages()', () => {
     expect(messages.meta.title.length).toBeGreaterThan(0)
   })
 
+  it('returns de messages for de locale', async () => {
+    const { getMessages } = await import('@/lib/i18n/server')
+    const messages = getMessages('de')
+    expect(messages).toBeDefined()
+    expect(typeof messages.meta.title).toBe('string')
+    expect(messages.meta.title.length).toBeGreaterThan(0)
+  })
+
   it('each locale returns distinct meta.title (no cross-contamination)', async () => {
     const { getMessages } = await import('@/lib/i18n/server')
     const ptBR = getMessages('pt-BR')
@@ -154,11 +169,19 @@ describe('getMessages()', () => {
     const es = getMessages('es')
     const zh = getMessages('zh')
     const fr = getMessages('fr')
+    const de = getMessages('de')
 
-    const titles = [ptBR.meta.title, en.meta.title, es.meta.title, zh.meta.title, fr.meta.title]
+    const titles = [
+      ptBR.meta.title,
+      en.meta.title,
+      es.meta.title,
+      zh.meta.title,
+      fr.meta.title,
+      de.meta.title,
+    ]
     const uniqueTitles = new Set(titles)
-    // All five should be different strings (sanity check — they are distinct translations)
-    expect(uniqueTitles.size).toBe(5)
+    // All six should be different strings (sanity check — they are distinct translations)
+    expect(uniqueTitles.size).toBe(6)
   })
 
   it('returns object with meta.description for all locales', async () => {
@@ -195,6 +218,11 @@ describe('toOpenGraphLocale()', () => {
   it('returns "fr" unchanged (no hyphen)', async () => {
     const { toOpenGraphLocale } = await import('@/lib/i18n/server')
     expect(toOpenGraphLocale('fr')).toBe('fr')
+  })
+
+  it('returns "de" unchanged (no hyphen)', async () => {
+    const { toOpenGraphLocale } = await import('@/lib/i18n/server')
+    expect(toOpenGraphLocale('de')).toBe('de')
   })
 
   it('returns a string for every supported locale', async () => {

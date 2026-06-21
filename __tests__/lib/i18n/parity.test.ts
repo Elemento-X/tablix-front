@@ -16,6 +16,7 @@ import en from '@/lib/i18n/messages/en.json'
 import es from '@/lib/i18n/messages/es.json'
 import zh from '@/lib/i18n/messages/zh.json'
 import fr from '@/lib/i18n/messages/fr.json'
+import de from '@/lib/i18n/messages/de.json'
 
 type JsonObject = Record<string, unknown>
 
@@ -25,6 +26,7 @@ const messagesByLocale: Record<Locale, JsonObject> = {
   es: es as unknown as JsonObject,
   zh: zh as unknown as JsonObject,
   fr: fr as unknown as JsonObject,
+  de: de as unknown as JsonObject,
 }
 
 function collectLeafPaths(obj: JsonObject, prefix = ''): string[] {

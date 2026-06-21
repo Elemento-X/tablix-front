@@ -20,7 +20,7 @@ import { env } from '@/config/env'
 // is intentionally self-contained (it replaces the root layout + LocaleProvider),
 // so it cannot import the bundles. When adding a new locale, add it here too —
 // otherwise that locale silently falls back to pt-BR on a root crash.
-type Locale = 'pt-BR' | 'en' | 'es' | 'zh' | 'fr'
+type Locale = 'pt-BR' | 'en' | 'es' | 'zh' | 'fr' | 'de'
 
 const MESSAGES: Record<
   Locale,
@@ -55,6 +55,13 @@ const MESSAGES: Record<
     description: "Une erreur inattendue est survenue. Réessayez ou revenez à la page d'accueil.",
     tryAgain: 'Réessayer',
     goHome: "Retour à l'accueil",
+  },
+  de: {
+    title: 'Etwas ist schiefgelaufen',
+    description:
+      'Ein unerwarteter Fehler ist aufgetreten. Versuchen Sie es erneut oder kehren Sie zur Startseite zurück.',
+    tryAgain: 'Erneut versuchen',
+    goHome: 'Zur Startseite',
   },
 }
 
