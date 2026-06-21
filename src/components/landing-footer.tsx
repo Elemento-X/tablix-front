@@ -21,6 +21,11 @@ export function LandingFooter() {
       section: 'pricing',
       href: lh('/pricing'),
     },
+    {
+      label: t('useCases.mergeExcel.h1'),
+      section: 'merge-excel',
+      href: lh('/juntar-planilhas-excel'),
+    },
   ]
 
   return (

@@ -12,8 +12,14 @@ describe('sitemap()', () => {
     expect(Array.isArray(result)).toBe(true)
   })
 
-  it('returns exactly 4 entries', () => {
-    expect(result).toHaveLength(4)
+  it('returns exactly 5 entries', () => {
+    expect(result).toHaveLength(5)
+  })
+
+  it('includes the merge-excel use-case landing', () => {
+    const landing = result.find((e) => e.url.endsWith('/juntar-planilhas-excel'))
+    expect(landing).toBeDefined()
+    expect(landing?.alternates?.languages).toBeDefined()
   })
 
   it('every entry has a url property', () => {

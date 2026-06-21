@@ -82,9 +82,15 @@
     "heading": "为何信赖 Tablix",
     "ariaLabel": "Tablix 信任指标",
     "metrics": {
-      "zeroStorage": { "label": "存储的字节数" },
-      "localProcessing": { "label": "本地处理" },
-      "formats": { "label": "格式：XLSX、CSV 和 XLS" }
+      "zeroStorage": {
+        "label": "存储的字节数"
+      },
+      "localProcessing": {
+        "label": "本地处理"
+      },
+      "formats": {
+        "label": "格式：XLSX、CSV 和 XLS"
+      }
     }
   },
   "comparisonMini": {
@@ -647,5 +653,32 @@
     "accept": "知道了",
     "learnMore": "了解更多",
     "ariaLabel": "Cookie 提示"
+  },
+  "useCases": {
+    "mergeExcel": {
+      "metaTitle": "合并 Excel 文件，免费在线工具 | Tablix",
+      "metaDescription": "免费在线合并 Excel 和 CSV 文件，无需注册。选择所需的列，几秒钟即可下载整洁的新文件，全程在您的浏览器中处理，安全又私密。",
+      "h1": "合并 Excel 文件",
+      "intro": "无需公式，也无需复制粘贴，即可将多个 Excel 文件合并为一个。上传文件、选择列，然后下载处理好的结果。",
+      "benefit1": "无需安装，直接在浏览器中运行",
+      "benefit2": "100% 私密：文件在您的设备上处理，绝不上传",
+      "benefit3": "由您决定保留哪些列",
+      "howToTitle": "三步合并 Excel 文件",
+      "step1Title": "上传文件",
+      "step1Desc": "拖入您的 Excel 或 CSV 文件。免费版每次最多可合并 3 个文件。",
+      "step2Title": "选择列",
+      "step2Desc": "查看自动识别的所有列，只保留最终文件中需要的列。",
+      "step3Title": "下载结果",
+      "step3Desc": "生成合并后的表格，下载整洁、可直接使用的新文件。",
+      "faqTitle": "常见问题",
+      "faq1Q": "用 Tablix 合并 Excel 文件免费吗？",
+      "faq1A": "免费。免费版每月可合并 1 次，最多 3 个文件，总计 500 行、3 列。需要更多？Pro 版可提升所有上限。",
+      "faq2Q": "我的数据安全吗？",
+      "faq2A": "安全。在免费版中，所有处理都在您的浏览器中完成，文件绝不会上传到任何服务器。",
+      "faq3Q": "一次可以合并多少个文件？",
+      "faq3A": "免费版每次合并最多 3 个文件，总计不超过 500 行、3 列和 1 MB。Pro 版可扩展所有这些限制。",
+      "ctaTitle": "准备好合并您的 Excel 文件了吗？",
+      "ctaButton": "合并我的文件"
+    }
   }
 }
