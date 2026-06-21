@@ -2,23 +2,24 @@ import { locales, defaultLocale, localeNames, type Locale } from '@/lib/i18n/con
 
 describe('i18n config', () => {
   describe('locales', () => {
-    it('should have pt-BR, en, es, zh, and fr locales', () => {
+    it('should have pt-BR, en, es, zh, fr, and de locales', () => {
       expect(locales).toContain('pt-BR')
       expect(locales).toContain('en')
       expect(locales).toContain('es')
       expect(locales).toContain('zh')
       expect(locales).toContain('fr')
+      expect(locales).toContain('de')
     })
 
-    it('should have exactly 5 locales', () => {
-      expect(locales).toHaveLength(5)
+    it('should have exactly 6 locales', () => {
+      expect(locales).toHaveLength(6)
     })
 
     it('should be a readonly tuple', () => {
       // TypeScript enforces readonly at compile time via "as const"
       // At runtime, we just verify the array exists and has expected values
       expect(Array.isArray(locales)).toBe(true)
-      expect(locales.length).toBe(5)
+      expect(locales.length).toBe(6)
     })
   })
 
@@ -53,6 +54,10 @@ describe('i18n config', () => {
       expect(localeNames.fr).toBe('Français')
     })
 
+    it('should have correct name for de', () => {
+      expect(localeNames.de).toBe('Deutsch')
+    })
+
     it('should have names for all locales', () => {
       for (const locale of locales) {
         expect(localeNames[locale]).toBeDefined()
@@ -64,8 +69,8 @@ describe('i18n config', () => {
 
   describe('Locale type', () => {
     it('should accept valid locale values', () => {
-      const validLocales: Locale[] = ['pt-BR', 'en', 'es', 'zh', 'fr']
-      expect(validLocales).toHaveLength(5)
+      const validLocales: Locale[] = ['pt-BR', 'en', 'es', 'zh', 'fr', 'de']
+      expect(validLocales).toHaveLength(6)
     })
   })
 })

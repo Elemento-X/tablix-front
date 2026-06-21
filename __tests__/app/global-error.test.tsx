@@ -56,6 +56,12 @@ describe('global-error (RootError) i18n', () => {
     await waitFor(() => expect(screen.getByText("Une erreur s'est produite")).toBeInTheDocument())
   })
 
+  it('renders German when tablix-locale=de', async () => {
+    setLocaleCookie('de')
+    render(<RootError {...props} />)
+    await waitFor(() => expect(screen.getByText('Etwas ist schiefgelaufen')).toBeInTheDocument())
+  })
+
   it('falls back to pt-BR for an invalid locale cookie', async () => {
     setLocaleCookie('fr-XX-invalid')
     render(<RootError {...props} />)

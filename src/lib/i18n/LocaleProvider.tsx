@@ -7,6 +7,7 @@ import en from './messages/en.json'
 import es from './messages/es.json'
 import zh from './messages/zh.json'
 import fr from './messages/fr.json'
+import de from './messages/de.json'
 
 const messages = {
   'pt-BR': ptBR,
@@ -14,6 +15,7 @@ const messages = {
   es,
   zh,
   fr,
+  de,
 }
 
 type Messages = typeof ptBR
