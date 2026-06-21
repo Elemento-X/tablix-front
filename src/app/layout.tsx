@@ -89,12 +89,33 @@ export default async function RootLayout({
   const nonce = (await headers()).get('x-nonce') ?? ''
   const locale = await getServerLocale()
 
+  // Organization schema — base for brand recognition / Knowledge Panel.
+  // Present on every page (root layout). sameAs left empty until social profiles exist.
+  const organizationJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Tablix',
+    url: SITE_URL,
+    logo: `${SITE_URL}/apple-icon.png`,
+  }
+
   return (
     <html lang={locale} suppressHydrationWarning>
       <body
         className={`${geistSans.className} ${geistMono.className} font-sans antialiased`}
         suppressHydrationWarning
       >
+        <script
+          type="application/ld+json"
+          nonce={nonce}
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd)
+              .replace(/</g, '\\u003c')
+              .replace(/-->/g, '--\\u003e')
+              .replace(/]]>/g, ']]\\u003e'),
+          }}
+        />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem nonce={nonce}>
           <PostHogProvider>
             <MotionProvider>
