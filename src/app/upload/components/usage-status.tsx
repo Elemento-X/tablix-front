@@ -3,6 +3,7 @@
 import { Card, CardContent } from '@/components/card'
 import { formatFileSize, type UsageInfo } from '@/hooks/use-usage'
 import { useLocale } from '@/lib/i18n'
+import { getPlanName } from '@/lib/plan-name'
 import { Info } from 'lucide-react'
 
 interface UsageStatusProps {
@@ -63,7 +64,7 @@ export function UsageStatus({ usage, isLoading }: UsageStatusProps) {
           <div className="flex-1">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-foreground text-sm font-medium">
-                {t('status.plan')}: {usage.plan.toUpperCase()}
+                {t('status.plan')}: {getPlanName(t, usage.plan)}
               </span>
 
               <span className="text-foreground text-sm font-medium">

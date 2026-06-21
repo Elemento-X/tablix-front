@@ -1,6 +1,7 @@
 import { toast } from 'sonner'
 import { FetchError } from '@/lib/fetch-client'
 import { SpreadsheetParseError, type ParseErrorCode } from '@/lib/spreadsheet-errors'
+import { getPlanName } from '@/lib/plan-name'
 
 const FETCH_ERROR_KEY_MAP: Record<string, string> = {
   offline: 'errors.offline',
@@ -49,7 +50,11 @@ export function toastFetchError(
 
   if (err instanceof SpreadsheetParseError) {
     const key = PARSE_CODE_KEY_MAP[err.code] ?? fallbackKey
-    toast.error(t(key, err.params))
+    // params.plan carries the plan TYPE ("free") — resolve to the localized name.
+    const params = err.params?.plan
+      ? { ...err.params, plan: getPlanName(t, err.params.plan) }
+      : err.params
+    toast.error(t(key, params))
     return
   }
 

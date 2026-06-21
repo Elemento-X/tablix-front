@@ -20,6 +20,8 @@ jest.mock('@/lib/i18n', () => ({
         'status.maxColumnsLabel': 'Max columns:',
         'status.maxColumns': 'columns',
         'a11y.usageProgress': 'Plan usage progress',
+        'pricing.plans.free.name': 'Free',
+        'pricing.plans.pro.name': 'Pro',
       }
       return map[key] ?? key
     },
@@ -52,9 +54,14 @@ describe('UsageStatus', () => {
     expect(container.firstChild).toBeNull()
   })
 
-  it('renders plan name in uppercase', () => {
+  it('renders the localized plan name', () => {
     render(<UsageStatus usage={createUsage()} isLoading={false} />)
-    expect(screen.getByText(/FREE/)).toBeInTheDocument()
+    expect(screen.getByText(/Free/)).toBeInTheDocument()
+  })
+
+  it('renders the localized plan name for pro', () => {
+    render(<UsageStatus usage={createUsage({ plan: 'pro' })} isLoading={false} />)
+    expect(screen.getByText(/Pro/)).toBeInTheDocument()
   })
 
   it('renders remaining/max unifications', () => {

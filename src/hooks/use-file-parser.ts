@@ -18,8 +18,12 @@ export interface ParseError {
 }
 
 /** Build the params consumed by the `errors.parseRowLimit` i18n message. */
-function rowLimitParams(total: number, max: number, planName: string): Record<string, string> {
-  return { total: String(total), max: String(max), plan: planName.toUpperCase() }
+/**
+ * Params for the `errors.parseRowLimit` message. `plan` carries the plan TYPE
+ * (e.g. "free") — the localized name is resolved later by toast-error via t().
+ */
+function rowLimitParams(total: number, max: number, plan: PlanType): Record<string, string> {
+  return { total: String(total), max: String(max), plan }
 }
 
 type PreviewRow = Record<string, string | number | boolean | null>
@@ -73,7 +77,7 @@ export function useFileParser() {
         throw new SpreadsheetParseError(
           'ROW_LIMIT',
           `File exceeds row limit: ${totalRows} rows (max ${limits.maxRows} for ${limits.name} plan)`,
-          rowLimitParams(totalRows, limits.maxRows, limits.name),
+          rowLimitParams(totalRows, limits.maxRows, plan),
         )
       }
 
@@ -115,7 +119,7 @@ export function useFileParser() {
         throw new SpreadsheetParseError(
           'ROW_LIMIT',
           `File exceeds row limit: ${result.rowCount} rows (max ${limits.maxRows} for ${limits.name} plan)`,
-          rowLimitParams(result.rowCount, limits.maxRows, limits.name),
+          rowLimitParams(result.rowCount, limits.maxRows, plan),
         )
       }
 
