@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
-import { getServerLocale, getMessages } from '@/lib/i18n/server'
+import { getServerLocale, getMessages, toOpenGraphLocale } from '@/lib/i18n/server'
 import { buildAlternates, localizedUrl } from '@/lib/i18n/routing'
+import { getRelatedGuides } from '@/lib/blog/posts'
 import { UseCaseLanding } from '@/components/use-case-landing'
 
 const PATH = '/juntar-arquivos-csv'
 const USE_CASE = 'mergeCsv'
+const GUIDE_SLUGS = ['como-combinar-arquivos-csv', 'csv-ou-xlsx-qual-usar']
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getServerLocale()
@@ -16,11 +18,18 @@ export async function generateMetadata(): Promise<Metadata> {
     description: uc.metaDescription,
     alternates: buildAlternates(locale, PATH),
     openGraph: {
+      type: 'website',
       title: uc.metaTitle,
       description: uc.metaDescription,
       url: localizedUrl(locale, PATH),
+      siteName: 'Tablix',
+      locale: toOpenGraphLocale(locale),
     },
-    twitter: { title: uc.metaTitle, description: uc.metaDescription },
+    twitter: {
+      card: 'summary_large_image',
+      title: uc.metaTitle,
+      description: uc.metaDescription,
+    },
   }
 }
 
@@ -28,6 +37,7 @@ export default async function MergeCsvLandingPage() {
   const nonce = (await headers()).get('x-nonce') ?? ''
   const locale = await getServerLocale()
   const uc = getMessages(locale).useCases[USE_CASE]
+  const relatedGuides = await getRelatedGuides(GUIDE_SLUGS, locale)
 
   const howToJsonLd = {
     '@context': 'https://schema.org',
@@ -69,7 +79,7 @@ export default async function MergeCsvLandingPage() {
         suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: escape(faqJsonLd) }}
       />
-      <UseCaseLanding useCaseKey={USE_CASE} />
+      <UseCaseLanding useCaseKey={USE_CASE} relatedGuides={relatedGuides} />
     </>
   )
 }

@@ -654,6 +654,27 @@
     "learnMore": "Learn more",
     "ariaLabel": "Cookie notice"
   },
+  "blog": {
+    "meta": {
+      "title": "Tablix Blog: spreadsheet, Excel and CSV guides",
+      "description": "Practical guides to merge, combine and organize Excel and CSV spreadsheets. Learn the step by step and do it right in your browser, for free."
+    },
+    "title": "Spreadsheet guides",
+    "subtitle": "Practical tutorials to merge, combine and organize your Excel and CSV data.",
+    "empty": "No articles published yet.",
+    "readMore": "Read guide",
+    "publishedOn": "Published on",
+    "updatedOn": "updated on",
+    "relatedGuidesTitle": "Related guides",
+    "breadcrumb": {
+      "home": "Home",
+      "blog": "Blog"
+    },
+    "cta": {
+      "title": "Ready to organize your spreadsheets?",
+      "button": "Try Tablix for free"
+    }
+  },
   "useCases": {
     "mergeExcel": {
       "metaTitle": "Merge Excel Files Online Free | Tablix",

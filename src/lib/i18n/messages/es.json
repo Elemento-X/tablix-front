@@ -654,6 +654,27 @@
     "learnMore": "Más información",
     "ariaLabel": "Aviso de cookies"
   },
+  "blog": {
+    "meta": {
+      "title": "Blog de Tablix: guías de hojas de cálculo, Excel y CSV",
+      "description": "Guías prácticas para unir, combinar y organizar hojas de cálculo en Excel y CSV. Aprenda el paso a paso y resuélvalo en su navegador, gratis."
+    },
+    "title": "Guías de hojas de cálculo",
+    "subtitle": "Tutoriales prácticos para unir, combinar y organizar sus datos en Excel y CSV.",
+    "empty": "Aún no hay artículos publicados.",
+    "readMore": "Leer guía",
+    "publishedOn": "Publicado el",
+    "updatedOn": "actualizado el",
+    "relatedGuidesTitle": "Guías relacionadas",
+    "breadcrumb": {
+      "home": "Inicio",
+      "blog": "Blog"
+    },
+    "cta": {
+      "title": "¿Listo para organizar sus hojas de cálculo?",
+      "button": "Probar Tablix gratis"
+    }
+  },
   "useCases": {
     "mergeExcel": {
       "metaTitle": "Unir hojas de Excel gratis online | Tablix",

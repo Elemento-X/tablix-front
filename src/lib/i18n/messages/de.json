@@ -654,6 +654,27 @@
     "learnMore": "Mehr erfahren",
     "ariaLabel": "Cookie-Hinweis"
   },
+  "blog": {
+    "meta": {
+      "title": "Tablix Blog: Anleitungen für Tabellen, Excel und CSV",
+      "description": "Praktische Anleitungen zum Zusammenführen, Kombinieren und Organisieren von Excel- und CSV-Tabellen. Schritt für Schritt, direkt im Browser, kostenlos."
+    },
+    "title": "Tabellen-Anleitungen",
+    "subtitle": "Praktische Tutorials zum Zusammenführen, Kombinieren und Organisieren Ihrer Excel- und CSV-Daten.",
+    "empty": "Noch keine Artikel veröffentlicht.",
+    "readMore": "Anleitung lesen",
+    "publishedOn": "Veröffentlicht am",
+    "updatedOn": "aktualisiert am",
+    "relatedGuidesTitle": "Verwandte Anleitungen",
+    "breadcrumb": {
+      "home": "Startseite",
+      "blog": "Blog"
+    },
+    "cta": {
+      "title": "Bereit, Ihre Tabellen zu organisieren?",
+      "button": "Tablix kostenlos testen"
+    }
+  },
   "useCases": {
     "mergeExcel": {
       "metaTitle": "Excel-Dateien zusammenführen kostenlos | Tablix",
