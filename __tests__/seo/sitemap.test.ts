@@ -95,18 +95,20 @@ describe('sitemap()', () => {
     expect(pricing?.changeFrequency).toBe('weekly')
   })
 
-  it('every entry has lastModified as a Date', () => {
+  it('every entry has lastModified as a stable ISO date string (not new Date() per build)', () => {
     result.forEach((entry) => {
-      expect(entry.lastModified).toBeInstanceOf(Date)
+      expect(typeof entry.lastModified).toBe('string')
+      // YYYY-MM-DD — versioned constant, not a per-build timestamp.
+      expect(entry.lastModified as string).toMatch(/^\d{4}-\d{2}-\d{2}$/)
     })
   })
 
-  it('lastModified dates are close to now (not in far past or future)', () => {
+  it('lastModified dates are valid and not in the future', () => {
     const now = Date.now()
-    const oneMinuteMs = 60 * 1000
     result.forEach((entry) => {
-      const ts = (entry.lastModified as Date).getTime()
-      expect(Math.abs(ts - now)).toBeLessThan(oneMinuteMs)
+      const ts = new Date(entry.lastModified as string).getTime()
+      expect(Number.isNaN(ts)).toBe(false)
+      expect(ts).toBeLessThanOrEqual(now)
     })
   })
 

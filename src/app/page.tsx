@@ -42,18 +42,40 @@ export default async function LandingPage() {
     ],
   }
 
+  // HowTo schema from the "How it works" section (4 steps) — eligible for rich results.
+  const steps = messages.howItWorks.steps
+  const howToJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    name: messages.howItWorks.title,
+    inLanguage: locale,
+    step: [steps.upload, steps.visualize, steps.choose, steps.generate].map((s, i) => ({
+      '@type': 'HowToStep',
+      position: i + 1,
+      name: s.title,
+      text: s.description,
+    })),
+  }
+
+  const escapeJsonLd = (obj: unknown) =>
+    JSON.stringify(obj)
+      .replace(/</g, '\\u003c')
+      .replace(/-->/g, '--\\u003e')
+      .replace(/]]>/g, ']]\\u003e')
+
   return (
     <>
       <script
         type="application/ld+json"
         nonce={nonce}
         suppressHydrationWarning
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(softwareJsonLd)
-            .replace(/</g, '\\u003c')
-            .replace(/-->/g, '--\\u003e')
-            .replace(/]]>/g, ']]\\u003e'),
-        }}
+        dangerouslySetInnerHTML={{ __html: escapeJsonLd(softwareJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        nonce={nonce}
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: escapeJsonLd(howToJsonLd) }}
       />
       <LandingPageContent />
     </>
