@@ -82,9 +82,15 @@
     "heading": "Pourquoi faire confiance à Tablix",
     "ariaLabel": "Indicateurs de confiance Tablix",
     "metrics": {
-      "zeroStorage": { "label": "octets stockés" },
-      "localProcessing": { "label": "traitement local" },
-      "formats": { "label": "formats : XLSX, CSV et XLS" }
+      "zeroStorage": {
+        "label": "octets stockés"
+      },
+      "localProcessing": {
+        "label": "traitement local"
+      },
+      "formats": {
+        "label": "formats : XLSX, CSV et XLS"
+      }
     }
   },
   "comparisonMini": {
@@ -647,5 +653,82 @@
     "accept": "Compris",
     "learnMore": "En savoir plus",
     "ariaLabel": "Avis sur les cookies"
+  },
+  "useCases": {
+    "mergeExcel": {
+      "metaTitle": "Fusionner des fichiers Excel en ligne | Tablix",
+      "metaDescription": "Fusionnez vos fichiers Excel et CSV en ligne, gratuitement et sans inscription. Gardez les colonnes utiles et téléchargez un nouveau fichier en quelques secondes.",
+      "h1": "Fusionner des fichiers Excel",
+      "intro": "Réunissez plusieurs fichiers Excel en un seul, sans formules ni copier-coller. Importez vos fichiers, choisissez les colonnes et téléchargez le résultat prêt à l'emploi.",
+      "benefit1": "Rien à installer — tout se passe dans votre navigateur",
+      "benefit2": "100% privé : vos fichiers sont traités sur votre appareil et n'en sortent jamais",
+      "benefit3": "Vous choisissez exactement les colonnes à conserver",
+      "howToTitle": "Comment fusionner des fichiers Excel en 3 étapes",
+      "step1Title": "Importez vos fichiers",
+      "step1Desc": "Glissez vos fichiers Excel ou CSV. Avec le plan Free, fusionnez jusqu'à 3 fichiers à la fois.",
+      "step2Title": "Choisissez les colonnes",
+      "step2Desc": "Visualisez toutes les colonnes détectées et ne gardez que celles dont vous avez besoin dans le fichier final.",
+      "step3Title": "Téléchargez le résultat",
+      "step3Desc": "Générez le fichier fusionné et téléchargez un nouveau fichier propre, prêt à l'emploi.",
+      "faqTitle": "Questions fréquentes",
+      "faq1Q": "Fusionner des fichiers Excel avec Tablix, est-ce gratuit ?",
+      "faq1A": "Oui. Le plan Free inclut 1 fusion par mois, avec jusqu'à 3 fichiers, 500 lignes et 3 colonnes au total. Besoin de plus ? Le plan Pro augmente toutes les limites.",
+      "faq2Q": "Mes données sont-elles en sécurité ?",
+      "faq2A": "Oui. Avec le plan Free, tout le traitement se fait dans votre navigateur : vos fichiers ne sont jamais envoyés sur un serveur.",
+      "faq3Q": "Combien de fichiers puis-je fusionner à la fois ?",
+      "faq3A": "Avec le plan Free, jusqu'à 3 fichiers par fusion, pour un maximum de 500 lignes, 3 colonnes et 1 Mo. Le plan Pro élargit toutes ces limites.",
+      "ctaTitle": "Prêt à fusionner vos fichiers Excel ?",
+      "ctaButton": "Fusionner mes fichiers"
+    },
+    "mergeCsv": {
+      "metaTitle": "Fusionner des fichiers CSV en ligne | Tablix",
+      "metaDescription": "Réunissez plusieurs fichiers CSV en un seul, gratuitement et sans inscription. Choisissez les colonnes et téléchargez un nouveau CSV en quelques secondes.",
+      "h1": "Fusionner des fichiers CSV",
+      "intro": "Réunissez plusieurs fichiers CSV en un seul, sans ouvrir de tableur ni régler de délimiteurs. Importez vos CSV, choisissez les colonnes et téléchargez le résultat.",
+      "benefit1": "Lit les CSV de toute origine — exports de systèmes, outils et rapports",
+      "benefit2": "100% privé : vos CSV sont traités sur votre appareil et n'en sortent jamais",
+      "benefit3": "Vous décidez des colonnes à conserver dans le fichier final",
+      "howToTitle": "Comment fusionner des fichiers CSV en 3 étapes",
+      "step1Title": "Importez vos CSV",
+      "step1Desc": "Glissez vos fichiers CSV. Avec le plan Free, fusionnez jusqu'à 3 fichiers à la fois.",
+      "step2Title": "Choisissez les colonnes",
+      "step2Desc": "Visualisez les colonnes détectées dans chaque CSV et ne gardez que celles qui comptent.",
+      "step3Title": "Téléchargez le CSV fusionné",
+      "step3Desc": "Générez le fichier final et téléchargez un nouveau CSV propre, prêt à l'emploi.",
+      "faqTitle": "Questions fréquentes",
+      "faq1Q": "Fusionner des fichiers CSV avec Tablix, est-ce gratuit ?",
+      "faq1A": "Oui. Le plan Free inclut 1 fusion par mois, avec jusqu'à 3 fichiers, 500 lignes et 3 colonnes au total. Besoin de plus ? Le plan Pro augmente toutes les limites.",
+      "faq2Q": "Mes fichiers CSV sont-ils en sécurité ?",
+      "faq2A": "Oui. Avec le plan Free, tout le traitement se fait dans votre navigateur : vos CSV ne sont jamais envoyés sur un serveur.",
+      "faq3Q": "Combien de fichiers CSV puis-je fusionner à la fois ?",
+      "faq3A": "Avec le plan Free, jusqu'à 3 fichiers par fusion, pour un maximum de 500 lignes, 3 colonnes et 1 Mo. Le plan Pro élargit toutes ces limites.",
+      "ctaTitle": "Prêt à fusionner vos fichiers CSV ?",
+      "ctaButton": "Fusionner mes CSV"
+    },
+    "combineMultiple": {
+      "metaTitle": "Combiner plusieurs feuilles de calcul | Tablix",
+      "metaDescription": "Combinez plusieurs feuilles de calcul en un seul fichier, gratuitement et sans inscription. Consolidez les données de plusieurs fichiers et obtenez un seul résultat.",
+      "h1": "Combiner plusieurs feuilles de calcul",
+      "intro": "Réunissez les données de plusieurs feuilles de calcul dans un seul fichier consolidé. Au lieu de copier-coller feuille par feuille, importez vos fichiers, choisissez les colonnes et téléchargez le résultat.",
+      "benefit1": "Consolidez plusieurs fichiers d'un coup, sans créer de formules",
+      "benefit2": "100% privé : vos feuilles sont traités sur votre appareil et n'en sortent jamais",
+      "benefit3": "Uniformisez les colonnes de tous les fichiers dans un seul format",
+      "howToTitle": "Comment combiner plusieurs feuilles de calcul en 3 étapes",
+      "step1Title": "Importez vos feuilles de calcul",
+      "step1Desc": "Glissez vos fichiers Excel ou CSV. Avec le plan Free, combinez jusqu'à 3 feuilles à la fois.",
+      "step2Title": "Choisissez les colonnes",
+      "step2Desc": "Visualisez les colonnes de chaque fichier et sélectionnez celles qui entrent dans la feuille consolidée.",
+      "step3Title": "Téléchargez le fichier unique",
+      "step3Desc": "Générez la feuille consolidée et téléchargez un nouveau fichier qui réunit tout.",
+      "faqTitle": "Questions fréquentes",
+      "faq1Q": "Combiner plusieurs feuilles de calcul avec Tablix, est-ce gratuit ?",
+      "faq1A": "Oui. Le plan Free inclut 1 fusion par mois, avec jusqu'à 3 fichiers, 500 lignes et 3 colonnes au total. Besoin de plus ? Le plan Pro augmente toutes les limites.",
+      "faq2Q": "Mes feuilles de calcul sont-elles en sécurité ?",
+      "faq2A": "Oui. Avec le plan Free, tout le traitement se fait dans votre navigateur : vos fichiers ne sont jamais envoyés sur un serveur.",
+      "faq3Q": "Combien de feuilles de calcul puis-je combiner à la fois ?",
+      "faq3A": "Avec le plan Free, jusqu'à 3 fichiers par fusion, pour un maximum de 500 lignes, 3 colonnes et 1 Mo. Le plan Pro élargit toutes ces limites.",
+      "ctaTitle": "Prêt à combiner vos feuilles de calcul en une seule ?",
+      "ctaButton": "Combiner mes feuilles"
+    }
   }
 }

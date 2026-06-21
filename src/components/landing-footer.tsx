@@ -21,6 +21,21 @@ export function LandingFooter() {
       section: 'pricing',
       href: lh('/pricing'),
     },
+    {
+      label: t('useCases.mergeExcel.h1'),
+      section: 'merge-excel',
+      href: lh('/juntar-planilhas-excel'),
+    },
+    {
+      label: t('useCases.mergeCsv.h1'),
+      section: 'merge-csv',
+      href: lh('/juntar-arquivos-csv'),
+    },
+    {
+      label: t('useCases.combineMultiple.h1'),
+      section: 'combine-multiple',
+      href: lh('/unir-varias-planilhas'),
+    },
   ]
 
   return (

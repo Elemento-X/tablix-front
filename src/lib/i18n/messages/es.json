@@ -82,9 +82,15 @@
     "heading": "Por qué confiar en Tablix",
     "ariaLabel": "Métricas de confianza de Tablix",
     "metrics": {
-      "zeroStorage": { "label": "bytes almacenados" },
-      "localProcessing": { "label": "procesamiento local" },
-      "formats": { "label": "formatos: XLSX, CSV y XLS" }
+      "zeroStorage": {
+        "label": "bytes almacenados"
+      },
+      "localProcessing": {
+        "label": "procesamiento local"
+      },
+      "formats": {
+        "label": "formatos: XLSX, CSV y XLS"
+      }
     }
   },
   "comparisonMini": {
@@ -647,5 +653,82 @@
     "accept": "Entendido",
     "learnMore": "Más información",
     "ariaLabel": "Aviso de cookies"
+  },
+  "useCases": {
+    "mergeExcel": {
+      "metaTitle": "Unir hojas de Excel gratis online | Tablix",
+      "metaDescription": "Una y combine hojas de Excel y CSV en línea, gratis y sin registro. Elija las columnas que necesita y descargue un archivo nuevo en segundos, desde su navegador.",
+      "h1": "Unir hojas de Excel",
+      "intro": "Combine varias hojas de Excel en un solo archivo, sin fórmulas ni copiar y pegar. Suba sus archivos, elija las columnas y descargue el resultado listo para usar.",
+      "benefit1": "Sin instalar nada: funciona directo en su navegador",
+      "benefit2": "100% privado: sus archivos se procesan en su dispositivo y no salen de él",
+      "benefit3": "Usted elige exactamente qué columnas conservar",
+      "howToTitle": "Cómo unir hojas de Excel en 3 pasos",
+      "step1Title": "Suba sus archivos",
+      "step1Desc": "Arrastre sus hojas de Excel o CSV. En el plan Free, una hasta 3 archivos a la vez.",
+      "step2Title": "Elija las columnas",
+      "step2Desc": "Vea todas las columnas detectadas y conserve solo las que necesita en el archivo final.",
+      "step3Title": "Descargue el resultado",
+      "step3Desc": "Genere la hoja unificada y descargue un archivo nuevo, limpio y listo para usar.",
+      "faqTitle": "Preguntas frecuentes",
+      "faq1Q": "¿Unir hojas de Excel en Tablix es gratis?",
+      "faq1A": "Sí. El plan Free incluye 1 unión por mes, con hasta 3 archivos, 500 filas y 3 columnas en total. ¿Necesita más? El plan Pro amplía todos los límites.",
+      "faq2Q": "¿Mis datos están seguros?",
+      "faq2A": "Sí. En el plan Free, todo el procesamiento ocurre en su propio navegador: sus archivos nunca se envían a ningún servidor.",
+      "faq3Q": "¿Cuántas hojas puedo unir a la vez?",
+      "faq3A": "En el plan Free, hasta 3 archivos por unión, con un máximo de 500 filas, 3 columnas y 1 MB. El plan Pro amplía todos estos límites.",
+      "ctaTitle": "¿Listo para unir sus hojas de Excel?",
+      "ctaButton": "Unir mis hojas"
+    },
+    "mergeCsv": {
+      "metaTitle": "Combinar archivos CSV online | Tablix",
+      "metaDescription": "Una varios archivos CSV en uno solo, gratis y sin registro. Elija las columnas, combine los datos y descargue un CSV nuevo en segundos, desde su navegador.",
+      "h1": "Combinar archivos CSV",
+      "intro": "Una varios archivos CSV en un solo archivo, sin abrir una hoja ni ajustar delimitadores. Suba sus CSV, elija las columnas y descargue el resultado listo.",
+      "benefit1": "Lee CSV de cualquier origen: exportaciones de sistemas, herramientas e informes",
+      "benefit2": "100% privado: sus CSV se procesan en su dispositivo y no salen de él",
+      "benefit3": "Usted decide qué columnas entran en el archivo final",
+      "howToTitle": "Cómo combinar archivos CSV en 3 pasos",
+      "step1Title": "Suba sus CSV",
+      "step1Desc": "Arrastre sus archivos CSV. En el plan Free, una hasta 3 archivos a la vez.",
+      "step2Title": "Elija las columnas",
+      "step2Desc": "Vea las columnas detectadas en cada CSV y conserve solo las que importan en el resultado.",
+      "step3Title": "Descargue el CSV unificado",
+      "step3Desc": "Genere el archivo final y descargue un CSV nuevo, limpio y listo para usar.",
+      "faqTitle": "Preguntas frecuentes",
+      "faq1Q": "¿Combinar archivos CSV en Tablix es gratis?",
+      "faq1A": "Sí. El plan Free incluye 1 unión por mes, con hasta 3 archivos, 500 filas y 3 columnas en total. ¿Necesita más? El plan Pro amplía todos los límites.",
+      "faq2Q": "¿Mis archivos CSV están seguros?",
+      "faq2A": "Sí. En el plan Free, todo el procesamiento ocurre en su propio navegador: sus CSV nunca se envían a ningún servidor.",
+      "faq3Q": "¿Cuántos archivos CSV puedo combinar a la vez?",
+      "faq3A": "En el plan Free, hasta 3 archivos por unión, con un máximo de 500 filas, 3 columnas y 1 MB. El plan Pro amplía todos estos límites.",
+      "ctaTitle": "¿Listo para combinar sus archivos CSV?",
+      "ctaButton": "Combinar mis CSV"
+    },
+    "combineMultiple": {
+      "metaTitle": "Combinar varias hojas de cálculo en una | Tablix",
+      "metaDescription": "Combine varias hojas de cálculo en un solo archivo, gratis y sin registro. Consolide los datos de varios archivos, elija las columnas y descargue un único resultado.",
+      "h1": "Combinar varias hojas de cálculo en una",
+      "intro": "Reúna los datos de varias hojas de cálculo en un único archivo consolidado. En lugar de copiar y pegar hoja por hoja, suba sus archivos, elija las columnas y descargue el resultado.",
+      "benefit1": "Consolide varios archivos a la vez, sin armar fórmulas",
+      "benefit2": "100% privado: sus hojas se procesan en su dispositivo y no salen de él",
+      "benefit3": "Estandarice las columnas de todos los archivos en un solo formato",
+      "howToTitle": "Cómo combinar varias hojas de cálculo en 3 pasos",
+      "step1Title": "Suba sus hojas de cálculo",
+      "step1Desc": "Arrastre sus archivos Excel o CSV. En el plan Free, combine hasta 3 hojas a la vez.",
+      "step2Title": "Elija las columnas",
+      "step2Desc": "Vea las columnas de cada archivo y seleccione cuáles entran en la hoja consolidada.",
+      "step3Title": "Descargue el archivo único",
+      "step3Desc": "Genere la hoja consolidada y descargue un archivo nuevo con todo reunido.",
+      "faqTitle": "Preguntas frecuentes",
+      "faq1Q": "¿Combinar varias hojas de cálculo en Tablix es gratis?",
+      "faq1A": "Sí. El plan Free incluye 1 unión por mes, con hasta 3 archivos, 500 filas y 3 columnas en total. ¿Necesita más? El plan Pro amplía todos los límites.",
+      "faq2Q": "¿Mis hojas de cálculo están seguras?",
+      "faq2A": "Sí. En el plan Free, todo el procesamiento ocurre en su propio navegador: sus archivos nunca se envían a ningún servidor.",
+      "faq3Q": "¿Cuántas hojas de cálculo puedo combinar a la vez?",
+      "faq3A": "En el plan Free, hasta 3 archivos por unión, con un máximo de 500 filas, 3 columnas y 1 MB. El plan Pro amplía todos estos límites.",
+      "ctaTitle": "¿Listo para combinar sus hojas en una sola?",
+      "ctaButton": "Combinar mis hojas"
+    }
   }
 }

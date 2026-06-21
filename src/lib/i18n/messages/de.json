@@ -82,9 +82,15 @@
     "heading": "Warum Sie Tablix vertrauen können",
     "ariaLabel": "Tablix-Vertrauenskennzahlen",
     "metrics": {
-      "zeroStorage": { "label": "gespeicherte Bytes" },
-      "localProcessing": { "label": "lokale Verarbeitung" },
-      "formats": { "label": "Formate: XLSX, CSV und XLS" }
+      "zeroStorage": {
+        "label": "gespeicherte Bytes"
+      },
+      "localProcessing": {
+        "label": "lokale Verarbeitung"
+      },
+      "formats": {
+        "label": "Formate: XLSX, CSV und XLS"
+      }
     }
   },
   "comparisonMini": {
@@ -647,5 +653,82 @@
     "accept": "Verstanden",
     "learnMore": "Mehr erfahren",
     "ariaLabel": "Cookie-Hinweis"
+  },
+  "useCases": {
+    "mergeExcel": {
+      "metaTitle": "Excel-Dateien zusammenführen kostenlos | Tablix",
+      "metaDescription": "Excel- und CSV-Dateien online zusammenführen – kostenlos und ohne Anmeldung. Wählen Sie die passenden Spalten und laden Sie in Sekunden eine neue Datei herunter.",
+      "h1": "Excel-Dateien zusammenführen",
+      "intro": "Führen Sie mehrere Excel-Dateien zu einer zusammen – ganz ohne Formeln oder Copy-and-paste. Dateien hochladen, Spalten wählen und das fertige Ergebnis herunterladen.",
+      "benefit1": "Keine Installation nötig – läuft direkt im Browser",
+      "benefit2": "100% privat: Ihre Dateien werden auf Ihrem Gerät verarbeitet und verlassen es nie",
+      "benefit3": "Sie entscheiden, welche Spalten erhalten bleiben",
+      "howToTitle": "Excel-Dateien zusammenführen in 3 Schritten",
+      "step1Title": "Dateien hochladen",
+      "step1Desc": "Ziehen Sie Ihre Excel- oder CSV-Dateien hierher. Im Free-Plan führen Sie bis zu 3 Dateien gleichzeitig zusammen.",
+      "step2Title": "Spalten auswählen",
+      "step2Desc": "Sehen Sie alle erkannten Spalten und behalten Sie nur die, die Sie wirklich brauchen.",
+      "step3Title": "Ergebnis herunterladen",
+      "step3Desc": "Erstellen Sie die zusammengeführte Tabelle und laden Sie eine saubere, fertige Datei herunter.",
+      "faqTitle": "Häufige Fragen",
+      "faq1Q": "Ist das Zusammenführen von Excel-Dateien mit Tablix kostenlos?",
+      "faq1A": "Ja. Der Free-Plan umfasst 1 Zusammenführung pro Monat mit bis zu 3 Dateien, 500 Zeilen und 3 Spalten insgesamt. Mehr nötig? Der Pro-Plan erweitert alle Limits.",
+      "faq2Q": "Sind meine Daten sicher?",
+      "faq2A": "Ja. Im Free-Plan erfolgt die gesamte Verarbeitung direkt in Ihrem Browser – Ihre Dateien werden nie an einen Server gesendet.",
+      "faq3Q": "Wie viele Tabellen kann ich gleichzeitig zusammenführen?",
+      "faq3A": "Im Free-Plan bis zu 3 Dateien pro Zusammenführung, mit maximal 500 Zeilen, 3 Spalten und 1 MB. Der Pro-Plan erweitert all diese Grenzen.",
+      "ctaTitle": "Bereit, Ihre Excel-Dateien zusammenzuführen?",
+      "ctaButton": "Dateien zusammenführen"
+    },
+    "mergeCsv": {
+      "metaTitle": "CSV-Dateien zusammenführen kostenlos | Tablix",
+      "metaDescription": "Mehrere CSV-Dateien online zu einer zusammenführen – kostenlos und ohne Anmeldung. Spalten wählen und in Sekunden eine neue CSV-Datei herunterladen.",
+      "h1": "CSV-Dateien zusammenführen",
+      "intro": "Führen Sie mehrere CSV-Dateien zu einer zusammen – ohne Tabelle zu öffnen oder Trennzeichen anzupassen. CSVs hochladen, Spalten wählen und Ergebnis herunterladen.",
+      "benefit1": "Liest CSV aus jeder Quelle – System-Exporte, Tools und Berichte",
+      "benefit2": "100% privat: Ihre CSVs werden auf Ihrem Gerät verarbeitet und verlassen es nie",
+      "benefit3": "Sie entscheiden, welche Spalten in die fertige Datei kommen",
+      "howToTitle": "CSV-Dateien zusammenführen in 3 Schritten",
+      "step1Title": "CSVs hochladen",
+      "step1Desc": "Ziehen Sie Ihre CSV-Dateien hierher. Im Free-Plan führen Sie bis zu 3 Dateien gleichzeitig zusammen.",
+      "step2Title": "Spalten auswählen",
+      "step2Desc": "Sehen Sie die erkannten Spalten jeder CSV und behalten Sie nur die, die im Ergebnis zählen.",
+      "step3Title": "Zusammengeführte CSV herunterladen",
+      "step3Desc": "Erstellen Sie die fertige Datei und laden Sie eine saubere, neue CSV-Datei herunter.",
+      "faqTitle": "Häufige Fragen",
+      "faq1Q": "Ist das Zusammenführen von CSV-Dateien mit Tablix kostenlos?",
+      "faq1A": "Ja. Der Free-Plan umfasst 1 Zusammenführung pro Monat mit bis zu 3 Dateien, 500 Zeilen und 3 Spalten insgesamt. Mehr nötig? Der Pro-Plan erweitert alle Limits.",
+      "faq2Q": "Sind meine CSV-Dateien sicher?",
+      "faq2A": "Ja. Im Free-Plan erfolgt die gesamte Verarbeitung direkt in Ihrem Browser – Ihre CSVs werden nie an einen Server gesendet.",
+      "faq3Q": "Wie viele CSV-Dateien kann ich gleichzeitig zusammenführen?",
+      "faq3A": "Im Free-Plan bis zu 3 Dateien pro Zusammenführung, mit maximal 500 Zeilen, 3 Spalten und 1 MB. Der Pro-Plan erweitert all diese Grenzen.",
+      "ctaTitle": "Bereit, Ihre CSV-Dateien zusammenzuführen?",
+      "ctaButton": "CSV-Dateien zusammenführen"
+    },
+    "combineMultiple": {
+      "metaTitle": "Mehrere Tabellen zu einer zusammenführen | Tablix",
+      "metaDescription": "Mehrere Tabellen zu einer Datei zusammenführen – kostenlos und ohne Anmeldung. Konsolidieren Sie Daten aus mehreren Dateien und erhalten Sie ein einziges Ergebnis.",
+      "h1": "Mehrere Tabellen zu einer zusammenführen",
+      "intro": "Führen Sie die Daten mehrerer Tabellen in einer konsolidierten Datei zusammen. Statt Blatt für Blatt zu kopieren, laden Sie Ihre Dateien hoch, wählen die Spalten und laden das Ergebnis herunter.",
+      "benefit1": "Konsolidieren Sie mehrere Dateien auf einmal, ohne Formeln zu erstellen",
+      "benefit2": "100% privat: Ihre Tabellen werden auf Ihrem Gerät verarbeitet und verlassen es nie",
+      "benefit3": "Vereinheitlichen Sie die Spalten aller Dateien in einem Format",
+      "howToTitle": "Mehrere Tabellen zusammenführen in 3 Schritten",
+      "step1Title": "Tabellen hochladen",
+      "step1Desc": "Ziehen Sie Ihre Excel- oder CSV-Dateien hierher. Im Free-Plan führen Sie bis zu 3 Tabellen gleichzeitig zusammen.",
+      "step2Title": "Spalten auswählen",
+      "step2Desc": "Sehen Sie die Spalten jeder Datei und wählen Sie, welche in die konsolidierte Tabelle kommen.",
+      "step3Title": "Einzeldatei herunterladen",
+      "step3Desc": "Erstellen Sie die konsolidierte Tabelle und laden Sie eine neue Datei herunter, die alles vereint.",
+      "faqTitle": "Häufige Fragen",
+      "faq1Q": "Ist das Zusammenführen mehrerer Tabellen mit Tablix kostenlos?",
+      "faq1A": "Ja. Der Free-Plan umfasst 1 Zusammenführung pro Monat mit bis zu 3 Dateien, 500 Zeilen und 3 Spalten insgesamt. Mehr nötig? Der Pro-Plan erweitert alle Limits.",
+      "faq2Q": "Sind meine Tabellen sicher?",
+      "faq2A": "Ja. Im Free-Plan erfolgt die gesamte Verarbeitung direkt in Ihrem Browser – Ihre Dateien werden nie an einen Server gesendet.",
+      "faq3Q": "Wie viele Tabellen kann ich gleichzeitig zusammenführen?",
+      "faq3A": "Im Free-Plan bis zu 3 Dateien pro Zusammenführung, mit maximal 500 Zeilen, 3 Spalten und 1 MB. Der Pro-Plan erweitert all diese Grenzen.",
+      "ctaTitle": "Bereit, mehrere Tabellen zu einer zusammenzuführen?",
+      "ctaButton": "Tabellen zusammenführen"
+    }
   }
 }

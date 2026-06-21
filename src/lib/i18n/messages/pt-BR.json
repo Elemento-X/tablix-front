@@ -82,9 +82,15 @@
     "heading": "Por que confiar no Tablix",
     "ariaLabel": "Métricas de confiança do Tablix",
     "metrics": {
-      "zeroStorage": { "label": "bytes armazenados" },
-      "localProcessing": { "label": "processamento local" },
-      "formats": { "label": "formatos: XLSX, CSV e XLS" }
+      "zeroStorage": {
+        "label": "bytes armazenados"
+      },
+      "localProcessing": {
+        "label": "processamento local"
+      },
+      "formats": {
+        "label": "formatos: XLSX, CSV e XLS"
+      }
     }
   },
   "comparisonMini": {
@@ -647,5 +653,82 @@
     "accept": "Entendi",
     "learnMore": "Saiba mais",
     "ariaLabel": "Aviso de cookies"
+  },
+  "useCases": {
+    "mergeExcel": {
+      "metaTitle": "Juntar planilhas Excel online grátis | Tablix",
+      "metaDescription": "Junte e una planilhas Excel e CSV online, grátis e sem cadastro. Escolha as colunas que importam e baixe um arquivo novo em segundos, no seu navegador.",
+      "h1": "Juntar planilhas Excel",
+      "intro": "Una várias planilhas Excel em um só arquivo, sem fórmulas nem copia e cola. Suba os arquivos, escolha as colunas e baixe o resultado pronto para usar.",
+      "benefit1": "Sem instalar nada — funciona direto no navegador",
+      "benefit2": "100% privado: seus arquivos são processados no seu dispositivo e não saem dele",
+      "benefit3": "Você escolhe exatamente quais colunas manter",
+      "howToTitle": "Como juntar planilhas Excel em 3 passos",
+      "step1Title": "Suba seus arquivos",
+      "step1Desc": "Arraste suas planilhas Excel ou CSV. No plano Free, junte até 3 arquivos por vez.",
+      "step2Title": "Escolha as colunas",
+      "step2Desc": "Veja todas as colunas detectadas e selecione só as que você precisa no arquivo final.",
+      "step3Title": "Baixe o resultado",
+      "step3Desc": "Gere a planilha unificada e baixe um arquivo novo, limpo e pronto para usar.",
+      "faqTitle": "Perguntas frequentes",
+      "faq1Q": "Juntar planilhas no Tablix é grátis?",
+      "faq1A": "Sim. O plano Free permite 1 unificação por mês, com até 3 arquivos, 500 linhas e 3 colunas no total. Para volumes maiores, o plano Pro amplia todos os limites.",
+      "faq2Q": "Meus dados estão seguros?",
+      "faq2A": "Estão. No plano Free, todo o processamento acontece no seu próprio navegador — seus arquivos não são enviados para nenhum servidor.",
+      "faq3Q": "Quantas planilhas posso juntar de uma vez?",
+      "faq3A": "No plano Free, até 3 arquivos por unificação, somando no máximo 500 linhas, 3 colunas e 1 MB. Precisa de mais? O plano Pro aumenta esses limites.",
+      "ctaTitle": "Pronto para juntar suas planilhas?",
+      "ctaButton": "Juntar minhas planilhas"
+    },
+    "mergeCsv": {
+      "metaTitle": "Juntar arquivos CSV online grátis | Tablix",
+      "metaDescription": "Junte vários arquivos CSV em um só, grátis e sem cadastro. Escolha as colunas, una os dados e baixe um CSV novo em segundos, direto no seu navegador.",
+      "h1": "Juntar arquivos CSV",
+      "intro": "Una vários arquivos CSV em um único arquivo, sem abrir planilha nem mexer em delimitadores. Suba os CSVs, escolha as colunas e baixe o resultado pronto.",
+      "benefit1": "Lê CSV de qualquer origem — exports de sistemas, ferramentas e relatórios",
+      "benefit2": "100% privado: seus CSVs são processados no seu dispositivo e não saem dele",
+      "benefit3": "Você decide quais colunas entram no arquivo final",
+      "howToTitle": "Como juntar arquivos CSV em 3 passos",
+      "step1Title": "Suba seus CSVs",
+      "step1Desc": "Arraste seus arquivos CSV. No plano Free, junte até 3 arquivos por vez.",
+      "step2Title": "Escolha as colunas",
+      "step2Desc": "Veja as colunas detectadas em cada CSV e mantenha só as que importam no resultado.",
+      "step3Title": "Baixe o CSV unificado",
+      "step3Desc": "Gere o arquivo final e baixe um CSV novo, limpo e pronto para usar.",
+      "faqTitle": "Perguntas frequentes",
+      "faq1Q": "Juntar arquivos CSV no Tablix é grátis?",
+      "faq1A": "Sim. O plano Free permite 1 unificação por mês, com até 3 arquivos, 500 linhas e 3 colunas no total. Para volumes maiores, o plano Pro amplia todos os limites.",
+      "faq2Q": "Meus arquivos CSV estão seguros?",
+      "faq2A": "Estão. No plano Free, todo o processamento acontece no seu próprio navegador — seus CSVs não são enviados para nenhum servidor.",
+      "faq3Q": "Quantos arquivos CSV posso juntar de uma vez?",
+      "faq3A": "No plano Free, até 3 arquivos por unificação, somando no máximo 500 linhas, 3 colunas e 1 MB. Precisa de mais? O plano Pro aumenta esses limites.",
+      "ctaTitle": "Pronto para juntar seus arquivos CSV?",
+      "ctaButton": "Juntar meus CSV"
+    },
+    "combineMultiple": {
+      "metaTitle": "Unir várias planilhas em uma | Tablix",
+      "metaDescription": "Una várias planilhas em um único arquivo, grátis e sem cadastro. Consolide os dados de vários arquivos, escolha as colunas e baixe um resultado só.",
+      "h1": "Unir várias planilhas em uma",
+      "intro": "Reúna os dados de várias planilhas em um único arquivo consolidado. Em vez de copiar e colar aba por aba, suba os arquivos, escolha as colunas e baixe o resultado.",
+      "benefit1": "Consolide vários arquivos de uma vez, sem montar fórmulas",
+      "benefit2": "100% privado: suas planilhas são processadas no seu dispositivo e não saem dele",
+      "benefit3": "Padronize as colunas de todos os arquivos em um único formato",
+      "howToTitle": "Como unir várias planilhas em 3 passos",
+      "step1Title": "Suba suas planilhas",
+      "step1Desc": "Arraste seus arquivos Excel ou CSV. No plano Free, una até 3 planilhas por vez.",
+      "step2Title": "Escolha as colunas",
+      "step2Desc": "Veja as colunas de cada arquivo e selecione quais entram na planilha consolidada.",
+      "step3Title": "Baixe o arquivo único",
+      "step3Desc": "Gere a planilha consolidada e baixe um arquivo novo com tudo reunido.",
+      "faqTitle": "Perguntas frequentes",
+      "faq1Q": "Unir várias planilhas no Tablix é grátis?",
+      "faq1A": "Sim. O plano Free permite 1 unificação por mês, com até 3 arquivos, 500 linhas e 3 colunas no total. Para volumes maiores, o plano Pro amplia todos os limites.",
+      "faq2Q": "Minhas planilhas estão seguras?",
+      "faq2A": "Estão. No plano Free, todo o processamento acontece no seu próprio navegador — seus arquivos não são enviados para nenhum servidor.",
+      "faq3Q": "Quantas planilhas posso unir de uma vez?",
+      "faq3A": "No plano Free, até 3 arquivos por unificação, somando no máximo 500 linhas, 3 colunas e 1 MB. Precisa de mais? O plano Pro aumenta esses limites.",
+      "ctaTitle": "Pronto para unir suas planilhas em uma só?",
+      "ctaButton": "Unir minhas planilhas"
+    }
   }
 }
