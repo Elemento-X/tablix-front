@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Tablix — Verwandeln Sie komplexe Tabellen in gebrauchsfertige Dateien",
-    "description": "Laden Sie Ihre Tabelle hoch, wählen Sie die benötigten Spalten aus und erstellen Sie in Sekunden eine neue Datei. Online-Tool zur individuellen Verarbeitung und Erstellung von Tabellen.",
+    "title": "Excel- und CSV-Tabellen online zusammenführen | Tablix",
+    "description": "Excel- und CSV-Tabellen online zusammenführen — kostenlos, ohne Anmeldung. Wählen Sie die wichtigen Spalten und laden Sie eine neue Datei herunter.",
     "privacyTitle": "Datenschutzerklärung — Tablix",
     "privacyDescription": "Erfahren Sie, wie Tablix Ihre Daten erhebt, verwendet und schützt. LGPD-konforme Datenschutzerklärung.",
     "termsTitle": "Nutzungsbedingungen — Tablix",
@@ -553,7 +553,7 @@
     }
   },
   "pricingPage": {
-    "metaTitle": "Tarife & Preise | Tablix",
+    "metaTitle": "Preise & Tarife — Kostenlos und Pro | Tablix",
     "metaDescription": "Vergleichen Sie die Tablix-Tarife Kostenlos, Pro und Enterprise. Kostenlos starten, keine Registrierung nötig.",
     "ctaText": "Bereit, Ihre Tabellen zu vereinfachen?",
     "ctaSubtext": "In Sekunden starten. Keine Registrierung, keine Kreditkarte erforderlich.",

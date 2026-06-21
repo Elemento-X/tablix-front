@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Tablix — 将复杂的电子表格转换为即用文件",
-    "description": "上传电子表格，选择所需的列，几秒钟内生成新文件。用于自定义电子表格处理与生成的在线工具。",
+    "title": "Tablix — 在线合并 Excel 和 CSV 表格",
+    "description": "在线合并 Excel 和 CSV 表格，免费且无需注册。选择需要的列，几秒钟内下载整理好的新文件。",
     "privacyTitle": "隐私政策 — Tablix",
     "privacyDescription": "了解 Tablix 如何收集、使用和保护您的数据。隐私政策符合 LGPD 规定。",
     "termsTitle": "使用条款 — Tablix",
@@ -553,7 +553,7 @@
     }
   },
   "pricingPage": {
-    "metaTitle": "套餐与定价 | Tablix",
+    "metaTitle": "价格与套餐 — 免费版和专业版 | Tablix",
     "metaDescription": "比较 Tablix 免费版、专业版和企业版套餐。免费开始，无需注册。",
     "ctaText": "准备好简化您的电子表格了吗？",
     "ctaSubtext": "几秒钟即可开始。无需注册，无需信用卡。",
