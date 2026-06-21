@@ -12,8 +12,8 @@ describe('sitemap()', () => {
     expect(Array.isArray(result)).toBe(true)
   })
 
-  it('returns exactly 5 entries', () => {
-    expect(result).toHaveLength(5)
+  it('returns exactly 7 entries', () => {
+    expect(result).toHaveLength(7)
   })
 
   it('includes the merge-excel use-case landing', () => {
