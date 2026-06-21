@@ -23,6 +23,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/', lastModified: SITE_LAST_UPDATED, changeFrequency: 'weekly', priority: 1 },
     { path: '/pricing', lastModified: SITE_LAST_UPDATED, changeFrequency: 'weekly', priority: 0.8 },
     {
+      path: '/juntar-planilhas-excel',
+      lastModified: SITE_LAST_UPDATED,
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      path: '/juntar-arquivos-csv',
+      lastModified: SITE_LAST_UPDATED,
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      path: '/unir-varias-planilhas',
+      lastModified: SITE_LAST_UPDATED,
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
       path: '/privacy-policy',
       lastModified: LEGAL_LAST_UPDATED,
       changeFrequency: 'monthly',
