@@ -654,6 +654,27 @@
     "learnMore": "Saiba mais",
     "ariaLabel": "Aviso de cookies"
   },
+  "blog": {
+    "meta": {
+      "title": "Blog Tablix: guias de planilhas, Excel e CSV",
+      "description": "Guias práticos para juntar, unir e organizar planilhas no Excel e CSV. Aprenda o passo a passo e resolva direto no navegador, de graça."
+    },
+    "title": "Guias de planilhas",
+    "subtitle": "Tutoriais práticos para juntar, unir e organizar seus dados em Excel e CSV.",
+    "empty": "Nenhum artigo publicado ainda.",
+    "readMore": "Ler guia",
+    "publishedOn": "Publicado em",
+    "updatedOn": "atualizado em",
+    "relatedGuidesTitle": "Guias relacionados",
+    "breadcrumb": {
+      "home": "Início",
+      "blog": "Blog"
+    },
+    "cta": {
+      "title": "Pronto para organizar suas planilhas?",
+      "button": "Experimentar o Tablix grátis"
+    }
+  },
   "useCases": {
     "mergeExcel": {
       "metaTitle": "Juntar planilhas Excel online grátis | Tablix",

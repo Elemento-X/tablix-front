@@ -654,6 +654,27 @@
     "learnMore": "En savoir plus",
     "ariaLabel": "Avis sur les cookies"
   },
+  "blog": {
+    "meta": {
+      "title": "Blog Tablix : guides tableurs, Excel et CSV",
+      "description": "Des guides pratiques pour fusionner, combiner et organiser vos feuilles de calcul Excel et CSV. Étape par étape, directement dans votre navigateur, gratuitement."
+    },
+    "title": "Guides tableurs",
+    "subtitle": "Des tutoriels pratiques pour fusionner, combiner et organiser vos données Excel et CSV.",
+    "empty": "Aucun article publié pour le moment.",
+    "readMore": "Lire le guide",
+    "publishedOn": "Publié le",
+    "updatedOn": "mis à jour le",
+    "relatedGuidesTitle": "Guides associés",
+    "breadcrumb": {
+      "home": "Accueil",
+      "blog": "Blog"
+    },
+    "cta": {
+      "title": "Prêt à organiser vos feuilles de calcul ?",
+      "button": "Essayer Tablix gratuitement"
+    }
+  },
   "useCases": {
     "mergeExcel": {
       "metaTitle": "Fusionner des fichiers Excel en ligne | Tablix",

@@ -36,6 +36,11 @@ export function LandingFooter() {
       section: 'combine-multiple',
       href: lh('/unir-varias-planilhas'),
     },
+    {
+      label: t('blog.title'),
+      section: 'blog',
+      href: lh('/blog'),
+    },
   ]
 
   return (

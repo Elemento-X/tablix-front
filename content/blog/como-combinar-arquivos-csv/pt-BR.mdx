@@ -1,0 +1,48 @@
+---
+title: Como combinar arquivos CSV em um só (sem programar)
+description: Veja como combinar vários arquivos CSV em um único arquivo, lidando com delimitadores e codificação — e uma forma rápida de fazer online, grátis.
+datePublished: 2026-06-21
+dateModified: 2026-06-21
+relatedLanding: /juntar-arquivos-csv
+order: 2
+---
+
+Arquivos CSV são o formato universal de exportação: sistemas, bancos, ferramentas de marketing e relatórios quase sempre oferecem "exportar como CSV". O problema é que esses arquivos costumam vir picados — um por mês, um por origem, um por equipe — e juntar tudo na mão é tedioso e arriscado. Este guia mostra como combinar arquivos CSV do jeito certo.
+
+## O que pode dar errado com CSV
+
+Antes de combinar, vale entender por que CSV engana. Dois arquivos que parecem iguais podem ter diferenças invisíveis:
+
+- **Delimitador diferente:** alguns usam vírgula (`,`), outros ponto e vírgula (`;`) — comum em exports em português.
+- **Codificação diferente:** acentos quebram quando um arquivo é UTF-8 e outro é ANSI/Latin-1.
+- **Cabeçalhos divergentes:** "Cliente" em um, "Nome do Cliente" em outro.
+
+Combinar sem resolver isso gera colunas duplicadas e caracteres estranhos no resultado.
+
+## Passo a passo manual
+
+Se você prefere fazer no Excel ou num editor de texto:
+
+1. Abra o primeiro CSV e confirme o delimitador e a codificação.
+2. Padronize os demais arquivos para o mesmo delimitador e a mesma codificação.
+3. Cole os dados de cada arquivo abaixo do primeiro, **sem repetir o cabeçalho**.
+4. Salve o resultado como um novo CSV em UTF-8.
+
+Funciona, mas exige atenção a cada arquivo — e um deslize na codificação só aparece depois, quando os acentos já vieram errados.
+
+## A forma rápida: combinar CSV online
+
+Para pular a parte chata, você pode subir todos os CSVs de uma vez, deixar a ferramenta detectar as colunas e baixar um único arquivo limpo. No [Tablix](/juntar-arquivos-csv), o plano gratuito processa tudo no seu navegador — seus arquivos não são enviados para nenhum servidor.
+
+<Cta href="/juntar-arquivos-csv" label="Combinar meus arquivos CSV" />
+
+## Perguntas frequentes
+
+**Os arquivos precisam ter o mesmo delimitador?**
+No processo manual, sim. Em ferramentas que detectam o formato automaticamente, cada arquivo é lido corretamente mesmo com delimitadores diferentes.
+
+**Vou perder os acentos ao combinar?**
+Só se misturar codificações. Salvar o resultado em UTF-8 preserva acentos e caracteres especiais.
+
+**E se eu tiver planilhas Excel além de CSV?**
+Você pode tratar os dois formatos juntos. Veja o guia de [como juntar planilhas no Excel](/blog/como-juntar-planilhas-no-excel) e a comparação entre [CSV ou XLSX](/blog/csv-ou-xlsx-qual-usar).

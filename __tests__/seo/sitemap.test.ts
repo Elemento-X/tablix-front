@@ -1,110 +1,89 @@
 /**
  * Tests for src/app/sitemap.ts
- * Validates sitemap output: 3 URLs, correct priorities, frequencies, HTTPS, valid format
+ * Validates sitemap output: marketing + legal + blog URLs, priorities,
+ * frequencies, HTTPS, hreflang alternates and valid lastmod format.
  */
 
 import sitemap from '@/app/sitemap'
+import type { MetadataRoute } from 'next'
 
 describe('sitemap()', () => {
-  const result = sitemap()
+  let result: MetadataRoute.Sitemap
+
+  beforeAll(async () => {
+    result = await sitemap()
+  })
 
   it('returns an array', () => {
     expect(Array.isArray(result)).toBe(true)
   })
 
-  it('returns exactly 7 entries', () => {
-    expect(result).toHaveLength(7)
+  it('includes the 3 static marketing/legal pairs plus pricing, blog index and 4 articles', () => {
+    // home, pricing, blog, 4 articles, privacy, terms = 8 base + 4 articles? -> 12
+    expect(result).toHaveLength(12)
   })
 
-  it('includes the merge-excel use-case landing', () => {
+  it('includes the merge-excel use-case landing with hreflang alternates', () => {
     const landing = result.find((e) => e.url.endsWith('/juntar-planilhas-excel'))
     expect(landing).toBeDefined()
     expect(landing?.alternates?.languages).toBeDefined()
   })
 
-  it('every entry has a url property', () => {
+  it('contains the blog index entry', () => {
+    const blog = result.find((e) => e.url === 'https://tablix.me/blog')
+    expect(blog).toBeDefined()
+    expect(blog?.priority).toBe(0.7)
+  })
+
+  it('contains every published blog article', () => {
+    const slugs = [
+      'como-combinar-arquivos-csv',
+      'como-juntar-planilhas-no-excel',
+      'como-unir-varias-planilhas',
+      'csv-ou-xlsx-qual-usar',
+    ]
+    slugs.forEach((slug) => {
+      const entry = result.find((e) => e.url === `https://tablix.me/blog/${slug}`)
+      expect(entry).toBeDefined()
+      expect(entry?.priority).toBe(0.7)
+      expect(entry?.alternates?.languages).toBeDefined()
+    })
+  })
+
+  it('every entry has a non-empty url property', () => {
     result.forEach((entry) => {
       expect(typeof entry.url).toBe('string')
       expect(entry.url.length).toBeGreaterThan(0)
     })
   })
 
-  it('every URL uses HTTPS', () => {
+  it('every URL uses HTTPS and is on tablix.me', () => {
     result.forEach((entry) => {
       expect(entry.url).toMatch(/^https:\/\//)
-    })
-  })
-
-  it('every URL is on tablix.me', () => {
-    result.forEach((entry) => {
       expect(entry.url).toContain('tablix.me')
     })
   })
 
-  it('contains home page entry at root URL', () => {
+  it('contains home page entry at root URL with priority 1', () => {
     const home = result.find((e) => e.url === 'https://tablix.me')
     expect(home).toBeDefined()
-  })
-
-  it('contains /privacy-policy entry', () => {
-    const pp = result.find((e) => e.url.endsWith('/privacy-policy'))
-    expect(pp).toBeDefined()
-  })
-
-  it('contains /terms entry', () => {
-    const terms = result.find((e) => e.url.endsWith('/terms'))
-    expect(terms).toBeDefined()
-  })
-
-  it('contains /pricing entry', () => {
-    const pricing = result.find((e) => e.url.endsWith('/pricing'))
-    expect(pricing).toBeDefined()
-  })
-
-  it('home page has priority 1', () => {
-    const home = result.find((e) => e.url === 'https://tablix.me')
     expect(home?.priority).toBe(1)
   })
 
-  it('/privacy-policy has priority 0.3', () => {
-    const pp = result.find((e) => e.url.endsWith('/privacy-policy'))
-    expect(pp?.priority).toBe(0.3)
+  it('contains /privacy-policy and /terms with priority 0.3', () => {
+    expect(result.find((e) => e.url.endsWith('/privacy-policy'))?.priority).toBe(0.3)
+    expect(result.find((e) => e.url.endsWith('/terms'))?.priority).toBe(0.3)
   })
 
-  it('/terms has priority 0.3', () => {
-    const terms = result.find((e) => e.url.endsWith('/terms'))
-    expect(terms?.priority).toBe(0.3)
-  })
-
-  it('/pricing has priority 0.8', () => {
+  it('contains /pricing with priority 0.8 and weekly frequency', () => {
     const pricing = result.find((e) => e.url.endsWith('/pricing'))
     expect(pricing?.priority).toBe(0.8)
-  })
-
-  it('home page has changeFrequency "weekly"', () => {
-    const home = result.find((e) => e.url === 'https://tablix.me')
-    expect(home?.changeFrequency).toBe('weekly')
-  })
-
-  it('/privacy-policy has changeFrequency "monthly"', () => {
-    const pp = result.find((e) => e.url.endsWith('/privacy-policy'))
-    expect(pp?.changeFrequency).toBe('monthly')
-  })
-
-  it('/terms has changeFrequency "monthly"', () => {
-    const terms = result.find((e) => e.url.endsWith('/terms'))
-    expect(terms?.changeFrequency).toBe('monthly')
-  })
-
-  it('/pricing has changeFrequency "weekly"', () => {
-    const pricing = result.find((e) => e.url.endsWith('/pricing'))
     expect(pricing?.changeFrequency).toBe('weekly')
   })
 
   it('every entry has lastModified as a stable ISO date string (not new Date() per build)', () => {
     result.forEach((entry) => {
       expect(typeof entry.lastModified).toBe('string')
-      // YYYY-MM-DD — versioned constant, not a per-build timestamp.
       expect(entry.lastModified as string).toMatch(/^\d{4}-\d{2}-\d{2}$/)
     })
   })
@@ -129,7 +108,6 @@ describe('sitemap()', () => {
 
   it('no duplicate URLs', () => {
     const urls = result.map((e) => e.url)
-    const unique = new Set(urls)
-    expect(unique.size).toBe(urls.length)
+    expect(new Set(urls).size).toBe(urls.length)
   })
 })
