@@ -1,6 +1,7 @@
 'use client'
 
 import { Languages } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/button'
 import {
   DropdownMenu,
@@ -9,10 +10,27 @@ import {
   DropdownMenuTrigger,
 } from '@/components/dropdown-menu'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { useLocale, locales, localeNames } from '@/lib/i18n'
+import {
+  useLocale,
+  locales,
+  localeNames,
+  localizedPath,
+  stripLocale,
+  type Locale,
+} from '@/lib/i18n'
 
 export function LanguageSelector() {
   const { locale, setLocale, t } = useLocale()
+  const pathname = usePathname()
+  const router = useRouter()
+
+  // Changing language navigates to the same page under the new locale prefix
+  // (URL is the source of truth). setLocale keeps state/cookie in sync.
+  const changeLocale = (loc: Locale) => {
+    setLocale(loc)
+    const basePath = stripLocale(pathname || '/')
+    router.push(localizedPath(loc, basePath))
+  }
 
   return (
     <div className="flex items-center gap-1">
@@ -28,7 +46,7 @@ export function LanguageSelector() {
           {locales.map((loc) => (
             <DropdownMenuItem
               key={loc}
-              onClick={() => setLocale(loc)}
+              onClick={() => changeLocale(loc)}
               className={locale === loc ? 'bg-accent' : ''}
             >
               {localeNames[loc]}

@@ -4,10 +4,11 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { LanguageSelector } from '@/components/language-selector'
-import { useLocale } from '@/lib/i18n'
+import { useLocale, useLocalizedHref } from '@/lib/i18n'
 
 export function LegalLayoutContent({ children }: { children: ReactNode }) {
   const { t } = useLocale()
+  const lh = useLocalizedHref()
 
   return (
     <div className="bg-background min-h-screen">
@@ -15,7 +16,7 @@ export function LegalLayoutContent({ children }: { children: ReactNode }) {
         <div className="mx-auto max-w-4xl px-4 py-4 sm:px-6">
           <div className="flex items-center justify-between">
             <Link
-              href="/"
+              href={lh('/')}
               className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -35,13 +36,13 @@ export function LegalLayoutContent({ children }: { children: ReactNode }) {
           <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
             <div className="flex gap-4 text-sm">
               <Link
-                href="/privacy-policy"
+                href={lh('/privacy-policy')}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 {t('footer.privacyPolicy')}
               </Link>
               <Link
-                href="/terms"
+                href={lh('/terms')}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 {t('footer.terms')}

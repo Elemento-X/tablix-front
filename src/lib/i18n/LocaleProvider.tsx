@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { type Locale, defaultLocale } from './config'
+import { localizedPath } from './routing'
 import ptBR from './messages/pt-BR.json'
 import en from './messages/en.json'
 import es from './messages/es.json'
@@ -54,21 +55,24 @@ function getNestedValue(obj: Record<string, unknown>, path: string): string {
   return typeof result === 'string' ? result : path
 }
 
-export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(defaultLocale)
+export function LocaleProvider({
+  children,
+  initialLocale,
+}: {
+  children: ReactNode
+  initialLocale?: Locale
+}) {
+  // URL (via initialLocale, resolved server-side from the path prefix) is the
+  // source of truth — no flash of hydration. Falls back to defaultLocale.
+  const [locale, setLocaleState] = useState<Locale>(initialLocale ?? defaultLocale)
   const [isClient, setIsClient] = useState(false)
 
-  // Initialize locale from localStorage on client side and sync to cookie
+  // Keep the cookie in sync with the active locale (used by the landing-page
+  // language suggestion). We do NOT override the URL locale with localStorage.
   useEffect(() => {
     setIsClient(true)
-    const stored = localStorage.getItem(LOCALE_STORAGE_KEY) as Locale | null
-    if (stored && stored in messages) {
-      setLocaleState(stored)
-      setLocaleCookie(stored)
-    } else {
-      setLocaleCookie(defaultLocale)
-    }
-  }, [])
+    setLocaleCookie(initialLocale ?? defaultLocale)
+  }, [initialLocale])
 
   const setLocale = (newLocale: Locale) => {
     setLocaleState(newLocale)
@@ -109,4 +113,14 @@ export function useLocale() {
     throw new Error('useLocale must be used within a LocaleProvider')
   }
   return context
+}
+
+/**
+ * Returns a function that localizes an internal path for the current locale.
+ * Use for every internal href/Link so navigation stays within the active
+ * language (e.g. in /en, `lh('/pricing')` → `/en/pricing`).
+ */
+export function useLocalizedHref() {
+  const { locale } = useLocale()
+  return (path: string) => localizedPath(locale, path)
 }

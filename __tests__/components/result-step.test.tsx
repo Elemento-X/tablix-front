@@ -13,6 +13,7 @@ jest.mock('@/lib/i18n', () => ({
       return key
     },
   }),
+  useLocalizedHref: () => (path: string) => path,
 }))
 
 jest.mock('next/link', () => {

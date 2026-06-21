@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useLocale } from '@/lib/i18n'
+import { useLocale, useLocalizedHref } from '@/lib/i18n'
 import { CONTACT_EMAIL } from '@/lib/constants'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import { scrollToSection } from '@/components/landing-header-nav'
@@ -10,6 +10,7 @@ import { TablixLogo } from '@/components/tablix-logo'
 
 export function LandingFooter() {
   const { t } = useLocale()
+  const lh = useLocalizedHref()
   const prefersReducedMotion = useReducedMotion()
 
   const productLinks = [
@@ -18,7 +19,7 @@ export function LandingFooter() {
     {
       label: t('footer.product.pricing'),
       section: 'pricing',
-      href: '/pricing',
+      href: lh('/pricing'),
     },
   ]
 
@@ -57,7 +58,7 @@ export function LandingFooter() {
               ))}
               <li>
                 <Link
-                  href="/upload"
+                  href={lh('/upload')}
                   className="text-primary hover:text-primary/80 text-sm transition-colors"
                 >
                   {t('footer.product.cta')}
@@ -73,7 +74,7 @@ export function LandingFooter() {
             <ul className="space-y-3">
               <li>
                 <Link
-                  href="/terms"
+                  href={lh('/terms')}
                   className="text-muted-foreground hover:text-foreground text-sm transition-colors"
                 >
                   {t('footer.terms')}
@@ -81,7 +82,7 @@ export function LandingFooter() {
               </li>
               <li>
                 <Link
-                  href="/privacy-policy"
+                  href={lh('/privacy-policy')}
                   className="text-muted-foreground hover:text-foreground text-sm transition-colors"
                 >
                   {t('footer.privacyPolicy')}

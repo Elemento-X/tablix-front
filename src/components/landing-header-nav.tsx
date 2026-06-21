@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useLocale } from '@/lib/i18n'
+import { useLocale, useLocalizedHref } from '@/lib/i18n'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 
 interface NavItem {
@@ -36,6 +36,7 @@ function scrollToSection(id: string, instant: boolean) {
 
 export function LandingHeaderNav({ activeSection }: LandingHeaderNavProps) {
   const { t } = useLocale()
+  const lh = useLocalizedHref()
   const prefersReducedMotion = useReducedMotion()
 
   const navItems: NavItem[] = [
@@ -45,7 +46,7 @@ export function LandingHeaderNav({ activeSection }: LandingHeaderNavProps) {
       href: '/#how-it-works',
     },
     { key: 'audience', label: t('header.nav.audience'), href: '/#audience' },
-    { key: 'pricing', label: t('header.nav.pricing'), href: '/pricing' },
+    { key: 'pricing', label: t('header.nav.pricing'), href: lh('/pricing') },
   ]
 
   return (

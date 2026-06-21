@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { getServerLocale, getMessages } from '@/lib/i18n/server'
+import { buildAlternates, localizedUrl } from '@/lib/i18n/routing'
 import { headers } from 'next/headers'
-import { SITE_URL } from '@/lib/constants'
 import { PricingPageContent } from './components/PricingPageContent'
 import { FAQ_KEYS } from './constants'
 
@@ -11,17 +11,16 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const title = messages.pricingPage.metaTitle
   const description = messages.pricingPage.metaDescription
+  const alternates = buildAlternates(locale, '/pricing')
 
   return {
     title,
     description,
-    alternates: {
-      canonical: `${SITE_URL}/pricing`,
-    },
+    alternates,
     openGraph: {
       title,
       description,
-      url: `${SITE_URL}/pricing`,
+      url: localizedUrl(locale, '/pricing'),
     },
     twitter: {
       title,

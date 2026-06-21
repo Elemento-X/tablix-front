@@ -4,7 +4,11 @@
  * robots config, and locale-aware title/description
  */
 
-// Mock next/headers before importing layout
+import { SITE_URL } from '@/lib/constants'
+
+// Mock next/headers before importing layout.
+// headers() is read first (x-locale); returning '' (falsy) makes getServerLocale
+// fall through to the cookie, which is the intended behavior for these tests.
 const mockGet = jest.fn()
 jest.mock('next/headers', () => ({
   cookies: () => Promise.resolve({ get: mockGet }),
@@ -89,12 +93,23 @@ describe('generateMetadata()', () => {
     expect(result.alternates?.canonical).toBeDefined()
   })
 
-  it('does not include hreflang languages (no locale-based routing)', async () => {
-    // hreflang requires different URLs per locale. Since Tablix uses
-    // client-side locale switching without URL-based routing, hreflang
-    // is intentionally omitted to avoid sending incorrect signals to crawlers.
+  it('includes hreflang languages for all locales (URL-prefix routing)', async () => {
+    // URL-prefix routing (Abordagem B) makes every locale independently crawlable.
+    // buildAlternates() produces a complete, reciprocal hreflang set: 6 locales + x-default.
     const result = await getMetadata('pt-BR')
-    expect(result.alternates?.languages).toBeUndefined()
+    const langs = result.alternates?.languages as Record<string, string> | undefined
+    expect(langs).toBeDefined()
+    // pt-BR lives at the root (no prefix) — canonical = bare SITE_URL
+    expect(langs?.['pt-BR']).toBe(SITE_URL)
+    expect(langs?.['en']).toBe(`${SITE_URL}/en`)
+    expect(langs?.['es']).toBe(`${SITE_URL}/es`)
+    expect(langs?.['zh']).toBe(`${SITE_URL}/zh`)
+    expect(langs?.['fr']).toBe(`${SITE_URL}/fr`)
+    expect(langs?.['de']).toBe(`${SITE_URL}/de`)
+    // x-default always points to the default locale version (pt-BR = root)
+    expect(langs?.['x-default']).toBe(SITE_URL)
+    // 6 locales + x-default = 7 entries
+    expect(Object.keys(langs ?? {}).length).toBe(7)
   })
 
   it('includes openGraph object', async () => {

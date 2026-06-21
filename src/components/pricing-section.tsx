@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Check } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useLocale } from '@/lib/i18n'
+import { useLocale, useLocalizedHref } from '@/lib/i18n'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import { TIMING } from '@/lib/motion'
 import { CONTACT_EMAIL } from '@/lib/constants'
@@ -27,6 +27,7 @@ export function PricingSection({
   id,
   className = '',
 }: PricingSectionProps) {
+  const lh = useLocalizedHref()
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly')
   const { t } = useLocale()
   const prefersReducedMotion = useReducedMotion()
@@ -155,7 +156,7 @@ export function PricingSection({
               {t('pricing.plans.free.description')}
             </p>
 
-            <Link href="/upload">
+            <Link href={lh('/upload')}>
               <Button variant="outline" className="mt-8 w-full bg-transparent" size="lg">
                 {t('pricing.plans.free.cta')}
               </Button>
