@@ -464,7 +464,7 @@ describe('spreadsheet-merge.ts', () => {
 
       expect(err).toBeInstanceOf(SpreadsheetParseError)
       expect(err.code).toBe('ROW_LIMIT')
-      expect(err.params).toEqual({ total: '501', max: '500', plan: 'FREE' })
+      expect(err.params).toEqual({ total: '501', max: '500', plan: 'free' })
       expect(err.message).toContain('501 rows (max 500 for Free plan)')
     })
 

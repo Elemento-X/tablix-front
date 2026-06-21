@@ -145,7 +145,7 @@ export async function mergeSpreadsheets(options: MergeOptions): Promise<MergeRes
     throw new SpreadsheetParseError(
       'ROW_LIMIT',
       `File exceeds row limit: ${totalRows} rows (max ${limits.maxRows} for ${limits.name} plan)`,
-      { total: String(totalRows), max: String(limits.maxRows), plan: limits.name.toUpperCase() },
+      { total: String(totalRows), max: String(limits.maxRows), plan },
     )
   }
 

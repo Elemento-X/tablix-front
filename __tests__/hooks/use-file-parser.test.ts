@@ -211,7 +211,7 @@ describe('useFileParser hook', () => {
       expect((caughtErr as SpreadsheetParseError).params).toEqual({
         total: '501',
         max: '500',
-        plan: 'FREE',
+        plan: 'free',
       })
       expect(result.current.error).toMatchObject({ code: 'ROW_LIMIT' })
     })
@@ -340,7 +340,7 @@ describe('useFileParser hook', () => {
       expect((caughtErr as SpreadsheetParseError).params).toEqual({
         total: '501',
         max: '500',
-        plan: 'FREE',
+        plan: 'free',
       })
     })
 
